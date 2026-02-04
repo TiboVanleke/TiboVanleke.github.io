@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bootstrapping a weekly research memo | Tibo Vanleke</title>
+    <meta name="description" content="A quick pilot for turning weekly reading notes into a public-facing update.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        .callout {
+            border-left: 4px solid var(--accent);
+            background: #f2fbf6;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin: 18px 0;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        ul {
+            margin: 12px 0 0 18px;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>Bootstrapping a weekly research memo</h1>
+            <div class="meta">February 4, 2026 · 4 min read</div>
+        </header>
+
+        <article>
+            <p>
+                I want a lightweight ritual for sharing what I learn each week about LLM safety and
+                interpretability. The goal is not a full paper summary, but a short, high-signal memo
+                that helps me retain ideas and gives collaborators a quick window into what I am exploring.
+            </p>
+
+            <div class="callout">
+                Working definition: one memo per week, three bullets of insight, one open question, and a
+                link to a paper or experiment worth following.
+            </div>
+
+            <h2>Why this format</h2>
+            <p>
+                A short weekly memo forces me to separate “interesting” from “important.” It is also a
+                test bed for a future automated agent: if I can keep the structure predictable, a tool can
+                eventually draft the post from notes, and I can edit and publish quickly.
+            </p>
+
+            <h2>This week’s seed ideas</h2>
+            <ul>
+                <li>Implicit cues in training data can steer model behavior more than we expect.</li>
+                <li>Interpretability tools feel most useful when paired with a concrete safety hypothesis.</li>
+                <li>Public transparency creates gentle accountability that improves my research workflow.</li>
+            </ul>
+
+            <h2>Open question</h2>
+            <p>
+                How can we reliably detect subliminal learning signals before they show up in deployment?
+                If detection is costly, can we create small, cheap proxy tests that still catch the risk?
+            </p>
+
+            <p>
+                Next week I will try converting paper notes into the memo template automatically, then see
+                how much manual editing is truly needed.
+            </p>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
