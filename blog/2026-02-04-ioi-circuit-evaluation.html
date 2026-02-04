@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluating IOI circuits: faithfulness, completeness, minimality | Tibo Vanleke</title>
+    <meta name="description" content="A focused memo on how to evaluate mechanistic explanations using the IOI circuit in GPT-2 small.">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        .callout {
+            border-left: 4px solid var(--accent);
+            background: #f2fbf6;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin: 18px 0;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        ul {
+            margin: 12px 0 0 18px;
+        }
+
+        .refs ul {
+            margin-left: 18px;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>Evaluating IOI circuits: faithfulness, completeness, minimality</h1>
+            <div class="meta">February 4, 2026 · 4 min read</div>
+        </header>
+
+        <article>
+            <p>
+                This memo zooms in on a very specific alignment-adjacent question: how do we rigorously
+                evaluate whether a mechanistic explanation of a transformer behavior is actually correct?
+                The IOI circuit work in GPT-2 small is a rare case where we can test this directly with
+                quantitative criteria.
+            </p>
+
+            <div class="callout">
+                Summary: In IOI, a proposed circuit is not just a story. It is evaluated with
+                faithfulness (does it match the behavior), completeness (does it capture all of it),
+                and minimality (is it as small as possible).
+            </div>
+
+            <h2>Three high-signal insights</h2>
+            <ul>
+                <li>
+                    The IOI work shows that we can extract a concrete circuit (26 heads across 7 classes)
+                    and then test it with causal interventions, turning interpretability into an evaluable
+                    hypothesis rather than a narrative.
+                </li>
+                <li>
+                    Faithfulness, completeness, and minimality reveal different failure modes: a circuit
+                    can be faithful but still incomplete, or complete but not minimal, which matters if you
+                    want mechanistic explanations that scale to safety analysis.
+                </li>
+                <li>
+                    The broader transformer-circuits framework motivates this style of decomposition and
+                    gives a formal lens for reasoning about how heads compose through the residual stream.
+                </li>
+            </ul>
+
+            <h2>Open question</h2>
+            <p>
+                Can we design evaluation criteria that remain reliable when the circuit hypothesis includes
+                both attention and MLP components, or when the behavior is diffuse (e.g., in-context learning
+                mechanisms linked to induction heads)?
+            </p>
+
+            <h2>Why this is useful for alignment</h2>
+            <p>
+                Alignment needs explanations that are more than plausible stories. IOI offers a template for
+                converting interpretability into a falsifiable claim: propose a circuit, measure its causal
+                footprint, and explicitly account for what is missing.
+            </p>
+
+            <div class="refs">
+                <h2>References</h2>
+                <ul>
+                    <li><a href="https://arxiv.org/abs/2211.00593">Interpretability in the Wild: a Circuit for Indirect Object Identification in GPT-2 small</a> (primary)</li>
+                    <li><a href="https://transformer-circuits.pub/2021/framework/index.html">A Mathematical Framework for Transformer Circuits</a> (auxiliary)</li>
+                    <li><a href="https://arxiv.org/abs/2209.11895">In-context Learning and Induction Heads</a> (auxiliary)</li>
+                </ul>
+            </div>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
