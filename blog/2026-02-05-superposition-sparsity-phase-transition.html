@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sparsity as a control knob for superposition | Tibo Vanleke</title>
+    <meta name="description" content="A deep dive into how sparsity penalties trigger phase transitions between superposition and monosemantic features in toy models.">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        .callout {
+            border-left: 4px solid var(--accent);
+            background: #f2fbf6;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin: 18px 0;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        ul {
+            margin: 12px 0 0 18px;
+        }
+
+        .refs ul {
+            margin-left: 18px;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>Sparsity as a control knob for superposition</h1>
+            <div class="meta">February 5, 2026 · 9 min read</div>
+        </header>
+
+        <article>
+            <p>
+                Superposition is one of those interpretability concepts that is easy to recite but hard to
+                operationalize. We say that neurons are “polysemantic” because multiple features share the
+                same direction in activation space, and that a model “stores” more features than it has
+                neurons. But what actually controls the transition from clean, monosemantic features to a
+                dense superposed representation?
+            </p>
+
+            <div class="callout">
+                Research question: In toy models of superposition, how does a sparsity penalty change the
+                representational regime, and what does that imply for interpretability in real models?
+            </div>
+
+            <h2>Abstract</h2>
+            <p>
+                This memo digs into the toy-model analysis of superposition and focuses on a single control
+                knob: sparsity. In the Anthropic “Toy Models of Superposition” work, a sparse-penalized
+                autoencoder-like objective produces phase transitions between (1) a dense, interferent
+                representation where many features share directions, and (2) a near-monosemantic regime where
+                features map cleanly onto coordinates. The key mechanism is geometric: sparsity changes the
+                cost of activating extra features, which changes the optimal packing of feature directions.
+                I summarize the setup, the mechanism, and the implications, then outline what the toy models
+                do and do not tell us about larger transformer representations.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The superposition story sits on a longer arc of interpretability research about feature
+                geometry and linear structure in neural networks. The toy model work formalizes superposition
+                in a controlled setting, while “Towards Monosemanticity” attempts to recover cleaner features
+                in real models via dictionary learning. The transformer-circuits framework provides the
+                mathematical context for treating residual streams as linear spaces with sparse features.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The toy models use a simplified, controlled network that learns to represent a set of
+                independent features with limited representational capacity. The model sees sparse feature
+                vectors (only a subset of features active at once) and must reconstruct them with a
+                low-dimensional hidden representation. The training objective includes a sparsity penalty
+                (think L1 on activations) that discourages spreading mass across many units.
+            </p>
+            <p>
+                The mechanism is geometric packing. Without strong sparsity pressure, the model gains
+                reconstruction accuracy by letting different features share directions in the hidden layer.
+                Features become “superposed” because the model can tolerate some interference if it gains
+                capacity. When sparsity is increased, those shared directions become more expensive: each
+                activation now carries a higher penalty, so it is cheaper to keep features isolated. The
+                result is a phase transition where the optimal solution shifts from shared to separated
+                directions, giving rise to monosemantic features.
+            </p>
+
+            <h2>Key Findings</h2>
+            <ul>
+                <li>
+                    Sparsity does not merely clean up features; it changes the optimal representational
+                    geometry. The same model can prefer superposition at low sparsity and monosemanticity at
+                    high sparsity because the cost of shared activations crosses a threshold.
+                </li>
+                <li>
+                    Superposition can be understood as a packing problem: you can fit more features than
+                    dimensions by letting them overlap, but the overlaps create structured interference that
+                    depends on the sparsity regime.
+                </li>
+                <li>
+                    There is a qualitative phase transition in toy models where a small change in sparsity
+                    weight leads to a sudden change in feature allocation, not a smooth interpolation.
+                </li>
+                <li>
+                    The toy model predictions align with empirical findings in larger systems: sparse
+                    dictionary learning tends to recover more “monosemantic” features, suggesting that the
+                    sparsity knob is a realistic lever for interpretability.
+                </li>
+                <li>
+                    The geometry implies a trade-off between capacity and clarity. Pushing toward
+                    monosemanticity sacrifices feature density, which could matter for performance unless the
+                    model can scale width or depth to compensate.
+                </li>
+            </ul>
+
+            <h2>Concrete Examples</h2>
+            <p>
+                <strong>Example 1: Two features, one neuron.</strong> In the toy model, suppose there are two
+                independent features but only one hidden unit. With low sparsity, the optimal solution is to
+                align the hidden unit along the sum of the two feature directions, so both can be partially
+                reconstructed. Each feature is entangled, but the model still captures both. As the sparsity
+                penalty increases, the cost of activating the shared unit grows; the model can no longer
+                justify the overlap, and it effectively chooses a single feature to represent cleanly. This is
+                the simplest illustration of superposition giving way to monosemanticity.
+            </p>
+            <p>
+                <strong>Example 2: Four features, two neurons.</strong> With two neurons and four features, low
+                sparsity yields a “packed” solution where each neuron carries combinations of multiple
+                features. Increasing sparsity creates a bifurcation: the model reorganizes so each neuron is
+                more dedicated, and certain features are dropped or reconstructed poorly. The transition is
+                abrupt, reflecting the phase change in the optimization landscape.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The toy models abstract away many critical details: real transformers are deep, nonlinear,
+                and operate on highly structured data rather than independent features. The superposition
+                argument relies on assumptions about feature independence and sparsity that may not hold in
+                language. Also, the phase transition in toy settings may smooth out in large models with
+                millions of parameters. Finally, the sparsity penalty is a clean knob in the toy objective,
+                but in practice sparsity arises indirectly from architecture and data statistics, not from
+                an explicit L1 term.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                If sparsity is indeed a control knob, we need to identify the real-world equivalents: what
+                architectural or training choices act like implicit sparsity penalties? Structured sparsity
+                (group L1, activation gating, or sparsity-inducing regularizers) could be experimental levers
+                for testing the toy predictions. Another direction is to measure the geometry of learned
+                features across layers in existing models and see whether the toy model phase transition
+                appears as a shift in feature overlap or polysemanticity.
+            </p>
+            <p>
+                <strong>Open question:</strong> Is there a measurable “sparsity threshold” in real LLMs where
+                the representation shifts from superposition-dominated to monosemantic-dominated features, or
+                does scale smooth the transition so much that the threshold becomes meaningless?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The toy models suggest that superposition is not just a descriptive label; it is a regime
+                that depends on a tunable sparsity penalty. When sparsity is low, feature sharing is optimal
+                and polysemantic neurons are inevitable. When sparsity is high, the model reorganizes toward
+                monosemantic features, trading capacity for clarity. The practical takeaway is that
+                interpretability may depend as much on shaping representation geometry as on probing it.
+            </p>
+
+            <div class="refs">
+                <h2>References</h2>
+                <ul>
+                    <li><a href="https://transformer-circuits.pub/2022/toy_model/index.html">Toy Models of Superposition</a> (primary)</li>
+                    <li><a href="https://transformer-circuits.pub/2023/monosemanticity/index.html">Towards Monosemanticity: Decomposing Language Models with Dictionary Learning</a> (auxiliary)</li>
+                    <li><a href="https://transformer-circuits.pub/2021/framework/index.html">A Mathematical Framework for Transformer Circuits</a> (auxiliary)</li>
+                </ul>
+            </div>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
