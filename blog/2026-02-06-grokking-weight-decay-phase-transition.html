@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grokking as a phase transition in transformer training | Tibo Vanleke</title>
+    <meta name="description" content="A deep dive into why weight decay can trigger a sudden shift from memorization to algorithmic generalization in transformer grokking." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png">
+    <link rel="apple-touch-icon" href="/favicon-180.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        .callout {
+            border-left: 4px solid var(--accent);
+            background: #f2fbf6;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin: 18px 0;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        ul {
+            margin: 12px 0 0 18px;
+        }
+
+        .refs ul {
+            margin-left: 18px;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>Grokking as a phase transition in transformer training</h1>
+            <div class="meta">February 6, 2026 · 12 min read</div>
+        </header>
+
+        <article>
+            <p>
+                Grokking is the strange training dynamic where a model first memorizes a small algorithmic
+                dataset and then, after a long plateau, suddenly “gets it” and begins to generalize. It is
+                tempting to treat this as a curiosity, but the dynamics are precisely the kind of sharp
+                regime shift that matters for alignment: what seems like rote pattern matching can abruptly
+                become rule-following behavior under small changes in optimization.
+            </p>
+
+            <div class="callout">
+                Research question: why does a transformer trained on algorithmic data jump from memorization
+                to generalization, and how does weight decay create a phase transition in that shift?
+            </div>
+
+            <h2>Abstract</h2>
+            <p>
+                This memo focuses on a narrow mechanistic question: the grokking transition in transformer
+                classifiers trained on algorithmic tasks, and the role of weight decay in triggering that
+                transition. In the original grokking study, small transformers trained on modular arithmetic
+                or parity tasks exhibit a long period of near-perfect training accuracy with poor test
+                accuracy, followed by a sudden improvement in test performance without any architectural
+                change. The core mechanism is an optimization trade-off: memorization solutions are easy to
+                reach but have higher weight norms, while algorithmic solutions are harder to reach but have
+                lower norm. Weight decay slowly shifts the optimizer’s preference from the high-norm
+                memorization basin to the low-norm generalization basin, producing the delayed phase change.
+                I summarize the setup, the mechanism, and what this does (and does not) imply for modern
+                LLM behavior.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                Grokking sits at the intersection of generalization theory and mechanistic interpretability.
+                The original study positions grokking as an extreme version of overfitting dynamics on
+                algorithmic tasks. Classic generalization results show that models can fit random labels
+                while still generalizing in practice, suggesting optimization biases are crucial. Lottery
+                ticket-style results and pruning work also highlight that lower-norm or sparser solutions can
+                behave differently even when the training loss is identical. These threads motivate treating
+                the grokking transition as a structured bias in the optimizer rather than a mysterious
+                emergent property.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The canonical grokking setup trains a small transformer on a simple algorithmic task, such as
+                modular addition. Inputs are tokenized pairs (e.g., “a b”), and the model must predict
+                “a + b mod p.” The training set is small (a fraction of all possible pairs), so the model can
+                memorize the observed examples. Training uses standard cross-entropy loss, and weight decay
+                (L2 regularization) is applied to all parameters.
+            </p>
+            <p>
+                Two distinct solution families exist. The first is a memorization solution: the model learns
+                a lookup-table-like mapping from seen pairs to outputs. This yields near-perfect training
+                accuracy but weak generalization because the model has not learned the underlying group
+                structure of modular addition. The second is an algorithmic solution: the model learns a
+                latent representation that effectively performs addition in the group, which generalizes to
+                unseen pairs.
+            </p>
+            <p>
+                The key mechanism is the optimizer’s implicit bias under weight decay. Memorization
+                solutions typically require higher weight norms or more complex parameter configurations. An
+                algorithmic solution can be represented with lower norm, but it is harder to discover in the
+                short term. Weight decay does not immediately “force” the algorithmic solution; instead it
+                exerts a slow, persistent pressure toward low-norm configurations. Over many epochs, this
+                pressure erodes the memorization basin until the model transitions to the algorithmic basin.
+                The result is a phase-change-like transition: training accuracy remains high throughout,
+                while test accuracy abruptly rises once the optimizer crosses the boundary between solution
+                families.
+            </p>
+
+            <h2>Key Findings</h2>
+            <ul>
+                <li>
+                    Grokking is a two-basin phenomenon: memorization and generalization can both fit the
+                    training data, but they differ in norm, simplicity, and optimization accessibility.
+                </li>
+                <li>
+                    Weight decay acts as a slow control knob that favors the lower-norm basin; the apparent
+                    “delayed” generalization is the optimizer drifting toward a simpler representation rather
+                    than a sudden discovery of new data.
+                </li>
+                <li>
+                    The transition is sharp because the loss landscape contains a boundary between basins;
+                    once weight decay makes the memorization basin unstable, performance jumps quickly.
+                </li>
+                <li>
+                    Grokking shows that “generalization” can arrive long after the model has achieved perfect
+                    training accuracy, which challenges the assumption that early validation performance is a
+                    reliable indicator of final capabilities.
+                </li>
+            </ul>
+
+            <h2>Concrete Examples</h2>
+            <p>
+                <strong>Example 1: Modular addition.</strong> Train a 2-layer transformer on pairs
+                (a, b) with labels a + b mod 97, using only 40% of all possible pairs. The model quickly
+                achieves near-100% training accuracy while test accuracy stays near chance. After many
+                additional epochs with weight decay, test accuracy suddenly rises to near-perfect. The
+                observed jump is consistent with a shift from memorizing seen pairs to internalizing the
+                group structure of addition.
+            </p>
+            <p>
+                <strong>Example 2: Parity over bitstrings.</strong> Use tokenized inputs representing
+                10-bit binary strings and predict parity. A memorization solution can store seen strings,
+                while an algorithmic solution learns the XOR-like rule. With weight decay and sufficient
+                training time, the model eventually generalizes; without weight decay, the model can remain
+                stuck in the memorization regime indefinitely.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                Grokking results are primarily demonstrated on small algorithmic datasets with exhaustive
+                input spaces and simple rules. It is unclear how directly the same two-basin dynamics apply
+                to LLMs trained on natural language, where the data distribution is open-ended and
+                multi-modal. The role of explicit weight decay in modern LLM training is also mixed; many
+                setups rely on AdamW or other optimizers with decoupled weight decay, and the effective
+                regularization depends on schedule and scale. Finally, grokking is sensitive to dataset
+                size, optimizer settings, and architecture depth, suggesting the phenomenon may be less
+                universal than the original experiments imply.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The most useful next step is to identify measurable grokking analogs in larger models:
+                settings where a model can fit a subset of patterns but has to learn a latent rule to
+                generalize. Probing for delayed generalization in synthetic “language-like” tasks could
+                reveal whether the two-basin story persists at scale. Another direction is to link grokking
+                dynamics to mechanistic features: do circuits corresponding to algorithmic rules appear
+                suddenly at the transition, or do they build up slowly under the hood?
+            </p>
+            <p>
+                <strong>Open question:</strong> In modern LLM training, does the implicit regularization from
+                optimizer choice and data scale create grokking-like phase transitions for specific skills,
+                or does the diversity of natural language data smooth away the sharp boundary observed in
+                toy algorithmic tasks?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Grokking is best understood as a phase transition between two families of solutions that
+                both fit the training data. Weight decay biases optimization toward a lower-norm, more
+                algorithmic representation, but it may take a long time for that bias to dominate. The
+                resulting delayed generalization is a warning sign for alignment work: a model that looks
+                like it is merely memorizing today may abruptly exhibit rule-like generalization later,
+                without any architectural changes or new data.
+            </p>
+
+            <div class="refs">
+                <h2>References</h2>
+                <ul>
+                    <li><a href="https://arxiv.org/abs/2201.02177">Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets</a> (primary)</li>
+                    <li><a href="https://arxiv.org/abs/1611.03530">Understanding deep learning requires rethinking generalization</a> (auxiliary)</li>
+                    <li><a href="https://arxiv.org/abs/1803.03635">The Lottery Ticket Hypothesis: Finding Sparse, Trainable Neural Networks</a> (auxiliary)</li>
+                </ul>
+            </div>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
