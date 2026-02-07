@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In-context learning as implicit gradient descent | Tibo Vanleke</title>
+    <meta name="description" content="A focused review of evidence that transformers implement gradient-descent-like algorithms in-context for linear regression tasks.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>In-context learning as implicit gradient descent</h1>
+            <div class="meta">February 7, 2026 · 12 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo asks a narrow question: when transformers solve linear regression tasks via in-context
+                learning, do they implement a recognizable learning algorithm in the forward pass? Two 2022 papers
+                give a consistent answer. Akyurek et al. provide construction proofs that transformers can implement
+                gradient descent and ridge regression and then show that trained models track those predictors across
+                depth and noise regimes. Von Oswald et al. show a single attention layer can be algebraically equivalent
+                to a gradient descent step, and trained attention-only transformers discover weights close to that
+                construction. Together they support a mechanistic view of in-context learning as an implicit optimizer
+                over an internal linear model state.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                Akyurek et al. study in-context learning on linear regression and argue that transformers can encode
+                small linear models in their activations, updating those models as new examples arrive. They show that
+                transformer predictors match gradient descent, ridge regression, or exact least squares depending on
+                depth and noise, and they find late-layer representations that align with weight vectors and moment
+                matrices. The work is explicit about linear regression as the prototypical testbed for algorithmic
+                in-context learning.
+            </p>
+            <p>
+                Von Oswald et al. derive a concrete weight construction that makes a linear self-attention layer
+                equivalent to one gradient descent step on a regression objective. They then train attention-only
+                transformers and show the learned weights align closely with the constructed solution, suggesting
+                the algorithmic mechanism is discoverable by gradient-based training.
+            </p>
+            <p>
+                Olsson et al. analyze induction heads, a mechanism for token copying that appears alongside a sharp
+                jump in in-context learning in small attention-only models. While induction heads are not the same
+                phenomenon as linear-regression in-context learning, they provide a complementary mechanistic anchor
+                for how attention can implement simple, interpretable algorithms over context.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The core idea is a model-in-activations: the transformer uses attention to compute sufficient statistics
+                from the context and store an internal linear model that updates as new (x, y) pairs appear. In the
+                linear regression setup, the context contains alternating inputs and labels, and the transformer must
+                predict the next label. Akyurek et al. show that a transformer can compute the statistics needed for
+                ridge regression and can implement gradient descent updates in constant depth given a suitable hidden
+                size. They then show that trained models behave like one of these estimators depending on depth and
+                noise.
+            </p>
+            <p>
+                Von Oswald et al. provide a more minimal construction: a single linear self-attention layer can be
+                made to match the transformation of one gradient descent step on a regression loss. This creates a
+                direct map between attention weights and optimization dynamics, and it enables a clear test: if training
+                discovers those weights, then the model has converged to an explicit optimizer.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the mechanism concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: Noise-dependent estimator shifts.</strong> In Akyurek et al., transformers trained
+                    on synthetic linear regression behave like gradient descent, ridge regression, or exact least squares
+                    depending on dataset noise and model depth. As depth and width increase, the predictors move toward
+                    Bayesian-optimal estimators. This indicates the in-context learner is not a fixed heuristic; it shifts
+                    algorithmically across regimes.
+                </li>
+                <li>
+                    <strong>Case study 2: One-step gradient descent in attention.</strong> Von Oswald et al. show that a single
+                    attention layer can be constructed to equal one gradient descent update. When trained on regression
+                    tasks, the attention-only transformer learns weights closely matching this construction, making the
+                    “optimizer in the forward pass” visible in parameter space.
+                </li>
+            </ul>
+            <p>
+                From these cases, several crisp insights follow:
+            </p>
+            <ul>
+                <li>In-context learning on linear regression can be interpreted as an implicit optimizer, not just pattern matching.</li>
+                <li>Attention can compute and carry sufficient statistics (moment matrices, cross-terms) needed for classical estimators.</li>
+                <li>The effective algorithm changes with depth and noise regime, implying phase-like shifts in the learned predictor.</li>
+                <li>A single attention layer can exactly equal a gradient descent step, and training can rediscover that construction.</li>
+                <li>Mechanistic attention heads (like induction heads) reinforce that simple algorithms can be embedded in attention.
+                </li>
+            </ul>
+
+            <h2>Limitations</h2>
+            <p>
+                The evidence is intentionally narrow. The strongest equivalences are in synthetic linear regression with
+                attention-only or simplified architectures. These results do not prove that large, mixed attention-and-MLP
+                language models rely on the same mechanism for real language tasks. They show a clean mechanistic regime,
+                but not its prevalence across tasks, datasets, or larger architectures.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                A critical test is robustness under distribution shift. If an in-context learner truly implements a
+                specific estimator, its behavior under feature scaling, collinearity, or under-identified systems should
+                be predictable from that algorithm. Another direction is to bridge the clean attention-only construction
+                to architectures with MLPs while preserving interpretability, e.g., by isolating which layers update the
+                internal model state versus those that transform representations.
+            </p>
+            <p>
+                <strong>Open question:</strong> For real language tasks, does in-context learning decompose into a small
+                set of algorithmic circuits (like the GD-like mechanism shown for linear regression), or does the
+                apparent optimizer behavior vanish once the data distribution departs from the linear regression regime?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                In the linear regression testbed, in-context learning is not a black box. Transformers can implement
+                gradient-descent-like updates through attention, and trained models align with those predictors across
+                noise and depth regimes. The result is a concrete, mechanistic interpretation of in-context learning as
+                an implicit optimizer, and a tractable setting for asking how far that interpretation generalizes.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>Primary: E. Akyurek et al., "What learning algorithm is in-context learning? Investigations with linear models." arXiv:2211.15661. <a href="https://arxiv.org/abs/2211.15661">https://arxiv.org/abs/2211.15661</a></li>
+                <li>Aux: J. von Oswald et al., "Transformers learn in-context by gradient descent." arXiv:2212.07677. <a href="https://arxiv.org/abs/2212.07677">https://arxiv.org/abs/2212.07677</a></li>
+                <li>Aux: C. Olsson et al., "In-context Learning and Induction Heads." arXiv:2209.11895. <a href="https://arxiv.org/abs/2209.11895">https://arxiv.org/abs/2209.11895</a></li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
