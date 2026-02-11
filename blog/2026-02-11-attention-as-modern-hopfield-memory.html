@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attention as modern Hopfield memory | Tibo Vanleke</title>
+    <meta name="description" content="A focused review of the modern Hopfield-network view of attention, with emphasis on storage capacity and retrieval behavior." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>Attention as modern Hopfield memory</h1>
+            <div class="meta">February 11, 2026 · 13 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo asks a narrow question: if we treat transformer attention as a modern Hopfield network,
+                what does that imply about memory capacity and retrieval dynamics inside attention heads? The modern
+                Hopfield formulation claims an exponentially large pattern capacity (in the associative space dimension),
+                one-step retrieval, and tiny retrieval errors, while showing the attention update is mathematically
+                equivalent to a Hopfield update. A second line of work on dense associative memories reframes classic
+                Hopfield nets as a family that interpolates between feature-matching and prototype regimes and connects
+                those energies to familiar activation functions. Putting these together yields a clean mechanistic lens:
+                attention heads can be interpreted as energy-based associative memories whose effective regime depends on
+                how sharply they weight keys, what patterns they are trained to store, and which metastable states the
+                dynamics favor.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                Ramsauer et al. define a modern Hopfield network with continuous states and a new update rule, then
+                show that the update is equivalent to transformer attention. In this view, an attention head performs
+                a single associative-memory retrieval step over a set of stored patterns (the values), indexed by
+                similarity to the current query (the keys). They argue this system can store exponentially many patterns
+                and recover them in one step with exponentially small retrieval errors. The work also characterizes three
+                types of energy minima: global averaging, metastable averages over subsets, and fixed points that correspond
+                to individual stored patterns.
+            </p>
+            <p>
+                Krotov and Hopfield study a dense associative memory with higher-order interactions. Their construction
+                yields a family of energy functions that smoothly interpolate between feature-matching and prototype
+                recognition regimes. On the deep-learning side, this family corresponds to single-hidden-layer networks
+                with activation functions ranging from logistic and ReLU to higher-degree rectified polynomials. The dense
+                memory perspective is explicitly linked to pattern-recognition tasks such as XOR and MNIST, making the
+                storage/retrieval story concrete.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The modern Hopfield lens treats attention as an energy-based memory operation. A query vector is compared
+                to a set of key vectors. Softmax weights define a probability distribution over stored patterns, and the
+                output is a weighted sum of the values. The Hopfield formulation interprets this as a single update that
+                moves the system toward an energy minimum. When the softmax is sharp, retrieval approaches a nearest-neighbor
+                or prototype-like regime; when it is broad, the update yields a global or subset average of patterns. The
+                three energy minima types map neatly onto these behaviors: global averaging, metastable subset averaging,
+                and single-pattern retrieval.
+            </p>
+            <p>
+                The dense associative memory perspective extends the classic Hopfield model with higher-order interactions
+                (effectively higher-degree energy functions). This changes capacity and selectivity. In the associative-memory
+                view, higher-degree interactions amplify feature matching and can increase the number of storable patterns
+                beyond the classical Hopfield limit. In neural-network terms, the same family corresponds to hidden-layer
+                networks with different activation functions. This duality is useful because it translates energy-landscape
+                intuition (basins, minima, metastability) into familiar deep-learning design knobs (activation shape, gain,
+                and depth).
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two concrete case studies anchor the theory:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: Hopfield layers as attention-like memory.</strong> Ramsauer et al. report that
+                    Hopfield layers (equivalent to attention updates) deliver state-of-the-art results on several multiple
+                    instance learning tasks, immune repertoire classification, UCI benchmark datasets, and drug design
+                    problems. These domains require the model to retrieve and pool information over large sets, which aligns
+                    with the associative-memory interpretation.
+                </li>
+                <li>
+                    <strong>Case study 2: Dense associative memory on XOR and MNIST.</strong> Krotov and Hopfield show that
+                    their dense associative memory handles XOR and MNIST classification, illustrating how higher-order
+                    interactions can store and retrieve patterns that defeat classic linear readouts.
+                </li>
+            </ul>
+            <p>
+                From these cases, several crisp insights follow:
+            </p>
+            <ul>
+                <li>Attention heads can be analyzed as single-step associative retrieval, not just weighted averaging.</li>
+                <li>Softmax sharpness controls whether a head behaves like a prototype selector or a global aggregator.</li>
+                <li>Metastable energy minima provide a mechanistic interpretation of heads that mix subsets of patterns.</li>
+                <li>Dense associative memories explain how higher-order interactions can expand capacity beyond classic limits.</li>
+                <li>The Hopfield framing connects architectural choices (activation shapes, head temperature) to memory behavior.</li>
+            </ul>
+
+            <h2>Limitations</h2>
+            <p>
+                The modern Hopfield result is a theoretical equivalence and capacity guarantee under the proposed update
+                rule, but it does not prove that every trained transformer head achieves those capacity or error bounds in
+                practice. Empirical claims in the Hopfield-layer paper emphasize classification benchmarks and do not trace
+                individual attention heads in large language models. Likewise, the dense associative memory results are
+                grounded in specific energy models and toy datasets; it remains unclear how to map those guarantees onto
+                the messy, multi-layer dynamics of large-scale language modeling.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                A natural next step is to measure attention heads in real LLMs against Hopfield-derived diagnostics:
+                estimate effective temperature, identify metastable subsets, and quantify retrieval error rates for
+                known stored patterns (e.g., rare facts or structured prompts). Another direction is to test whether
+                swapping in explicit Hopfield layers or dense-associative-memory activations in small transformer
+                variants yields predictable changes in in-context recall, as the theory would suggest.
+            </p>
+            <p>
+                <strong>Open question:</strong> Do the heads responsible for long-range factual recall in modern LLMs
+                operate in a sharp, single-pattern retrieval regime (Hopfield fixed points), or do they instead rely on
+                metastable subset averaging that blurs multiple related facts together?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The modern Hopfield view of attention provides a precise associative-memory lens: attention is a
+                one-step energy-minimization update with multiple retrieval regimes. Dense associative memory work
+                complements this by showing how higher-order interactions change capacity and recognition behavior.
+                Together they suggest a concrete research program for auditing transformer heads as memory systems,
+                with controllable knobs (temperature, activation shape) and testable predictions about retrieval errors
+                and capacity.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>Primary: H. Ramsauer et al., "Hopfield Networks is All You Need." arXiv:2008.02217. <a href="https://arxiv.org/abs/2008.02217">https://arxiv.org/abs/2008.02217</a></li>
+                <li>Aux: D. Krotov, J. J. Hopfield, "Dense Associative Memory for Pattern Recognition." NeurIPS 2016 / arXiv:1606.01164. <a href="https://arxiv.org/abs/1606.01164">https://arxiv.org/abs/1606.01164</a></li>
+                <li>Aux: NeurIPS 2016 paper page, "Dense Associative Memory for Pattern Recognition." <a href="https://papers.nips.cc/paper/6121-dense-associative-memory-for-pattern-recognition">https://papers.nips.cc/paper/6121-dense-associative-memory-for-pattern-recognition</a></li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
