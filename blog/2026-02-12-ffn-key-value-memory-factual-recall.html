@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFN layers as key-value memories for factual recall | Tibo Vanleke</title>
+    <meta name="description" content="A deep review of evidence that transformer feed-forward layers behave like key-value memories and localize factual recall in mid-layer MLPs." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>FFN layers as key-value memories for factual recall</h1>
+            <div class="meta">February 12, 2026 · 14 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo asks a narrow research question: do transformer feed-forward (FFN/MLP) layers behave like
+                key-value memories that store factual associations, and if so, what does that imply about how models
+                retrieve and edit facts? The core evidence comes from Geva et al. (EMNLP 2021), who analyze FFN layers
+                as key-value memories where keys align with input text patterns and values induce output-token
+                distributions. A second line of work (ROME; NeurIPS 2022) shows that factual recall in GPT-style
+                models can be localized to mid-layer MLPs and edited with a small rank-one weight update. A related
+                neuron-level view (Knowledge Neurons; ACL 2022) finds that a sparse set of MLP neurons controls the
+                expression of specific facts in cloze prompts. Together these results support a cohesive picture:
+                FFNs are not just generic nonlinearities but structured memory accessors, and factual knowledge is
+                encoded in a way that is localized, editable, and mechanistically interpretable.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                Geva et al. provide the central mechanistic claim: each FFN layer can be viewed as a key-value memory
+                where keys correspond to textual patterns that activate the layer and values encode an induced
+                distribution over next-token predictions. Their analysis shows that the patterns are human-interpretable,
+                with lower layers reflecting shallow lexical patterns and upper layers reflecting more semantic cues.
+                They also show the FFN output is a composition of multiple “memories,” later refined by residual
+                connections across layers.
+            </p>
+            <p>
+                Meng et al. (ROME) analyze where factual associations live in GPT-style autoregressive transformers. They
+                introduce causal tracing to identify activations that determine factual predictions and find that mid-layer
+                MLP modules are decisive during the subject token. Building on that, they propose Rank-One Model Editing
+                (ROME), which directly updates a single MLP weight matrix to insert a new factual association while
+                preserving generalization.
+            </p>
+            <p>
+                Dai et al. (Knowledge Neurons) operate at a finer granularity: they propose a knowledge attribution
+                method to identify neurons within FFN modules whose activations correlate with specific facts in cloze
+                tasks. Suppressing or amplifying these neurons affects whether the model states the corresponding
+                fact, and their case studies show targeted edits of factual knowledge without full fine-tuning.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The key-value memory view starts from the FFN formulation: a hidden state is projected by a first
+                linear layer (keys), passed through a nonlinearity, and then mapped by a second linear layer (values)
+                back to the model dimension. Geva et al. interpret each hidden neuron as a “key” that fires on certain
+                input patterns, while the corresponding output weight vector serves as a “value” that pushes the logits
+                toward tokens likely to follow those patterns. Aggregating over all active keys yields a weighted
+                sum of value vectors, which becomes the FFN output.
+            </p>
+            <p>
+                ROME uses a causal tracing procedure to localize the components responsible for recalling a fact. They
+                corrupt subject representations, restore individual activations, and measure which interventions recover
+                the correct factual prediction. This identifies a mid-layer MLP site and a specific token position (the
+                last subject token) where the fact is effectively retrieved. ROME then computes a rank-one update that
+                changes the MLP’s value mapping for that subject representation, inserting a new key-value pair while
+                minimally affecting other behavior.
+            </p>
+            <p>
+                Knowledge Neurons mirrors the key-value story at the neuron level. A knowledge attribution score is
+                computed for neurons based on their contribution to a cloze completion. The highest-scoring neurons
+                form a sparse set that can be manipulated: amplifying them boosts the probability of the correct
+                answer, while suppressing them reduces it. This offers a concrete operationalization of “memory slots”
+                inside the FFN.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies illustrate the key-value memory interpretation in practice:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: Trigger patterns and value predictions.</strong> Geva et al. surface trigger
+                    examples that highly activate individual FFN keys. These triggers align with recognizable textual
+                    patterns (e.g., lexical or syntactic cues), and the associated values bias the model toward tokens
+                    that commonly follow those patterns. The combined FFN output acts like a superposition of multiple
+                    retrieved memory entries.
+                </li>
+                <li>
+                    <strong>Case study 2: Editing a single fact in GPT.</strong> ROME demonstrates that a single, localized
+                    rank-one update to a mid-layer MLP can rewrite a specific factual association, improving accuracy on
+                    a counterfactual dataset while preserving generalization across paraphrases.
+                </li>
+            </ul>
+            <p>
+                From these cases, several crisp insights follow:
+            </p>
+            <ul>
+                <li>FFN layers behave like memory lookups, not just generic nonlinear transforms.</li>
+                <li>Lower-layer keys skew toward surface patterns; higher-layer keys skew toward semantic ones.</li>
+                <li>Factual recall is localized in mid-layer MLP modules when the subject is processed.</li>
+                <li>Rank-one edits can insert a new factual association while preserving nearby behavior.</li>
+                <li>Neuron-level attribution provides a practical handle for auditing or editing facts.</li>
+            </ul>
+
+            <h2>Limitations</h2>
+            <p>
+                The key-value memory framing is supported by strong qualitative analyses but is not a complete
+                mechanistic account of all FFN behavior. Many FFN activations are distributed and context-dependent,
+                so “memory slot” language can be an approximation. ROME and Knowledge Neurons provide evidence of
+                locality for factual associations, yet their manipulations target individual facts and do not scale
+                cleanly to large-scale knowledge updates. Additionally, the causal tracing and attribution methods are
+                sensitive to experimental setup (model choice, prompt style, and dataset), so the localization may
+                vary across architectures and training corpora.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                A compelling next step is to unify the layer-level key-value interpretation (Geva) with neuron-level
+                attribution (Knowledge Neurons) into a single diagnostic that predicts which FFN subspaces encode a
+                given fact, along with how robust that encoding is across prompts and paraphrases. Another direction
+                is to stress-test model editing at scale: do repeated rank-one edits remain stable, or do they gradually
+                erode other memories encoded in the same layer?
+            </p>
+            <p>
+                <strong>Open question:</strong> Can we derive a principled, model-agnostic criterion for when a factual
+                association is “localized enough” to be safely edited in a single MLP layer without creating hidden
+                interference elsewhere in the network?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The emerging evidence points to a concrete mechanistic story: transformer FFN layers act like
+                key-value memories, and factual recall in GPT-style models is concentrated in mid-layer MLPs.
+                Geva et al. provide the structural view (keys, values, and compositional memory outputs), while ROME
+                and Knowledge Neurons show that specific facts can be localized and edited with targeted interventions.
+                Together these results motivate a focused research program on memory localization, editability, and
+                the stability of knowledge stored in FFNs.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>Primary: M. Geva, R. Schuster, J. Berant, O. Levy, "Transformer Feed-Forward Layers Are Key-Value Memories." EMNLP 2021. <a href="https://aclanthology.org/2021.emnlp-main.446/">https://aclanthology.org/2021.emnlp-main.446/</a></li>
+                <li>Aux: K. Meng, D. Bau, A. Andonian, Y. Belinkov, "Locating and Editing Factual Associations in GPT." NeurIPS 2022. <a href="https://proceedings.neurips.cc/paper_files/paper/2022/hash/6f1d43d5a82a37e89b0665b33bf3a182-Abstract-Conference.html">https://proceedings.neurips.cc/paper_files/paper/2022/hash/6f1d43d5a82a37e89b0665b33bf3a182-Abstract-Conference.html</a></li>
+                <li>Aux: D. Dai, L. Dong, Y. Hao, Z. Sui, B. Chang, F. Wei, "Knowledge Neurons in Pretrained Transformers." ACL 2022. <a href="https://aclanthology.org/2022.acl-long.581/">https://aclanthology.org/2022.acl-long.581/</a></li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
