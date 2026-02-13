@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALiBi vs RoPE: positional bias and length extrapolation | Tibo Vanleke</title>
+    <meta name="description" content="A focused review of why ALiBi extrapolates to longer contexts more reliably than RoPE, and what that implies about positional inductive bias in attention." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>ALiBi vs RoPE: positional bias and length extrapolation</h1>
+            <div class="meta">February 13, 2026 · 11 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo asks a narrow, practical question: why does ALiBi (Attention with Linear Biases) extrapolate
+                to longer sequence lengths more reliably than Rotary Position Embedding (RoPE), and what does that
+                imply about the inductive bias baked into attention scores? Both methods were introduced in 2021 and
+                aim to encode position without the fixed-length limitations of learned absolute embeddings. RoPE
+                rotates query and key vectors to encode absolute position while inducing relative-position structure
+                inside the attention dot product. ALiBi adds a distance-proportional penalty directly to attention
+                scores, encouraging recency while avoiding explicit positional vectors. The ALiBi paper demonstrates
+                “train short, test long” extrapolation (1024 → 2048) with matched perplexity and lower compute costs,
+                while RoPE demonstrates strong performance on long-text classification benchmarks and theoretical
+                properties around relative distance. This review compares the mechanisms, highlights where the
+                extrapolation behavior plausibly originates, and isolates the open question of how to combine the best
+                of both biases.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                Positional information is essential in the Transformer architecture introduced by Vaswani et al.
+                (2017), which adds position encodings to token embeddings so attention can distinguish order. The
+                original sinusoidal encodings are fixed and length-agnostic but still require explicit positional
+                vectors to be added at the input. RoPE (Su et al., 2021) and ALiBi (Press et al., 2021) both attempt to
+                retain the flexibility of sinusoidal encodings while improving length generalization and simplifying
+                the incorporation of position into the attention computation itself.
+            </p>
+            <p>
+                RoPE proposes a rotation-based encoding that inserts relative-position structure directly into the
+                attention dot product. The paper highlights several desirable properties: it can be extended to longer
+                sequence lengths, it yields decaying inter-token dependency with increasing relative distance, and it
+                can be adapted to linear attention variants. ALiBi takes a different stance: instead of injecting
+                positional vectors, it biases the attention scores with a linear distance penalty, producing a built-in
+                recency preference and enabling length extrapolation without changing the embedding layer.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                RoPE encodes position by rotating query and key vectors with a position-dependent rotation matrix. The
+                key feature is that the dot product of rotated queries and keys depends on their relative positions,
+                effectively integrating relative distance into attention while maintaining a clean, parameter-free
+                functional form. The RoFormer paper emphasizes that this rotation yields both absolute positional
+                encoding and explicit relative-position dependency in the self-attention formulation, making it
+                compatible with long inputs and theoretical analysis.
+            </p>
+            <p>
+                ALiBi skips explicit position vectors entirely. Instead, it adds a penalty to each attention score
+                proportional to the distance between tokens. The effect is a monotonic recency bias that is present at
+                every layer and head without increasing embedding dimensionality. The paper shows that this simple bias
+                supports extrapolation to longer sequences: models trained on length 1024 can be evaluated on length
+                2048 with perplexity matching a sinusoidal position-embedding baseline trained at 2048, while using
+                less memory and training faster.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two concrete case studies from the primary papers help anchor the comparison:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: ALiBi “train short, test long.”</strong> Press et al. train a 1.3B-parameter
+                    model on length-1024 sequences and evaluate on length-2048 sequences. The resulting perplexity is on
+                    par with a sinusoidal positional-embedding model trained directly at 2048, while ALiBi trains 11%
+                    faster and uses 11% less memory.
+                </li>
+                <li>
+                    <strong>Case study 2: RoPE on long-text classification.</strong> Su et al. evaluate RoFormer across
+                    long-text classification benchmarks and report consistent improvements over alternative positional
+                    encoding choices, supporting the claim that rotation-based position encoding can handle long
+                    contexts effectively.
+                </li>
+            </ul>
+            <p>
+                From these cases, several crisp insights follow:
+            </p>
+            <ul>
+                <li>ALiBi encodes position as a fixed, monotonic bias on attention scores, which generalizes cleanly to longer distances.</li>
+                <li>RoPE embeds position inside the query-key geometry, preserving relative position structure without adding embeddings.</li>
+                <li>ALiBi’s extrapolation results show that a simple distance penalty can substitute for longer-context training.</li>
+                <li>RoPE’s advantages show up most clearly in long-text classification and tasks where relative structure is critical.</li>
+            </ul>
+
+            <h2>Limitations</h2>
+            <p>
+                These methods are not directly comparable across all tasks. ALiBi emphasizes recency through a linear
+                distance penalty, which is well-suited for language modeling but may underweight very long-range
+                dependencies in tasks that require precise distant retrieval. RoPE, in contrast, encodes relative
+                positions more explicitly but does not include an explicit extrapolation benchmark in its primary
+                results, making it harder to compare on “train short, test long” settings. As a result, the relative
+                advantages may depend heavily on task type (classification vs. generation) and the training objective.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                A useful next step is a controlled study that evaluates RoPE and ALiBi under identical training
+                conditions, isolating the effects of the positional bias rather than architectural or data choices.
+                Another direction is to build hybrid schemes that preserve RoPE’s relative-geometry benefits while
+                incorporating the monotonic distance bias that makes ALiBi extrapolate. Such hybrids could be tested
+                on length extrapolation and on tasks requiring long-distance retrieval to see if they can achieve both
+                extrapolation and faithful long-range reasoning.
+            </p>
+            <p>
+                <strong>Open question:</strong> Can we design a positional encoding that preserves RoPE’s relative
+                structure while adding ALiBi-style monotonic distance bias, and does this hybrid improve both
+                length extrapolation and long-range retrieval accuracy in the same model?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                ALiBi and RoPE represent two distinct inductive biases for positional information. RoPE injects
+                relative-position structure into the attention dot product through rotation, while ALiBi adds a
+                distance-proportional score penalty that yields strong length extrapolation. The ALiBi results show a
+                surprisingly large benefit from a simple linear bias, while RoPE demonstrates that relative structure
+                can be embedded directly into attention geometry. The main takeaway is that length extrapolation is not
+                just about having “more position information,” but about how that information shapes attention scores.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>Primary: O. Press, N. A. Smith, M. Lewis, "Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation." arXiv 2021. <a href="https://arxiv.org/abs/2108.12409">https://arxiv.org/abs/2108.12409</a></li>
+                <li>Aux: J. Su, Y. Lu, S. Pan, A. Murtadha, B. Wen, Y. Liu, "RoFormer: Enhanced Transformer with Rotary Position Embedding." arXiv 2021. <a href="https://arxiv.org/abs/2104.09864">https://arxiv.org/abs/2104.09864</a></li>
+                <li>Aux: A. Vaswani et al., "Attention Is All You Need." arXiv 2017. <a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a></li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
