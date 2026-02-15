@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The softmax bottleneck in language modeling | Tibo Vanleke</title>
+    <meta name="description" content="A deep review of how the softmax bottleneck limits expressivity in language models and how mixture-of-softmaxes raises the effective rank." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>The softmax bottleneck in language modeling</h1>
+            <div class="meta">February 15, 2026 · 13 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo asks a narrow question: to what extent does the standard softmax output layer limit the
+                expressivity of neural language models, and how does the mixture-of-softmaxes (MoS) construction raise
+                that limit? Yang et al. (2018) show that the usual softmax parameterization corresponds to a low-rank
+                factorization of the log-probability matrix, implying a hard cap on the rank of conditional
+                distributions a model can represent. They argue that natural language is richly context-dependent and
+                therefore high-rank, so the softmax layer becomes a representational bottleneck even if the rest of the
+                network is powerful. Their proposed remedy mixes multiple softmax components to increase the effective
+                rank of the output distribution. This review walks through the mechanism, highlights concrete empirical
+                evidence, and surfaces open questions about how much the bottleneck still matters in modern
+                transformer-scale LLMs.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The softmax bottleneck critique is distinct from the "large vocabulary" efficiency problem. Adaptive
+                softmax (Grave et al., 2017) accelerates training by clustering frequent and rare words, cutting the
+                compute cost of the output layer without changing its rank properties. Similarly, adaptive input
+                representations (Baevski &amp; Auli, 2018) extend adaptive softmax ideas to input embeddings, reallocating
+                capacity across the vocabulary and improving speed and perplexity on large datasets. These approaches
+                optimize efficiency and capacity allocation, but they do not directly address the expressivity limits of
+                a single softmax parameterization. MoS targets the expressivity constraint head-on by increasing the
+                rank of the induced log-probability matrix.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The core observation is that a standard language model with a softmax output layer implements a
+                low-rank factorization of the log-probability matrix. Let each context be encoded as a hidden state
+                <em>h</em> and each token correspond to an embedding vector <em>w</em>. The logit for token <em>x</em> is
+                <em>h</em><sup>T</sup><em>w</em><sub>x</sub>, and the softmax normalizes across the vocabulary. Yang et al.
+                show that, after accounting for the log-normalizer, the resulting matrix of log-probabilities across
+                contexts and tokens has rank bounded by the hidden dimension. If the true conditional distribution is
+                higher rank than this bound, the model is forced to approximate it with a low-rank surrogate, regardless
+                of how expressive the encoder is.
+            </p>
+            <p>
+                MoS raises this rank by mixing multiple softmax components. Instead of a single softmax over
+                <em>h</em><sup>T</sup><em>w</em><sub>x</sub>, the model computes <em>K</em> different softmaxes from transformed
+                hidden states, then combines them with learned mixture weights. Each softmax component still produces a
+                low-rank log-probability matrix, but their weighted sum can approximate a higher-rank matrix. The
+                construction is analogous to representing a matrix as a sum of low-rank factors: with enough components,
+                MoS can approximate distributions that a single softmax cannot.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two concrete case studies from the original MoS paper ground the discussion:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: Penn Treebank and WikiText-2.</strong> Yang et al. report perplexity improvements
+                    to 47.69 on Penn Treebank and 40.68 on WikiText-2, both state-of-the-art at the time, using MoS on a
+                    strong RNN language model baseline.
+                </li>
+                <li>
+                    <strong>Case study 2: One Billion Word benchmark.</strong> The same model class delivers over a 5.6
+                    point perplexity improvement on the 1B Word dataset, indicating that the bottleneck is not merely a
+                    small-dataset artifact.
+                </li>
+            </ul>
+            <p>
+                From these results, several crisp insights follow:
+            </p>
+            <ul>
+                <li>The softmax bottleneck is a representational constraint that persists even when the encoder is expressive.</li>
+                <li>MoS increases output expressivity by summing low-rank log-probability matrices, effectively raising rank.</li>
+                <li>The gains show up on both small and large benchmarks, suggesting the bottleneck is not dataset-specific.</li>
+                <li>Efficiency-oriented softmax variants (adaptive softmax) solve a different problem than MoS.</li>
+                <li>The bottleneck perspective reframes "output layer choice" as a core modeling decision, not just an optimization detail.</li>
+            </ul>
+
+            <h2>Limitations</h2>
+            <p>
+                MoS is not a free lunch. Mixing multiple softmax components increases computation and memory at the
+                output layer, which can be significant for very large vocabularies. The method also introduces extra
+                hyperparameters (number of mixtures, mixing network) and can complicate training stability. More
+                broadly, MoS was demonstrated on RNN language models; while the bottleneck argument is architecture
+                agnostic, it is unclear how much of the empirical gain persists in transformer-scale LLMs that already
+                use enormous hidden dimensions and other regularization tricks. The method improves expressivity, but it
+                does not directly address other known limitations such as exposure bias or long-range dependency
+                modeling.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                A natural next step is to quantify how the softmax bottleneck scales with model size and vocabulary in
+                modern transformers. If the rank bound grows with hidden dimension, does it still materially constrain
+                state-of-the-art LLMs, or does scaling "drown out" the bottleneck? Another direction is to combine MoS
+                with efficiency-focused output layers, asking whether adaptive softmax plus mixture components can
+                simultaneously raise rank and keep compute manageable. Finally, it would be valuable to study whether
+                low-rank constraints matter more for certain tasks (e.g., rare-word prediction, syntactic agreement) than
+                for overall perplexity.
+            </p>
+            <p>
+                <strong>Open question:</strong> In transformer LLMs with very large hidden dimensions, is the softmax
+                bottleneck still a practical expressivity limit, or do scaling and subword tokenization effectively
+                eliminate it for most tasks?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The softmax bottleneck reframes language modeling as a matrix factorization problem with a hard rank
+                limit: a single softmax cannot express arbitrarily complex conditional distributions. MoS breaks that
+                limit by mixing multiple softmax components, yielding empirically large perplexity gains on classic
+                benchmarks. The conceptual payoff is bigger than the performance bump: output layer design determines
+                what distributions are even representable. Whether this limitation still matters in modern LLMs is an
+                open, testable question.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>Primary: Z. Yang, Z. Dai, R. Salakhutdinov, W. W. Cohen, "Breaking the Softmax Bottleneck: A High-Rank RNN Language Model." arXiv 2017 (ICLR 2018). <a href="https://arxiv.org/abs/1711.03953">https://arxiv.org/abs/1711.03953</a></li>
+                <li>Aux: E. Grave, A. Joulin, M. Cisse, D. Grangier, H. Jegou, "Efficient softmax approximation for GPUs." ICML 2017. <a href="https://proceedings.mlr.press/v70/grave17a.html">https://proceedings.mlr.press/v70/grave17a.html</a></li>
+                <li>Aux: A. Baevski, M. Auli, "Adaptive Input Representations for Neural Language Modeling." arXiv 2018. <a href="https://arxiv.org/abs/1809.10853">https://arxiv.org/abs/1809.10853</a></li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
