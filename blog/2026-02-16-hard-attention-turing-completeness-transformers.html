@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hard attention and Turing completeness in Transformers | Tibo Vanleke</title>
+    <meta name="description" content="A deep review of when Transformers are Turing complete, what architectural ingredients make it possible, and what the limits say about real-world self-attention." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>Hard attention and Turing completeness in Transformers</h1>
+            <div class="meta">February 16, 2026 · 11 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo asks a narrow theoretical question: under what architectural assumptions is a Transformer
+                Turing complete, and how do those assumptions relate to the self-attention used in modern LLMs? The
+                JMLR result by Pérez, Barceló, and Marinkovic shows that a Transformer with hard attention can simulate
+                a Turing machine by treating attention as a content-addressable read/write interface over internal
+                dense representations. The flip side is that standard soft attention with fixed depth does not inherit
+                those guarantees. I review the constructive proof ingredients, the minimal building blocks identified
+                by the Turing-completeness result, and the countervailing limitations shown in formal-language studies
+                of self-attention. The goal is to clarify which pieces of the Transformer stack are doing the heavy
+                theoretical lifting, and which gaps remain between existence proofs and the behavior of practical LLMs.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                Theoretical work on the computational power of Transformers splits into two camps. The first camp
+                establishes expressivity results, typically via explicit constructions. The JMLR paper “Attention is
+                Turing-Complete” (2021) is the canonical example, showing that a Transformer with hard attention and
+                positional encodings can simulate a Turing machine. The second camp studies limitations of
+                self-attention on formal languages. Hahn (TACL 2020) shows that fixed-depth self-attention cannot model
+                certain regular and hierarchical languages unless the depth or number of heads grows with sequence
+                length. Empirical work by Bhattamishra et al. (EMNLP 2020) complements this with controlled experiments
+                on Dyck-1 and other counter languages, revealing when Transformers can generalize and which components
+                seem responsible. Taken together, these papers show that Transformers can be both surprisingly powerful
+                in principle and surprisingly brittle under realistic constraints.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The Turing-completeness construction is not a claim about typical training; it is a claim about
+                representational capacity. Pérez et al. show that a Transformer with hard attention can implement the
+                state transition of a Turing machine by encoding the machine’s tape, head position, and finite control
+                state into a sequence of vectors. Hard attention matters because it lets the model select a single
+                memory slot deterministically. Once a slot is selected, residual updates can overwrite it, mimicking a
+                write operation on the tape. Positional encodings or other markers provide a stable addressing scheme
+                so the model can move its “read/write head” left or right.
+            </p>
+            <p>
+                The proof relies on three architectural ingredients: (1) an embedding that stores a discrete tape
+                symbol in a continuous vector, (2) a way to point to a specific position in the sequence, and (3) a
+                mechanism for overwriting that position’s representation. The authors show that a finite number of
+                Transformer layers suffices to carry out each Turing machine step, so the depth grows with the number
+                of steps, not with input length. This makes the result more like a programmable machine than a fixed
+                sequence transducer: you can simulate arbitrarily long computations, but you still need arbitrarily
+                many layers for long runtimes.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two concrete case studies help ground the theory in something more tangible:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: Simulating a Turing tape with hard attention.</strong> Pérez et al. construct a
+                    Transformer whose attention selects exactly one tape cell at a time, updates its symbol, and shifts
+                    the focus left or right based on the Turing machine’s control state. The sequence itself functions
+                    as the tape; the residual stream acts as the tape cell contents. The construction is explicit and
+                    mechanical, which makes it useful for reasoning about what Transformer components can encode.
+                </li>
+                <li>
+                    <strong>Case study 2: Dyck-1 and counter languages.</strong> Bhattamishra et al. build Transformers that
+                    recognize Dyck-1 (balanced parentheses) and other counter languages. Their experiments show that
+                    Transformers can learn the intended counting mechanism when given suitable positional encodings and
+                    training distributions. This gives a practical example of how the model might implement a limited
+                    pushdown-like behavior with attention and MLPs.
+                </li>
+            </ul>
+            <p>
+                From these analyses, a few crisp insights emerge:
+            </p>
+            <ul>
+                <li><strong>Hard attention is a qualitative shift.</strong> The deterministic selection of a single value
+                vector is what allows attention to behave like a read/write head rather than a smooth average.</li>
+                <li><strong>Positional encodings are part of the memory interface.</strong> Without a stable addressing
+                scheme, it is unclear how the model can repeatedly return to and update a specific tape cell.</li>
+                <li><strong>Depth represents time, not just feature depth.</strong> The Turing-completeness proof unrolls
+                computation across layers, implying that deeper stacks correspond to longer simulated runtimes.</li>
+                <li><strong>Fixed-depth Transformers are formally limited.</strong> Hahn’s results show that if depth does
+                not grow with input length, there are formal languages the model provably cannot recognize.</li>
+                <li><strong>Empirical success is compatible with theoretical limits.</strong> The formal-language studies
+                suggest that natural language may sit in a “learnable subset” even if it exceeds the strict capacity
+                of fixed-depth self-attention on worst-case strings.</li>
+            </ul>
+            <p>
+                The overall picture is that expressivity results are existence proofs about what a Transformer could
+                compute, while limitations results define the boundary conditions when depth and precision are fixed.
+                The tension between these two viewpoints is exactly what makes the topic interesting.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The Turing-completeness theorem assumes hard attention, which is not how attention is implemented in
+                standard LLMs. Soft attention averages values, which makes it harder to emulate discrete read/write
+                operations without loss. The proof also assumes unbounded precision in the vectors, whereas real-world
+                training operates with finite precision and noisy optimization. Another limitation is that the
+                construction is not necessarily efficient: simulating long computations requires deep networks or
+                repeated application of the model. Finally, formal-language results like Hahn’s show that even with
+                hard attention, bounded depth models cannot capture certain periodic or hierarchical languages unless
+                capacity scales with sequence length.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                One path forward is to connect expressivity proofs with learnability: can gradient descent discover the
+                constructions that the Turing-completeness theorem guarantees? Another direction is to study whether
+                soft attention plus auxiliary mechanisms (e.g., recurrence or external memory) can approximate hard
+                attention in a way that preserves theoretical power. Formal-language experiments could also be refined
+                to measure not just accuracy but the specific mechanisms learned by attention heads and MLPs.
+            </p>
+            <p>
+                <strong>Open question:</strong> What is the minimal set of architectural tweaks that let a practical,
+                trainable Transformer approximate hard-attention read/write behavior without sacrificing the
+                optimization stability of soft attention?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Transformers can be Turing complete, but the proof relies on hard attention, stable addressing, and the
+                ability to spend depth as computational time. Fixed-depth, soft-attention Transformers are provably
+                limited on certain formal languages, yet they can still learn meaningful counting and structured
+                behavior in practice. The gap between theoretical capacity and what SGD actually finds remains the core
+                mystery. Understanding when attention behaves like a crisp memory interface, and when it devolves into
+                a fuzzy average, is likely the key to closing that gap.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Pérez, Barceló, &amp; Marinkovic. “Attention is Turing-Complete.” Journal of Machine Learning Research,
+                    2021. <a href="https://www.jmlr.org/papers/v22/20-302.html">https://www.jmlr.org/papers/v22/20-302.html</a>
+                </li>
+                <li>
+                    Hahn. “Theoretical Limitations of Self-Attention in Neural Sequence Models.” TACL 2020.
+                    <a href="https://aclanthology.org/2020.tacl-1.11/">https://aclanthology.org/2020.tacl-1.11/</a>
+                </li>
+                <li>
+                    Bhattamishra, Ahuja, &amp; Goyal. “On the Ability and Limitations of Transformers to Recognize Formal
+                    Languages.” EMNLP 2020. <a href="https://aclanthology.org/2020.emnlp-main.576/">https://aclanthology.org/2020.emnlp-main.576/</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
