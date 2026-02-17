@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-LN vs Post-LN: why layer norm placement stabilizes Transformers | Tibo Vanleke</title>
+    <meta name="description" content="A deep review of how layer norm placement controls gradient flow and residual amplification in deep Transformers." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>Pre-LN vs Post-LN: why layer norm placement stabilizes Transformers</h1>
+            <div class="meta">February 17, 2026 · 13 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo asks a narrow but practical question: why does the placement of layer normalization
+                (pre-LN vs post-LN) so strongly affect optimization stability in deep Transformers? The short answer
+                is that layer norm placement controls how residual branches amplify parameter updates. In post-LN
+                architectures, the residual stream is normalized after each sublayer, which can make early training
+                dynamics sensitive to learning rates and cause gradient explosions near the output. Pre-LN moves
+                normalization into each sublayer, letting the residual pathway act as a stable identity map at
+                initialization. I review the mean-field and amplification analyses that justify this behavior, then
+                connect them to two concrete engineering fixes: pre-LN training without warmup, and DeepNorm-style
+                residual scaling that recovers post-LN performance at extreme depth.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The canonical analysis is Xiong et al. (ICML 2020), which explains the learning rate warmup
+                requirement in post-LN Transformers and shows that pre-LN yields well-behaved gradients at
+                initialization. Liu et al. (EMNLP 2020) study training instability through an amplification lens,
+                arguing that residual branches can either over-amplify or under-utilize updates depending on
+                initialization and normalization choices. ReZero (Bachlechner et al., 2020) proposes a complementary
+                idea: explicitly gate residual branches with a zero-initialized scalar to preserve dynamical isometry
+                early in training. Finally, DeepNet (Wang et al., 2022) introduces DeepNorm, a residual scaling scheme
+                that recovers post-LN performance while keeping signal propagation stable even at hundreds or
+                thousands of layers.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The core difference between pre-LN and post-LN is where normalization sits relative to the residual
+                branch. In post-LN, each block computes <em>x + Sublayer(x)</em> and then normalizes. In pre-LN, the
+                sublayer consumes <em>LayerNorm(x)</em> and the residual is added afterward. This tiny change alters
+                the Jacobian of the block. Post-LN effectively couples the residual and the sublayer output inside a
+                normalization operation, which means the gradient seen by upstream layers can be highly sensitive to
+                the scale of the sublayer output. Pre-LN keeps the residual stream closer to the identity function at
+                initialization, providing a stable gradient highway.
+            </p>
+            <p>
+                Xiong et al. formalize this intuition using a mean-field analysis of gradients at initialization. They
+                show that in post-LN Transformers, the expected gradient magnitude grows with depth near the output
+                layers, forcing practitioners to use warmup to avoid early divergence. In pre-LN, the gradient scale
+                remains more uniform across depth, so the same learning rate can be used from step one. Liu et al.
+                complement this with a perturbation perspective: the residual branch can amplify small parameter
+                updates, and the balance of that amplification depends on how normalization interacts with the
+                residual pathway.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two concrete case studies help ground the theory:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: pre-LN without warmup.</strong> Xiong et al. show that moving LayerNorm inside
+                    the residual blocks removes the need for learning-rate warmup, because gradients are well-behaved
+                    at initialization. Empirically, pre-LN Transformers train stably with fewer hyperparameter
+                    adjustments while matching post-LN performance on translation and language modeling benchmarks.
+                </li>
+                <li>
+                    <strong>Case study 2: DeepNorm for extreme depth.</strong> DeepNet introduces a residual scaling rule
+                    that bounds update magnitudes and allows Transformers to scale to hundreds or even 1,000 layers
+                    without instability. The result illustrates that post-LN can be made stable if the residual branch
+                    is explicitly rescaled, rather than relying solely on warmup or pre-LN placement.
+                </li>
+            </ul>
+            <p>
+                From these analyses, several crisp insights emerge:
+            </p>
+            <ul>
+                <li><strong>Layer norm placement controls the gradient highway.</strong> Pre-LN preserves an identity
+                residual path that keeps gradients well-conditioned at initialization.</li>
+                <li><strong>Warmup is a compensating fix, not a core solution.</strong> Post-LN needs warmup because
+                gradients near the output are large; pre-LN reduces the root cause rather than masking it.</li>
+                <li><strong>Residual amplification is the main instability lever.</strong> Liu et al. show that the
+                instability arises from how residual branches amplify small parameter updates, not just from raw
+                gradient scale imbalance.</li>
+                <li><strong>Explicit residual scaling can recover post-LN benefits.</strong> DeepNorm and ReZero indicate
+                that controlling residual magnitude can stabilize deep Transformers without abandoning post-LN.</li>
+                <li><strong>Optimization stability and representation quality trade off.</strong> Post-LN sometimes trains
+                better once stable, but it is harder to reach that regime without careful initialization or scaling.
+                </li>
+            </ul>
+            <p>
+                The overarching theme is that training stability is less about a single “correct” architecture and
+                more about how normalization and residual pathways shape signal propagation over depth.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                Most analyses focus on initialization or early training. They explain why pre-LN is more stable but
+                say less about late-training dynamics, where post-LN can sometimes yield better validation metrics.
+                The mean-field results assume idealized conditions (e.g., random weights and simplified distributions),
+                while real LLM training includes adaptive optimizers, dropout, and weight decay. DeepNet and ReZero
+                demonstrate that residual scaling matters, but these techniques are mainly evaluated on translation or
+                medium-scale language modeling rather than massive instruction-tuned LLMs.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                A promising direction is to combine pre-LN stability with post-LN performance through adaptive
+                normalization schedules. Another is to integrate residual scaling with optimizer dynamics to make the
+                amplification analysis predictive of actual training curves. Finally, it would be valuable to map how
+                pre-LN versus post-LN changes the interpretability of residual-stream features, since the normalization
+                choice could alter linear probe behavior.
+            </p>
+            <p>
+                <strong>Open question:</strong> Can we design a layer norm or residual scaling scheme that provably
+                keeps gradients well-conditioned throughout training while matching post-LN’s final accuracy at very
+                large scale?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Layer norm placement is a deceptively small design choice that reshapes gradient flow in deep
+                Transformers. Post-LN makes residual pathways sensitive to scale, requiring warmup or careful
+                initialization, while pre-LN preserves an identity path that stabilizes optimization. DeepNorm and
+                ReZero show that explicit residual scaling can keep post-LN viable at extreme depth. The broader
+                lesson is that training stability is largely about controlling how residual branches amplify updates.
+                That framing connects formal analyses to practical engineering choices and still leaves room for a
+                hybrid approach that offers stability without sacrificing performance.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Xiong et al. “On Layer Normalization in the Transformer Architecture.” ICML 2020.
+                    <a href="https://arxiv.org/abs/2002.04745">https://arxiv.org/abs/2002.04745</a>
+                </li>
+                <li>
+                    Liu et al. “Understanding the Difficulty of Training Transformers.” EMNLP 2020.
+                    <a href="https://aclanthology.org/2020.emnlp-main.463/">https://aclanthology.org/2020.emnlp-main.463/</a>
+                </li>
+                <li>
+                    Bachlechner et al. “ReZero is All You Need: Fast Convergence at Large Depth.” arXiv 2020.
+                    <a href="https://arxiv.org/abs/2003.04887">https://arxiv.org/abs/2003.04887</a>
+                </li>
+                <li>
+                    Wang et al. “DeepNet: Scaling Transformers to 1,000 Layers.” arXiv 2022.
+                    <a href="https://arxiv.org/abs/2203.00555">https://arxiv.org/abs/2203.00555</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
