@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPO as implicit reward optimization under KL constraints | Tibo Vanleke</title>
+    <meta name="description" content="A deep review of when Direct Preference Optimization is equivalent to KL-regularized reward optimization and where that equivalence breaks." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>DPO as implicit reward optimization under KL constraints</h1>
+            <div class="meta">March 2, 2026 · 16 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo studies a narrow question in alignment training: under what assumptions is Direct Preference
+                Optimization (DPO) mathematically equivalent to optimizing a latent reward model with KL regularization,
+                and where does that equivalence fail in practice? The DPO result is appealing because it removes the
+                explicit reward-model and PPO loop used by canonical RLHF while still targeting preference-consistent
+                behavior. But this simplification is not magic. It depends on a specific constrained objective,
+                Bradley-Terry preference likelihood assumptions, and a fixed reference policy that anchors updates.
+                I focus on the mechanism linking pairwise preference data to policy logits, then analyze what this
+                implies for stability, reward misspecification, and distribution shift. The key takeaway is that DPO
+                is best understood as a clean estimator for a KL-regularized optimum, not as a universal replacement
+                for all reinforcement-style alignment methods.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The baseline pipeline is RLHF as in InstructGPT, where a reward model is fit on human preference
+                comparisons and then optimized with PPO under a KL penalty to a supervised reference model.
+                This gives strong practical results but introduces instability from reward-model overfitting,
+                reward hacking, and policy-gradient variance. DPO (Rafailov et al., 2023) reframes the same family
+                of objectives and shows that the optimal policy under KL-regularized reward maximization has a
+                closed-form relation to the reward; by substituting this relation into the preference likelihood,
+                one can train the policy directly by binary classification on chosen/rejected pairs.
+            </p>
+            <p>
+                Several follow-up methods probe nearby choices: odds-ratio objectives and conservative variants
+                attempt to improve robustness under noisy labels, while broader preference-learning work revisits
+                assumptions like transitivity and calibrated uncertainty. This memo keeps DPO central and uses these
+                variants mainly to expose where the original equivalence is strong versus fragile.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                Start from a KL-regularized objective over responses <em>y</em> for prompts <em>x</em>: maximize expected reward
+                while penalizing divergence from a reference policy <em>pi_ref</em>. The optimal policy has Gibbs form,
+                proportional to <em>pi_ref(y|x) * exp(r(x,y)/beta)</em>, where <em>beta</em> controls how far the aligned policy
+                can move from the reference. This equation is the bridge between reward-space and policy-space.
+            </p>
+            <p>
+                DPO uses pairwise preferences <em>(y_w, y_l)</em> and a Bradley-Terry model: probability the winner is
+                preferred depends on reward difference <em>r(x,y_w) - r(x,y_l)</em>. Replace reward differences with
+                log-probability differences implied by the Gibbs optimum. The result is a logistic objective over
+                policy-vs-reference log-ratios. Concretely, if the policy assigns much larger relative probability
+                to the chosen response than the rejected one (compared with the reference), loss goes down.
+                No explicit reward model is trained, and no on-policy rollouts are required during optimization.
+            </p>
+            <p>
+                Intuitively, DPO performs supervised learning in a transformed coordinate system. Instead of fitting
+                target text directly, it fits preference-consistent margins between pairs. The reference policy is
+                not only a regularizer but part of the estimator: it defines the baseline odds from which the method
+                measures alignment gains. This is why reference drift, beta selection, and pair curation matter as
+                first-order mechanism choices rather than mere tuning details.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two concrete case studies make the mechanism tangible:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: sentiment control on static preference pairs.</strong> In DPO-style experiments,
+                    when prompts have preferred positive/harmless completions versus less preferred alternatives,
+                    direct pairwise training reliably increases win rate without the reward-model collapse modes seen
+                    in small-scale RLHF reproductions. The practical gain is not just quality; it is predictable
+                    optimization behavior from a single-stage objective.
+                </li>
+                <li>
+                    <strong>Case study 2: instruction following on HH-style comparisons.</strong> On Anthropic HH and
+                    related instruction datasets, DPO-family methods can match or exceed PPO-based RLHF baselines on
+                    preference benchmarks while using simpler infrastructure. This illustrates the main operational
+                    claim: if your target is pairwise preference fit under a KL anchor, direct optimization is often
+                    enough.
+                </li>
+            </ul>
+            <p>
+                Across those settings, four crisp insights stand out:
+            </p>
+            <ul>
+                <li><strong>DPO is an estimator of a specific constrained optimum.</strong> Its strongest guarantee is tied
+                to the KL-regularized objective and pairwise likelihood assumptions, not to "alignment" in general.</li>
+                <li><strong>The reference policy defines what counts as improvement.</strong> A weak or miscalibrated
+                reference can bias learning, because DPO optimizes relative odds rather than absolute utility.</li>
+                <li><strong>Beta is a mechanism parameter, not just a knob.</strong> Small beta permits aggressive shifts and
+                can overfit noisy preferences; large beta preserves fluency but may under-correct harmful behavior.</li>
+                <li><strong>Stability gains come from removing two noisy loops.</strong> Eliminating explicit reward training
+                and PPO rollouts reduces compounding error pathways, especially early in alignment iterations.</li>
+            </ul>
+            <p>
+                A fifth observation from later work is that preference data quality now dominates failure modes.
+                Once the optimization stack is simplified, contradictions, label noise, and narrow rater policies
+                become the principal bottlenecks.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The equivalence argument can obscure model mismatch. Real annotator behavior is rarely a clean
+                Bradley-Terry process; preferences may be context-dependent, non-transitive, or multi-objective
+                (helpfulness versus harmlessness versus style). DPO then remains useful but loses its idealized
+                interpretation as exact reward optimization.
+            </p>
+            <p>
+                DPO is also fundamentally offline with respect to the provided comparison set. If deployment-time
+                failures involve unseen prompt regimes, direct pairwise fitting may not explore those regions the
+                way iterative data collection plus active evaluation could. Finally, pairwise objectives can induce
+                overconfident margins: the policy may learn "which of two is better" without learning calibrated
+                uncertainty about both being bad.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                A promising direction is hybrid training: use DPO-like objectives for stable base alignment, then add
+                targeted online data collection for failure slices that require exploration. Another direction is
+                uncertainty-aware preference learning, where the objective models annotator disagreement explicitly
+                instead of forcing every comparison into a single latent reward axis. There is also a mechanistic
+                interpretability opportunity: analyze whether DPO shifts are localized to a small set of circuits
+                (e.g., refusal style or harmlessness templates) or distributed broadly across the residual stream.
+            </p>
+            <p>
+                <strong>Open question:</strong> Can we derive a preference-optimization objective that keeps DPO's
+                single-stage stability while remaining statistically consistent under systematic annotator
+                disagreement and non-transitive preferences?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                DPO is best viewed as a precise reduction: with a KL-anchored objective and pairwise preference
+                assumptions, reward optimization can be rewritten as direct policy classification on chosen versus
+                rejected responses. That reduction explains why DPO is operationally simpler and often more stable
+                than PPO-based RLHF. It also clarifies boundaries: the method inherits assumptions about preference
+                structure, reference quality, and data coverage. For practitioners, the practical recipe is to treat
+                DPO as a high-signal default for static preference data, then layer in targeted data collection and
+                robustness methods when deployment behavior drifts beyond that regime.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Rafailov et al. "Direct Preference Optimization: Your Language Model is Secretly a Reward Model." arXiv 2023.
+                    <a href="https://arxiv.org/abs/2305.18290">https://arxiv.org/abs/2305.18290</a>
+                </li>
+                <li>
+                    Ouyang et al. "Training language models to follow instructions with human feedback." NeurIPS 2022.
+                    <a href="https://arxiv.org/abs/2203.02155">https://arxiv.org/abs/2203.02155</a>
+                </li>
+                <li>
+                    Bai et al. "Constitutional AI: Harmlessness from AI Feedback." arXiv 2022.
+                    <a href="https://arxiv.org/abs/2212.08073">https://arxiv.org/abs/2212.08073</a>
+                </li>
+                <li>
+                    Yuan et al. "RRHF: Rank Responses to Align Language Models with Human Feedback." arXiv 2023.
+                    <a href="https://arxiv.org/abs/2304.05302">https://arxiv.org/abs/2304.05302</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
