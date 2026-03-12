@@ -3,29 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tibo Vanleke | PhD Candidate</title>
-    <meta name="description" content="Tibo Vanleke — PhD candidate in AI at VUB. Researching LLMs and technical AI safety.">
+    <title>Tibo Vanleke | AI Safety Researcher</title>
+    <meta name="description" content="Tibo Vanleke is a PhD candidate at VUB researching subliminal learning, interpretability, and technical AI safety.">
     <meta name="author" content="Tibo Vanleke">
+    <meta name="theme-color" content="#f4efe6">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png">
     <link rel="apple-touch-icon" href="/favicon-180.png">
     <link rel="canonical" href="https://tibovanleke.com/">
-    <meta property="og:title" content="Tibo Vanleke | PhD Candidate">
-    <meta property="og:description" content="PhD candidate in AI at VUB. Researching LLMs and technical AI safety.">
+    <meta property="og:title" content="Tibo Vanleke | AI Safety Researcher">
+    <meta property="og:description" content="PhD candidate at VUB researching subliminal learning, interpretability, and technical AI safety.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://tibovanleke.com/">
     <meta name="twitter:card" content="summary">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/site.css">
+    <script defer src="/assets/site.js"></script>
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
             "@type": "Person",
             "name": "Tibo Vanleke",
             "jobTitle": "PhD Candidate in Artificial Intelligence",
+            "url": "https://tibovanleke.com/",
             "affiliation": [
                 {
                     "@type": "Organization",
@@ -33,7 +37,6 @@
                     "url": "https://www.vub.be/"
                 }
             ],
-            "url": "https://tibovanleke.com/",
             "sameAs": [
                 "https://www.linkedin.com/in/tibo-vanleke",
                 "https://github.com/TiboVanleke",
@@ -46,402 +49,272 @@
             ]
         }
     </script>
-    <style>
-        :root {
-            --bg: #f7f3ee;
-            --bg-2: #eef6f2;
-            --card: #ffffff;
-            --text-main: #1a1a1a;
-            --text-muted: #5f5f5f;
-            --accent: #0b6e4f;
-            --accent-2: #f59e0b;
-            --line: rgba(0, 0, 0, 0.08);
-            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
-            --radius: 18px;
-        }
-
-        body {
-            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background:
-                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
-                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
-                var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        .page {
-            max-width: 980px;
-            margin: 0 auto;
-            padding: 48px 20px 80px;
-        }
-
-        header {
-            display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 24px;
-            align-items: center;
-            margin-bottom: 48px;
-        }
-
-        .hero-card {
-            background: var(--card);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 28px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero-card::after {
-            content: "";
-            position: absolute;
-            inset: -40% 50% auto -20%;
-            height: 220px;
-            background: radial-gradient(circle, rgba(11, 110, 79, 0.12), transparent 70%);
-            pointer-events: none;
-        }
-
-        .kicker {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #e9f5ef;
-            color: #0b6e4f;
-            border-radius: 999px;
-            padding: 6px 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            letter-spacing: 0.01em;
-            margin-bottom: 16px;
-        }
-
-        h1 {
-            font-family: "Fraunces", serif;
-            font-size: clamp(2.4rem, 3.2vw, 3.4rem);
-            font-weight: 700;
-            margin: 0 0 10px;
-            letter-spacing: -0.01em;
-        }
-
-        .role {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            margin-bottom: 18px;
-        }
-
-        .hero-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 18px;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border-radius: 999px;
-            text-decoration: none;
-            font-weight: 600;
-            border: 1px solid transparent;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: #ffffff;
-            box-shadow: 0 12px 24px rgba(11, 110, 79, 0.2);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--accent);
-            border-color: rgba(11, 110, 79, 0.4);
-        }
-
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 16px;
-            margin-top: 24px;
-        }
-
-        .stat {
-            background: #f8faf9;
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 14px;
-        }
-
-        .stat strong {
-            display: block;
-            font-size: 1.2rem;
-        }
-
-        .stat span {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .aside-card {
-            background: var(--card);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            padding: 24px;
-            display: grid;
-            gap: 16px;
-        }
-
-        .aside-card h2 {
-            font-family: "Fraunces", serif;
-            margin: 0;
-            font-size: 1.4rem;
-        }
-
-        .section {
-            margin-bottom: 36px;
-        }
-
-        .section h3 {
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-        }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-        }
-
-        .mini-card {
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 16px;
-            background: #ffffff;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .mini-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-        }
-
-        .mini-card a {
-            color: var(--text-main);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .muted {
-            color: var(--text-muted);
-        }
-
-        .link-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            margin-top: 8px;
-        }
-
-        .link-row a {
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .blog-list {
-            display: grid;
-            gap: 14px;
-        }
-
-        .blog-item {
-            padding: 14px;
-            border: 1px dashed rgba(0, 0, 0, 0.18);
-            border-radius: 14px;
-            background: #fffdfa;
-        }
-
-        .blog-item a {
-            color: var(--text-main);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        footer {
-            margin-top: 40px;
-            padding-top: 24px;
-            border-top: 1px solid var(--line);
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 12px;
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        @media (max-width: 880px) {
-            header {
-                grid-template-columns: 1fr;
-            }
-
-            .stat-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .stat-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
 </head>
-<body>
-    <div class="page">
-        <header>
-            <div class="hero-card">
-                <div class="kicker">PhD Candidate · AI Safety</div>
-                <h1>Tibo Vanleke</h1>
-                <div class="role">Researching LLMs, interpretability, and technical AI safety at Vrije Universiteit Brussel.</div>
-                <p class="muted">
-                    I’m currently exploring subliminal learning and how to make model behavior more legible,
-                    trustworthy, and aligned with real-world constraints.
-                </p>
-                <div class="hero-actions">
-                    <a class="btn btn-primary" href="cv.pdf">Download CV</a>
-                    <a class="btn btn-ghost" href="mailto:tibo@vanleke.com">Email me</a>
-                    <a class="btn btn-ghost" href="/running/">Running career</a>
-                </div>
-                <div class="stat-grid">
-                    <div class="stat">
-                        <strong>LLMs + Safety</strong>
-                        <span>Primary research focus</span>
-                    </div>
-                    <div class="stat">
-                        <strong>VUB</strong>
-                        <span>Vrije Universiteit Brussel</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="aside-card">
-                <div class="section">
-                    <h2>Now</h2>
-                    <p class="muted">
-                        Building a research portfolio, experimenting with interpretability tools,
-                        and sketching a weekly writing habit for sharing ideas in public.
-                    </p>
-                </div>
-                <div class="section">
-                    <h3>Contact</h3>
-                    <div class="link-row">
-                        <a href="mailto:tibo@vanleke.com">tibo@vanleke.com</a>
-                        <a href="mailto:tibo.vanleke@vub.be">tibo.vanleke@vub.be</a>
-                        <a href="mailto:tibo.vanleke@mil.be">tibo.vanleke@mil.be</a>
-                    </div>
-                </div>
-                <div class="section">
-                    <h3>Find me</h3>
-                    <div class="link-row">
-                        <a href="https://orcid.org/0009-0003-2200-7529">ORCID</a>
-                        <a href="https://www.linkedin.com/in/tibo-vanleke">LinkedIn</a>
-                        <a href="https://github.com/TiboVanleke">GitHub</a>
-                        <a href="https://data.research.vub.be/home">VUB Data Lab</a>
-                    </div>
-                </div>
-            </div>
+<body class="page-home">
+    <div class="site-shell">
+        <header class="topbar" data-reveal>
+            <a class="brand" href="/" aria-label="Tibo Vanleke home">
+                <span class="brand-mark">TV</span>
+                <span class="brand-copy">
+                    <strong>Tibo Vanleke</strong>
+                    <span>AI safety researcher</span>
+                </span>
+            </a>
+            <nav class="nav" aria-label="Primary">
+                <a href="/" data-nav>Home</a>
+                <a href="/blog/" data-nav>Notes</a>
+                <a href="/running/" data-nav>Running</a>
+                <a href="/cv.pdf">CV</a>
+                <a href="mailto:tibo@vanleke.com">Contact</a>
+            </nav>
         </header>
 
-        <section class="section">
-            <h3>Research Threads</h3>
-            <div class="card-grid">
-                <div class="mini-card">
-                    <a href="#">Subliminal Learning</a>
-                    <p class="muted">What subtle signals teach models, and how to detect them early.</p>
+        <main class="site-main">
+            <section class="hero">
+                <div class="hero-main panel" data-reveal>
+                    <p class="eyebrow">PhD Candidate / Technical AI Safety</p>
+                    <h1>Making model behavior easier to trust before it matters.</h1>
+                    <p class="lede">
+                        I am a PhD candidate at Vrije Universiteit Brussel researching subliminal learning,
+                        mechanistic interpretability, and the practical question of how to make LLM systems
+                        more legible under real-world constraints.
+                    </p>
+                    <div class="button-row">
+                        <a class="btn btn-primary" href="/blog/">Read research notes</a>
+                        <a class="btn btn-secondary" href="/cv.pdf">Download CV</a>
+                        <a class="btn btn-minimal" href="mailto:tibo@vanleke.com">Email me</a>
+                    </div>
+                    <ul class="tag-list" aria-label="Research topics">
+                        <li class="tag">Subliminal learning</li>
+                        <li class="tag">Mechanistic interpretability</li>
+                        <li class="tag">LLM evaluation</li>
+                    </ul>
+                    <div class="stat-strip">
+                        <div class="stat">
+                            <strong>VUB</strong>
+                            <span>Vrije Universiteit Brussel</span>
+                        </div>
+                        <div class="stat">
+                            <strong>Belgium</strong>
+                            <span>Based in Brussels, collaborating broadly</span>
+                        </div>
+                        <div class="stat">
+                            <strong>12 notes</strong>
+                            <span>Public memos spanning safety, theory, and interpretability</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="mini-card">
-                    <a href="#">LLM Safety</a>
-                    <p class="muted">Robustness, alignment, and safeguards for real deployments.</p>
-                </div>
-                <div class="mini-card">
-                    <a href="#">Interpretability</a>
-                    <p class="muted">Tools and frameworks to illuminate model internals.</p>
-                </div>
-            </div>
-        </section>
 
-        <section class="section">
-            <h3>PhD Supervision</h3>
-            <div class="card-grid">
-                <div class="mini-card">
-                    <a href="https://ai.vub.ac.be/person/vincent-ginis">Prof. Vincent Ginis</a>
-                    <p class="muted">Main promotor · Data Analytics Labs, Vrije Universiteit Brussel.</p>
-                </div>
-                <div class="mini-card">
-                    <a href="https://data.research.vub.be/members/filip-van-droogenbroeck">Prof. Filip Van Droogenbroeck</a>
-                    <p class="muted">Co-promotor · Data Analytics Lab in Business Technology &amp; Operations, Faculty of Social Sciences &amp; Solvay Business School (VUB).</p>
-                </div>
-                <div class="mini-card">
-                    <a href="https://data.research.vub.be/members/marie-anne-guerry">Prof. Marie-Anne Guerry</a>
-                    <p class="muted">Co-promotor · Faculty of Social Sciences &amp; Solvay Business School (VUB).</p>
-                </div>
-            </div>
-        </section>
+                <div class="hero-side">
+                    <section class="panel panel--tint" data-reveal>
+                        <p class="eyebrow">Current notebook</p>
+                        <h2 class="panel-title">Three questions I keep returning to.</h2>
+                        <ul class="signal-list">
+                            <li>
+                                <span class="signal-index">01</span>
+                                <span class="signal-copy">
+                                    <strong>What hidden signals teach a model more than we notice?</strong>
+                                    <span>Especially when behavior shifts before obvious benchmark failures appear.</span>
+                                </span>
+                            </li>
+                            <li>
+                                <span class="signal-index">02</span>
+                                <span class="signal-copy">
+                                    <strong>How do we make mechanistic claims testable?</strong>
+                                    <span>Interpretability becomes more useful when it survives causal evaluation.</span>
+                                </span>
+                            </li>
+                            <li>
+                                <span class="signal-index">03</span>
+                                <span class="signal-copy">
+                                    <strong>Which safety checks stay useful in messy deployments?</strong>
+                                    <span>I am interested in methods that remain lightweight enough to use in practice.</span>
+                                </span>
+                            </li>
+                        </ul>
+                    </section>
 
-        <section class="section">
-            <h3>Selected Work</h3>
-            <div class="card-grid">
-                <div class="mini-card">
-                    <a href="cv.pdf">Curriculum Vitae</a>
-                    <p class="muted">Publications, talks, and academic background.</p>
+                    <section class="panel" data-reveal>
+                        <p class="eyebrow">Academic home</p>
+                        <h2 class="panel-title">Built inside VUB's data and AI ecosystem.</h2>
+                        <p class="panel-copy">
+                            My PhD sits at the intersection of technical safety, interpretability, and applied
+                            research culture.
+                        </p>
+                        <div class="link-row">
+                            <a class="inline-link" href="https://data.research.vub.be/home">VUB Data Lab</a>
+                            <a class="inline-link" href="https://ai.vub.ac.be/person/vincent-ginis">Prof. Vincent Ginis</a>
+                            <a class="inline-link" href="https://data.research.vub.be/members/filip-van-droogenbroeck">Prof. Filip Van Droogenbroeck</a>
+                            <a class="inline-link" href="https://data.research.vub.be/members/marie-anne-guerry">Prof. Marie-Anne Guerry</a>
+                        </div>
+                    </section>
                 </div>
-                <div class="mini-card">
-                    <a href="https://data.research.vub.be/home">VUB Data Lab</a>
-                    <p class="muted">Research department and lab homepage.</p>
-                </div>
-                <div class="mini-card">
-                    <a href="https://scholar.google.com/">Google Scholar</a>
-                    <p class="muted">Citation list and research outputs.</p>
-                </div>
-                <div class="mini-card">
-                    <a href="https://github.com/TiboVanleke">Projects</a>
-                    <p class="muted">Experiments, tools, and open-source work.</p>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="section">
-            <h3>Blog</h3>
-            <div class="blog-list">
-                <div class="blog-item">
-                    <strong><a href="/blog/">Research Notes</a></strong>
-                    <div class="muted">A weekly memo format for safety and interpretability insights.</div>
+            <section class="section" id="research">
+                <div class="section-heading" data-reveal>
+                    <p class="eyebrow">Research agenda</p>
+                    <h2>Three threads that shape how I think about safer language models.</h2>
+                    <p>
+                        The common theme is simple: if we want trustworthy systems, we need better ways to
+                        surface hidden behavior, explain it, and evaluate it before the stakes rise.
+                    </p>
                 </div>
-                <div class="blog-item">
-                    <strong><a href="/blog/2026-02-04-bootstrapping-a-weekly-research-memo.html">Bootstrapping a weekly research memo</a></strong>
-                    <div class="muted">February 4, 2026 · Proof-of-concept post.</div>
-                </div>
-                <div class="blog-item">
-                    <strong>Reading notes: interpretability papers</strong>
-                    <div class="muted">Planned • A weekly digest of papers and takeaways.</div>
-                </div>
-            </div>
-        </section>
 
-        <footer>
-            <span>Based in Belgium · Open to research collaboration</span>
-            <span>Last updated February 2026</span>
+                <div class="research-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">Thread 1</p>
+                        <h3>Subliminal learning</h3>
+                        <p>
+                            Understanding how subtle cues in training data or prompts can quietly steer model
+                            behavior long before anyone notices in deployment.
+                        </p>
+                        <ul class="card-list">
+                            <li>Find cheaper proxy tests for hidden behavioral steering.</li>
+                            <li>Separate meaningful signals from harmless correlation.</li>
+                        </ul>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">Thread 2</p>
+                        <h3>Mechanistic interpretability</h3>
+                        <p>
+                            Tracing circuits, features, and representational geometry so interpretability is
+                            something we can verify, not just narrate.
+                        </p>
+                        <ul class="card-list">
+                            <li>Focus on faithfulness, completeness, and minimality.</li>
+                            <li>Use geometry as a clue to what a model has actually learned.</li>
+                        </ul>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">Thread 3</p>
+                        <h3>Safety under constraints</h3>
+                        <p>
+                            Building evaluation habits and guardrails that stay useful outside ideal lab
+                            conditions, where time, compute, and attention are always limited.
+                        </p>
+                        <ul class="card-list">
+                            <li>Prefer methods that help real teams make earlier decisions.</li>
+                            <li>Keep the work close to deployment reality.</li>
+                        </ul>
+                    </article>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-heading" data-reveal>
+                    <p class="eyebrow">Selected writing</p>
+                    <h2>Short research memos instead of waiting for perfect drafts.</h2>
+                    <p>
+                        I use public notes to sharpen questions, retain ideas, and make my research process
+                        easier to follow for collaborators.
+                    </p>
+                </div>
+
+                <div class="writing-grid">
+                    <article class="feature-card" data-reveal>
+                        <div>
+                            <p class="card-meta">Latest note / March 2, 2026</p>
+                            <h3>DPO as implicit reward optimization under KL constraints</h3>
+                            <p>
+                                A memo on when Direct Preference Optimization really matches
+                                KL-regularized reward optimization, and where that story breaks.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">Read the memo</a>
+                            <a class="btn btn-secondary" href="/blog/">Browse all notes</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
+                            <p class="card-meta">Recent note</p>
+                            <h3>Pre-LN vs Post-LN</h3>
+                            <p>
+                                Why layer norm placement changes gradient flow, residual amplification,
+                                and training stability in deep Transformers.
+                            </p>
+                            <a class="inline-link" href="/blog/2026-02-17-pre-ln-post-ln-transformer-stability.html">Open the note</a>
+                        </article>
+
+                        <article class="card" data-reveal>
+                            <p class="card-meta">Recent note</p>
+                            <h3>Hard attention and Turing completeness</h3>
+                            <p>
+                                A short guide to when Transformers become Turing complete and what those
+                                expressivity results actually buy us.
+                            </p>
+                            <a class="inline-link" href="/blog/2026-02-16-hard-attention-turing-completeness-transformers.html">Open the note</a>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-heading" data-reveal>
+                    <p class="eyebrow">Network</p>
+                    <h2>The academic, practical, and personal threads around the work.</h2>
+                    <p>
+                        This site is part research log, part profile, and part place to show the habits that
+                        keep long projects sustainable.
+                    </p>
+                </div>
+
+                <div class="profile-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">Profiles</p>
+                        <h3>Find the work elsewhere</h3>
+                        <p>Academic identity, projects, and public profile links in one place.</p>
+                        <div class="link-row">
+                            <a class="inline-link" href="https://orcid.org/0009-0003-2200-7529">ORCID</a>
+                            <a class="inline-link" href="https://github.com/TiboVanleke">GitHub</a>
+                            <a class="inline-link" href="https://www.linkedin.com/in/tibo-vanleke">LinkedIn</a>
+                        </div>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">Supervision</p>
+                        <h3>People shaping the PhD</h3>
+                        <p>
+                            Main promotor: Prof. Vincent Ginis. Co-promotors: Prof. Filip Van Droogenbroeck
+                            and Prof. Marie-Anne Guerry.
+                        </p>
+                        <a class="inline-link" href="/cv.pdf">See full academic background</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">Outside the lab</p>
+                        <h3>Running keeps the horizon long.</h3>
+                        <p>
+                            Competitive distance running is where I practice patience, recovery, and the kind
+                            of consistency research also demands.
+                        </p>
+                        <a class="inline-link" href="/running/">View running profile</a>
+                    </article>
+                </div>
+            </section>
+
+            <section class="panel panel--tint" data-reveal>
+                <p class="eyebrow">Collaboration</p>
+                <h2 class="panel-title">Open to careful conversations around interpretability, evaluation, and safety.</h2>
+                <p class="panel-copy">
+                    If you are working on adjacent questions, building tools, or just want to compare notes,
+                    I am happy to hear from you.
+                </p>
+                <div class="button-row">
+                    <a class="btn btn-primary" href="mailto:tibo@vanleke.com">Start a conversation</a>
+                    <a class="btn btn-secondary" href="/blog/">Read the notes first</a>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <span>Based in Belgium / Open to research collaboration</span>
+            <span>Refreshed March 2026</span>
         </footer>
     </div>
-
 </body>
 </html>

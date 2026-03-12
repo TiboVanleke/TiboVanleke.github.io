@@ -3,206 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tibo Vanleke | Blog</title>
-    <meta name="description" content="Notes and experiments on LLMs, safety, and interpretability.">
+    <title>Tibo Vanleke | Research Notes</title>
+    <meta name="description" content="Public research notes on LLM safety, interpretability, optimization, and experimental workflows.">
+    <meta name="author" content="Tibo Vanleke">
+    <meta name="theme-color" content="#f4efe6">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png">
     <link rel="apple-touch-icon" href="/favicon-180.png">
+    <link rel="canonical" href="https://tibovanleke.com/blog/">
+    <meta property="og:title" content="Tibo Vanleke | Research Notes">
+    <meta property="og:description" content="Short, high-signal research memos on AI safety, interpretability, and transformer behavior.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tibovanleke.com/blog/">
+    <meta name="twitter:card" content="summary">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #f7f3ee;
-            --bg-2: #eef6f2;
-            --card: #ffffff;
-            --text-main: #1a1a1a;
-            --text-muted: #5f5f5f;
-            --accent: #0b6e4f;
-            --line: rgba(0, 0, 0, 0.08);
-            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
-            --radius: 18px;
-        }
-
-        body {
-            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background:
-                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
-                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
-                var(--bg);
-            color: var(--text-main);
-            margin: 0;
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        .page {
-            max-width: 860px;
-            margin: 0 auto;
-            padding: 48px 20px 80px;
-        }
-
-        header {
-            background: var(--card);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 28px;
-            margin-bottom: 28px;
-        }
-
-        h1 {
-            font-family: "Fraunces", serif;
-            font-size: clamp(2rem, 3vw, 2.8rem);
-            margin: 0 0 6px;
-        }
-
-        .muted {
-            color: var(--text-muted);
-        }
-
-        .post-list {
-            display: grid;
-            gap: 16px;
-        }
-
-        .post-card {
-            background: var(--card);
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 18px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .post-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-            font-family: "Fraunces", serif;
-            font-size: 1.5rem;
-            margin: 32px 0 12px;
-        }
-
-        .post-card a {
-            color: var(--text-main);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .top-link {
-            display: inline-flex;
-            margin-bottom: 18px;
-            color: var(--accent);
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        footer {
-            margin-top: 28px;
-            padding-top: 18px;
-            border-top: 1px solid var(--line);
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/site.css">
+    <script defer src="/assets/site.js"></script>
 </head>
-<body>
-    <div class="page">
-        <a class="top-link" href="/">← Back to home</a>
-        <header>
-            <h1>Research Notes</h1>
-            <div class="muted">Weekly thoughts, paper notes, and experiments around LLM safety and interpretability.</div>
+<body class="page-notes">
+    <div class="site-shell">
+        <header class="topbar" data-reveal>
+            <a class="brand" href="/" aria-label="Tibo Vanleke home">
+                <span class="brand-mark">TV</span>
+                <span class="brand-copy">
+                    <strong>Tibo Vanleke</strong>
+                    <span>AI safety researcher</span>
+                </span>
+            </a>
+            <nav class="nav" aria-label="Primary">
+                <a href="/" data-nav>Home</a>
+                <a href="/blog/" data-nav>Notes</a>
+                <a href="/running/" data-nav>Running</a>
+                <a href="/cv.pdf">CV</a>
+                <a href="mailto:tibo@vanleke.com">Contact</a>
+            </nav>
         </header>
 
-        <div class="post-list">
-            <article class="post-card">
-                <a href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">DPO as implicit reward optimization under KL constraints</a>
-                <div class="muted">March 2, 2026 · 16 min read</div>
-                <p class="muted">A deep review of when Direct Preference Optimization is equivalent to KL-regularized reward optimization and where that equivalence breaks.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-17-pre-ln-post-ln-transformer-stability.html">Pre-LN vs Post-LN: why layer norm placement stabilizes Transformers</a>
-                <div class="muted">February 17, 2026 · 13 min read</div>
-                <p class="muted">A deep review of how layer norm placement controls gradient flow and residual amplification in deep Transformers.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-16-hard-attention-turing-completeness-transformers.html">Hard attention and Turing completeness in Transformers</a>
-                <div class="muted">February 16, 2026 · 11 min read</div>
-                <p class="muted">A deep review of when Transformers are Turing complete, why hard attention matters, and what formal-language limits imply.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-15-softmax-bottleneck-mixture-of-softmaxes.html">The softmax bottleneck in language modeling</a>
-                <div class="muted">February 15, 2026 · 13 min read</div>
-                <p class="muted">A deep review of how the softmax bottleneck limits expressivity in language models and how mixture-of-softmaxes raises the effective rank.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-13-alibi-vs-rope-length-extrapolation.html">ALiBi vs RoPE: positional bias and length extrapolation</a>
-                <div class="muted">February 13, 2026 · 11 min read</div>
-                <p class="muted">A focused review of why ALiBi extrapolates to longer contexts more reliably than RoPE, and what that implies about positional inductive bias in attention.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-12-ffn-key-value-memory-factual-recall.html">FFN layers as key-value memories for factual recall</a>
-                <div class="muted">February 12, 2026 · 14 min read</div>
-                <p class="muted">A deep review of evidence that transformer feed-forward layers behave like key-value memories and localize factual recall in mid-layer MLPs.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-11-attention-as-modern-hopfield-memory.html">Attention as modern Hopfield memory</a>
-                <div class="muted">February 11, 2026 · 13 min read</div>
-                <p class="muted">A focused review of the modern Hopfield-network view of attention, with emphasis on storage capacity and retrieval behavior.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-07-in-context-gradient-descent-linear-regression.html">In-context learning as implicit gradient descent</a>
-                <div class="muted">February 7, 2026 · 12 min read</div>
-                <p class="muted">A deep dive into gradient-descent-like mechanisms in in-context linear regression.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-06-grokking-weight-decay-phase-transition.html">Grokking as a phase transition in transformer training</a>
-                <div class="muted">February 6, 2026 · 12 min read</div>
-                <p class="muted">A deep dive into how weight decay triggers delayed generalization in transformer grokking.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-05-superposition-sparsity-phase-transition.html">Sparsity as a control knob for superposition</a>
-                <div class="muted">February 5, 2026 · 9 min read</div>
-                <p class="muted">A deep dive into how sparsity penalties trigger phase transitions between superposition and monosemantic features.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-04-ioi-circuit-evaluation.html">Evaluating IOI circuits: faithfulness, completeness, minimality</a>
-                <div class="muted">February 4, 2026 · 4 min read</div>
-                <p class="muted">A focused memo on how to evaluate mechanistic explanations in GPT-2 small.</p>
-            </article>
-            <article class="post-card">
-                <a href="/blog/2026-02-04-bootstrapping-a-weekly-research-memo.html">Bootstrapping a weekly research memo</a>
-                <div class="muted">February 4, 2026 · 4 min read</div>
-                <p class="muted">A quick pilot for turning weekly reading notes into a public-facing update.</p>
-            </article>
-        </div>
+        <main class="site-main">
+            <section class="hero">
+                <div class="hero-main panel" data-reveal>
+                    <p class="eyebrow">Research notes</p>
+                    <h1>Public thinking from the edge of the research process.</h1>
+                    <p class="lede">
+                        These memos stay intentionally compact. Each one isolates a mechanism, paper, or
+                        question so the work remains visible before it becomes polished.
+                    </p>
+                    <div class="button-row">
+                        <a class="btn btn-primary" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">Start with the latest memo</a>
+                        <a class="btn btn-secondary" href="/">Back to home</a>
+                    </div>
+                    <ul class="tag-list" aria-label="Note topics">
+                        <li class="tag">Interpretability</li>
+                        <li class="tag">Optimization</li>
+                        <li class="tag">Transformer theory</li>
+                        <li class="tag">Research process</li>
+                    </ul>
+                    <div class="stat-strip">
+                        <div class="stat">
+                            <strong>12 published</strong>
+                            <span>Public memos so far</span>
+                        </div>
+                        <div class="stat">
+                            <strong>Feb to Mar 2026</strong>
+                            <span>Current public note window</span>
+                        </div>
+                        <div class="stat">
+                            <strong>One question each</strong>
+                            <span>A note format built for clarity over coverage</span>
+                        </div>
+                    </div>
+                </div>
 
-        <section style="margin-top: 28px;">
-            <h2 style="font-size: 1.2rem; margin-bottom: 8px;">Topic log</h2>
-            <div class="muted" style="margin-bottom: 12px;">At-a-glance list of covered research questions.</div>
-            <ul class="muted" style="margin: 0 0 0 18px; line-height: 1.7;">
-                <li>2026-03-02: DPO as implicit KL-regularized reward optimization and its failure modes under noisy preferences.</li>
-                <li>2026-02-17: Pre-LN vs Post-LN layer norm placement and Transformer training stability.</li>
-                <li>2026-02-16: Hard attention, positional addressing, and Turing completeness in Transformers.</li>
-                <li>2026-02-15: The softmax bottleneck and mixture-of-softmaxes as a rank-expanding output layer.</li>
-                <li>2026-02-13: ALiBi vs RoPE positional bias and length extrapolation.</li>
-                <li>2026-02-12: FFN layers as key-value memories for factual recall.</li>
-                <li>2026-02-11: Attention as modern Hopfield memory (capacity and retrieval).</li>
-                <li>2026-02-07: In-context learning as implicit gradient descent in linear regression.</li>
-                <li>2026-02-06: Grokking phase transitions driven by weight decay in transformer training.</li>
-                <li>2026-02-05: Sparsity thresholds and phase transitions in superposition toy models.</li>
-                <li>2026-02-04: Evaluating IOI circuit explanations (faithfulness, completeness, minimality).</li>
-                <li>2026-02-04: Bootstrapping a weekly research memo format.</li>
-            </ul>
-        </section>
+                <div class="hero-side">
+                    <section class="panel panel--tint" data-reveal>
+                        <p class="eyebrow">Format</p>
+                        <h2 class="panel-title">How these notes are written.</h2>
+                        <ul class="signal-list">
+                            <li>
+                                <span class="signal-index">01</span>
+                                <span class="signal-copy">
+                                    <strong>Keep it narrow</strong>
+                                    <span>Each memo stays centered on one claim, one paper, or one mechanism.</span>
+                                </span>
+                            </li>
+                            <li>
+                                <span class="signal-index">02</span>
+                                <span class="signal-copy">
+                                    <strong>Prefer signal over summary</strong>
+                                    <span>The aim is a strong takeaway, not exhaustive coverage.</span>
+                                </span>
+                            </li>
+                            <li>
+                                <span class="signal-index">03</span>
+                                <span class="signal-copy">
+                                    <strong>Leave open questions visible</strong>
+                                    <span>The most useful part is often what still feels unresolved.</span>
+                                </span>
+                            </li>
+                        </ul>
+                    </section>
 
-        <footer>
-            Want to collaborate or suggest a topic? Email me at tibo@vanleke.com.
+                    <section class="panel" data-reveal>
+                        <p class="eyebrow">Recent focus</p>
+                        <h2 class="panel-title">A few themes keep resurfacing.</h2>
+                        <div class="topic-cloud">
+                            <span class="topic-chip">Preference optimization</span>
+                            <span class="topic-chip">Layer norm placement</span>
+                            <span class="topic-chip">Hard attention</span>
+                            <span class="topic-chip">Length extrapolation</span>
+                            <span class="topic-chip">Feature geometry</span>
+                            <span class="topic-chip">KV memories</span>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-heading" data-reveal>
+                    <p class="eyebrow">Latest</p>
+                    <h2>The newest memo goes first.</h2>
+                    <p>Everything else stays browseable below, but the freshest research question should be immediate.</p>
+                </div>
+
+                <div class="writing-grid">
+                    <article class="feature-card" data-reveal>
+                        <div>
+                            <p class="card-meta">March 2, 2026 / 16 min read</p>
+                            <h3>DPO as implicit reward optimization under KL constraints</h3>
+                            <p>
+                                A deep review of when Direct Preference Optimization is equivalent to
+                                KL-regularized reward optimization and where that equivalence breaks.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
+                            <p class="card-meta">February 17, 2026 / 13 min read</p>
+                            <h3>Pre-LN vs Post-LN</h3>
+                            <p>Why layer norm placement controls gradient flow and residual amplification in deep Transformers.</p>
+                            <a class="inline-link" href="/blog/2026-02-17-pre-ln-post-ln-transformer-stability.html">Open memo</a>
+                        </article>
+
+                        <article class="card" data-reveal>
+                            <p class="card-meta">February 16, 2026 / 11 min read</p>
+                            <h3>Hard attention and Turing completeness</h3>
+                            <p>When Transformers become Turing complete and what those formal results do and do not imply.</p>
+                            <a class="inline-link" href="/blog/2026-02-16-hard-attention-turing-completeness-transformers.html">Open memo</a>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <div class="section-heading" data-reveal>
+                    <p class="eyebrow">Archive</p>
+                    <h2>The full memo archive.</h2>
+                    <p>Ordered newest first so the cadence and evolving interests are easy to scan.</p>
+                </div>
+
+                <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">March 2, 2026 / Optimization</p>
+                        <h3>DPO as implicit reward optimization under KL constraints</h3>
+                        <p>When DPO matches KL-regularized reward optimization, and where the approximation starts to leak.</p>
+                        <a class="inline-link" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 17, 2026 / Stability</p>
+                        <h3>Pre-LN vs Post-LN</h3>
+                        <p>How layer norm placement shapes gradient flow and training stability in deep Transformers.</p>
+                        <a class="inline-link" href="/blog/2026-02-17-pre-ln-post-ln-transformer-stability.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 16, 2026 / Theory</p>
+                        <h3>Hard attention and Turing completeness</h3>
+                        <p>Architectural ingredients, formal expressivity, and what they say about real-world attention.</p>
+                        <a class="inline-link" href="/blog/2026-02-16-hard-attention-turing-completeness-transformers.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 15, 2026 / Language modeling</p>
+                        <h3>The softmax bottleneck in language modeling</h3>
+                        <p>Why a low-rank output layer limits expressivity and how mixture-of-softmaxes expands it.</p>
+                        <a class="inline-link" href="/blog/2026-02-15-softmax-bottleneck-mixture-of-softmaxes.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 13, 2026 / Context length</p>
+                        <h3>ALiBi vs RoPE</h3>
+                        <p>Why ALiBi extrapolates to longer contexts more reliably than RoPE.</p>
+                        <a class="inline-link" href="/blog/2026-02-13-alibi-vs-rope-length-extrapolation.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 12, 2026 / Memory</p>
+                        <h3>FFN layers as key-value memories</h3>
+                        <p>Evidence that mid-layer MLPs store and retrieve factual associations.</p>
+                        <a class="inline-link" href="/blog/2026-02-12-ffn-key-value-memory-factual-recall.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 11, 2026 / Attention</p>
+                        <h3>Attention as modern Hopfield memory</h3>
+                        <p>A compact review of the Hopfield-network view of attention, storage capacity, and retrieval.</p>
+                        <a class="inline-link" href="/blog/2026-02-11-attention-as-modern-hopfield-memory.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 7, 2026 / In-context learning</p>
+                        <h3>In-context learning as implicit gradient descent</h3>
+                        <p>Evidence that Transformers can implement gradient-descent-like procedures in context.</p>
+                        <a class="inline-link" href="/blog/2026-02-07-in-context-gradient-descent-linear-regression.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 6, 2026 / Optimization</p>
+                        <h3>Grokking as a phase transition in transformer training</h3>
+                        <p>How weight decay can trigger a delayed shift from memorization to algorithmic generalization.</p>
+                        <a class="inline-link" href="/blog/2026-02-06-grokking-weight-decay-phase-transition.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 5, 2026 / Interpretability</p>
+                        <h3>Sparsity as a control knob for superposition</h3>
+                        <p>How sparsity penalties can flip a model between dense superposition and cleaner feature geometry.</p>
+                        <a class="inline-link" href="/blog/2026-02-05-superposition-sparsity-phase-transition.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 4, 2026 / Mechanistic evaluation</p>
+                        <h3>Evaluating IOI circuits</h3>
+                        <p>Faithfulness, completeness, and minimality as standards for mechanistic explanations.</p>
+                        <a class="inline-link" href="/blog/2026-02-04-ioi-circuit-evaluation.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">February 4, 2026 / Research process</p>
+                        <h3>Bootstrapping a weekly research memo</h3>
+                        <p>A lightweight public writing habit for turning weekly notes into usable research output.</p>
+                        <a class="inline-link" href="/blog/2026-02-04-bootstrapping-a-weekly-research-memo.html">Read memo</a>
+                    </article>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <span>Want to suggest a topic? Email tibo@vanleke.com</span>
+            <span>Research notes archive / March 2026</span>
         </footer>
     </div>
 </body>
