@@ -367,6 +367,48 @@ img {
     gap: 1rem;
 }
 
+.portrait-card {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.97), rgba(244, 239, 230, 0.9));
+}
+
+.portrait-media {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(14, 106, 82, 0.1), rgba(255, 255, 255, 0));
+}
+
+.portrait-media::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 40%;
+    background: linear-gradient(180deg, transparent, rgba(17, 30, 24, 0.2));
+    pointer-events: none;
+}
+
+.portrait-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 22%;
+}
+
+.portrait-caption {
+    display: grid;
+    gap: 0.6rem;
+    padding: 1.25rem 1.3rem 1.4rem;
+}
+
+.portrait-caption .eyebrow,
+.portrait-caption .panel-title,
+.portrait-caption .panel-copy {
+    margin: 0;
+}
+
 .panel-title {
     margin: 0 0 0.6rem;
     font-family: "Fraunces", serif;
