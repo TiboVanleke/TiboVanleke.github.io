@@ -53,7 +53,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-06-14-truthfulqa-inverse-scaling-imitative-falsehoods.html">Start with the latest memo</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
                     <ul class="tag-list" aria-label="Note topics">
@@ -64,11 +64,11 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>12 published</strong>
+                            <strong>13 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
-                            <strong>Feb to Mar 2026</strong>
+                            <strong>Feb to Jun 2026</strong>
                             <span>Current public note window</span>
                         </div>
                         <div class="stat">
@@ -113,7 +113,7 @@
                         <div class="topic-cloud">
                             <span class="topic-chip">Preference optimization</span>
                             <span class="topic-chip">Layer norm placement</span>
-                            <span class="topic-chip">Hard attention</span>
+                            <span class="topic-chip">Truthfulness</span>
                             <span class="topic-chip">Length extrapolation</span>
                             <span class="topic-chip">Feature geometry</span>
                             <span class="topic-chip">KV memories</span>
@@ -132,31 +132,31 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
-                            <p class="card-meta">March 2, 2026 / 16 min read</p>
-                            <h3>DPO as implicit reward optimization under KL constraints</h3>
+                            <p class="card-meta">June 14, 2026 / 18 min read</p>
+                            <h3>Why TruthfulQA shows inverse scaling</h3>
                             <p>
-                                A deep review of when Direct Preference Optimization is equivalent to
-                                KL-regularized reward optimization and where that equivalence breaks.
+                                A deeper review of why larger language models can become less truthful on
+                                TruthfulQA by better imitating human misconceptions.
                             </p>
                         </div>
                         <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">Read now</a>
+                            <a class="btn btn-primary" href="/blog/2026-06-14-truthfulqa-inverse-scaling-imitative-falsehoods.html">Read now</a>
                         </div>
                     </article>
 
                     <div class="stack-grid">
                         <article class="card" data-reveal>
+                            <p class="card-meta">March 2, 2026 / 16 min read</p>
+                            <h3>DPO as implicit reward optimization under KL constraints</h3>
+                            <p>When Direct Preference Optimization is equivalent to KL-regularized reward optimization, and where it breaks.</p>
+                            <a class="inline-link" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">Open memo</a>
+                        </article>
+
+                        <article class="card" data-reveal>
                             <p class="card-meta">February 17, 2026 / 13 min read</p>
                             <h3>Pre-LN vs Post-LN</h3>
                             <p>Why layer norm placement controls gradient flow and residual amplification in deep Transformers.</p>
                             <a class="inline-link" href="/blog/2026-02-17-pre-ln-post-ln-transformer-stability.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">February 16, 2026 / 11 min read</p>
-                            <h3>Hard attention and Turing completeness</h3>
-                            <p>When Transformers become Turing complete and what those formal results do and do not imply.</p>
-                            <a class="inline-link" href="/blog/2026-02-16-hard-attention-turing-completeness-transformers.html">Open memo</a>
                         </article>
                     </div>
                 </div>
@@ -170,6 +170,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">June 14, 2026 / Alignment</p>
+                        <h3>Why TruthfulQA shows inverse scaling</h3>
+                        <p>Why larger language models can become less truthful when scaling mostly improves imitation rather than evidence-sensitive abstention.</p>
+                        <a class="inline-link" href="/blog/2026-06-14-truthfulqa-inverse-scaling-imitative-falsehoods.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">March 2, 2026 / Optimization</p>
                         <h3>DPO as implicit reward optimization under KL constraints</h3>
@@ -255,11 +262,24 @@
                     </article>
                 </div>
             </section>
+
+            <section class="section">
+                <div class="section-heading" data-reveal>
+                    <p class="eyebrow">Topic log</p>
+                    <h2>Latest topic added to the running queue.</h2>
+                    <p>A lightweight log for keeping the memo stream diverse rather than circling the same mechanisms.</p>
+                </div>
+                <article class="panel" data-reveal>
+                    <ul>
+                        <li><strong>June 14, 2026:</strong> Why TruthfulQA shows inverse scaling: imitative falsehoods, uncertainty, and the limits of scaling for truthfulness.</li>
+                    </ul>
+                </article>
+            </section>
         </main>
 
         <footer class="footer">
             <span>Want to suggest a topic? Email tibo@vanleke.com</span>
-            <span>Research notes archive / March 2026</span>
+            <span>Research notes archive / June 2026</span>
         </footer>
     </div>
 </body>
