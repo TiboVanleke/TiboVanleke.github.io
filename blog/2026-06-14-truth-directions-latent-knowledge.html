@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Can hidden states reveal what an LLM thinks is true? | Tibo Vanleke</title>
+    <meta name="description" content="A deep review of whether LLM hidden states linearly encode truth even when surface outputs are false, with CCS as the central mechanism." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to blog</a>
+        <header>
+            <h1>Can hidden states reveal what an LLM thinks is true?</h1>
+            <div class="meta">June 14, 2026 · 14 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo looks at a narrow alignment question: when a language model says something false, do its
+                internal activations still contain information about the truth? The central paper is Burns et al.
+                (2023), which introduced Contrast-Consistent Search (CCS), an unsupervised method for extracting a
+                truth-related direction from model activations without labels. The result matters because many safety
+                failures look like a gap between knowing and saying. A model may imitate a common misconception,
+                follow a misleading prompt, or optimize for sounding plausible, even if some internal representation
+                still tracks reality better than the text it emits. The deeper question is not just whether probes can
+                classify true versus false statements, but whether truth is represented in a stable enough geometry to
+                support monitoring or intervention. My view is that the evidence supports a real but fragile phenomenon:
+                sufficiently capable models often linearly encode truth signals, yet those signals are entangled with
+                prompt framing, dataset structure, and the distinction between factual belief and next-token policy.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The problem sits inside the broader Eliciting Latent Knowledge agenda: if model outputs are not fully
+                trustworthy, perhaps internal states are a better place to ask what the model "knows." TruthfulQA
+                (Lin et al., 2022) gave this agenda a concrete benchmark by showing that larger models can become less
+                truthful because they imitate polished human falsehoods. Burns et al. then shifted focus from outputs
+                to representations, asking whether unlabeled activations alone can recover correct answers on paired
+                statements and negations.
+            </p>
+            <p>
+                Follow-up work sharpened the picture. Marks and Tegmark (2023) argued that truth and falsehood form an
+                emergent linear structure in sufficiently large models and showed transfer across curated true/false
+                datasets. Li et al. (2023) moved from reading to acting: if a truth direction exists, one can shift
+                activations along it at inference time and measurably increase truthfulness. Together these papers turn
+                a philosophical claim into an empirical one: hidden states may separate "belief-like" content from the
+                final generation policy, at least on constrained factual tasks.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                CCS starts with paired inputs that should have opposite truth values, such as a statement and its
+                negation or a yes/no question under two answer templates. For each item, one extracts hidden
+                activations from a chosen layer and learns a simple linear probe. The key constraint is not supervision
+                from labels but consistency: exactly one member of the pair should be true, and the probe should assign
+                complementary probabilities to the two members. Across many examples, the optimization searches for a
+                direction in activation space that makes these consistency relations hold.
+            </p>
+            <p>
+                Mechanistically, this is interesting because it does not require the model to answer correctly in text.
+                If a prompt says "Answer like a conspiracy theorist," the output channel may be pushed toward a false
+                completion. CCS asks whether earlier residual-stream states still preserve a separable truth signal
+                before decoding and instruction following fully dominate. In that sense, CCS is not a behavioral method
+                but a representation-geometry method.
+            </p>
+            <p>
+                The follow-up "geometry of truth" line makes a stronger claim. If truth is genuinely linearly encoded,
+                then a crude probe such as a difference in class means should generalize across datasets, and causal
+                intervention along that direction should change outputs. That is exactly why intervention papers matter
+                here: they convert a correlational probe result into limited causal evidence. A direction that merely
+                reads out spurious formatting cues will classify well in distribution but should not reliably alter the
+                truthfulness of generations when injected back into the forward pass.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the main claim more concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: misleading prompts versus hidden-state truth.</strong> Burns et al. report
+                    that CCS can retain high accuracy even when prompts push models toward incorrect answers. This is
+                    the clearest example of the "knowing vs saying" split: the output degrades, but an internal linear
+                    signal still points toward the correct truth value.
+                </li>
+                <li>
+                    <strong>Case study 2: intervention on TruthfulQA.</strong> Li et al. show that steering activations
+                    along truth-related directions can substantially improve TruthfulQA performance; their reported
+                    Alpaca result moves truthfulness from 32.5% to 65.1%. That does not prove the whole concept of
+                    truth is localized, but it does show that some extracted directions are operationally meaningful.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights stand out from this literature:
+            </p>
+            <ul>
+                <li><strong>Truth seems easier to encode than to express.</strong> Output generation reflects imitation, instruction following, and stylistic priors, while intermediate states can preserve a cleaner factual signal.</li>
+                <li><strong>Linearity is the surprising part.</strong> The important result is not merely that truth is present somewhere, but that simple linear probes often recover it in capable models.</li>
+                <li><strong>Probe success is stronger when symmetry is built into the task.</strong> Paired statements, negations, and balanced true/false datasets make the geometry visible; open-ended generations are much messier.</li>
+                <li><strong>Causal intervention is a stricter test than decoding accuracy.</strong> If moving activations along a discovered direction changes answers, the direction is more than a passive diagnostic.</li>
+            </ul>
+            <p>
+                A fifth observation is more cautionary. Transfer improves with model scale and dataset cleanliness, but
+                not all models appear to host equally stable truth directions. This suggests the phenomenon is emergent
+                rather than guaranteed by the transformer architecture alone.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                First, these results live mostly on controlled true/false tasks. That is a much narrower target than
+                real-world truthfulness in long-form, ambiguous, or multi-hop settings. A model may linearly encode the
+                truth value of "The Pacific is larger than the Atlantic" while still failing on questions that require
+                synthesis, source uncertainty, or causal explanation.
+            </p>
+            <p>
+                Second, there is a conceptual gap between a probe decoding truth and a model actually "believing"
+                something in any robust sense. The probe may exploit latent features correlated with dataset
+                construction, lexical form, or negation patterns. This is why cross-dataset transfer and intervention
+                matter so much, but even they do not fully resolve the semantics of belief in autoregressive models.
+            </p>
+            <p>
+                Third, truth directions can trade off against helpfulness or fluency. If an intervention makes the
+                model more cautious, less speculative, or more likely to abstain, benchmark truthfulness can improve
+                without a correspondingly rich improvement in epistemic competence. Alignment-wise, that distinction is
+                important: reducing falsehoods is useful, but it is not the same as obtaining calibrated, well-scoped
+                honesty.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The next step is to test whether truth directions survive harder distribution shifts: adversarial
+                prompting, deceptive instructions, multilingual settings, and longer reasoning chains. Another useful
+                direction is localization. Are truth-related signals carried broadly across the residual stream, or do
+                they concentrate in a sparse subset of heads, MLP features, or layers? That matters for both safety
+                monitoring and robustness.
+            </p>
+            <p>
+                A second frontier is calibration rather than binary classification. The field currently asks whether a
+                statement is true or false, but deployed systems need graded uncertainty, not only a sign. Finally,
+                there is a deep alignment connection: if internal truth signals can be read more faithfully than
+                outputs, they may become ingredients for scalable oversight, lie detection, or corrigibility checks.
+                But that only works if the signals remain stable when the model is pushed into strategically deceptive
+                regimes.
+            </p>
+            <p>
+                <strong>Open question:</strong> Is there a truth representation that remains linearly readable even when
+                a capable model is explicitly optimizing to appear convincing while being false?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The evidence so far suggests a real separation between internal factual representation and outward
+                generation behavior. CCS made the key move by showing that unlabeled activations can often recover
+                truth better than raw model answers, and later work strengthened the claim with transfer and
+                intervention results. Still, the phenomenon is narrower than "models have a universal truth neuron."
+                It is strongest on structured tasks, benefits from paired symmetry, and weakens as we move toward
+                open-ended reasoning and strategic behavior. For alignment, that is still important news: if models
+                sometimes know better than they say, hidden-state methods may become one of the few ways to measure the
+                gap directly.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Burns et al. "Discovering Latent Knowledge in Language Models Without Supervision." ICLR 2023.
+                    <a href="https://arxiv.org/abs/2212.03827">https://arxiv.org/abs/2212.03827</a>
+                </li>
+                <li>
+                    Lin et al. "TruthfulQA: Measuring How Models Mimic Human Falsehoods." ACL 2022.
+                    <a href="https://aclanthology.org/2022.acl-long.229/">https://aclanthology.org/2022.acl-long.229/</a>
+                </li>
+                <li>
+                    Marks and Tegmark. "The Geometry of Truth: Emergent Linear Structure in Large Language Model Representations of True/False Datasets." 2023.
+                    <a href="https://arxiv.org/abs/2310.06824">https://arxiv.org/abs/2310.06824</a>
+                </li>
+                <li>
+                    Li et al. "Inference-Time Intervention: Eliciting Truthful Answers from a Language Model." NeurIPS 2023 Workshop paper.
+                    <a href="https://arxiv.org/abs/2306.03341">https://arxiv.org/abs/2306.03341</a>
+                </li>
+                <li>
+                    Roger. "Eliciting Latent Knowledge from Quirky Language Models." ICLR 2024.
+                    <a href="https://openreview.net/forum?id=nGCMLATBit">https://openreview.net/forum?id=nGCMLATBit</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>

@@ -53,7 +53,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-06-14-induction-heads-phase-change-copying.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-06-14-truth-directions-latent-knowledge.html">Start with the latest memo</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
                     <ul class="tag-list" aria-label="Note topics">
@@ -64,7 +64,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>14 published</strong>
+                            <strong>15 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -117,6 +117,7 @@
                             <span class="topic-chip">Length extrapolation</span>
                             <span class="topic-chip">Feature geometry</span>
                             <span class="topic-chip">Induction heads</span>
+                            <span class="topic-chip">Truth directions</span>
                         </div>
                     </section>
                 </div>
@@ -132,19 +133,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">June 14, 2026 / 14 min read</p>
+                            <h3>Can hidden states reveal what an LLM thinks is true?</h3>
+                            <p>
+                                A longer review of whether LLM hidden states linearly encode truth even when
+                                model outputs are false, misleading, or steered by bad prompts.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-06-14-truth-directions-latent-knowledge.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">June 14, 2026 / 19 min read</p>
                             <h3>Why induction heads emerge as a phase change</h3>
                             <p>
                                 A deeper review of the specific attention circuit that copies repeated patterns and why
                                 its sudden emergence tracks copy-based in-context learning.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-06-14-induction-heads-phase-change-copying.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-06-14-induction-heads-phase-change-copying.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">June 14, 2026 / 18 min read</p>
                             <h3>Why TruthfulQA shows inverse scaling</h3>
@@ -153,13 +164,6 @@
                                 TruthfulQA by better imitating human misconceptions.
                             </p>
                             <a class="inline-link" href="/blog/2026-06-14-truthfulqa-inverse-scaling-imitative-falsehoods.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">March 2, 2026 / 16 min read</p>
-                            <h3>DPO as implicit reward optimization under KL constraints</h3>
-                            <p>When Direct Preference Optimization is equivalent to KL-regularized reward optimization, and where it breaks.</p>
-                            <a class="inline-link" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">Open memo</a>
                         </article>
                     </div>
                 </div>
@@ -173,6 +177,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">June 14, 2026 / Alignment</p>
+                        <h3>Can hidden states reveal what an LLM thinks is true?</h3>
+                        <p>When latent truth directions survive misleading prompts, and where that evidence remains fragile.</p>
+                        <a class="inline-link" href="/blog/2026-06-14-truth-directions-latent-knowledge.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">June 14, 2026 / Interpretability</p>
                         <h3>Why induction heads emerge as a phase change</h3>
@@ -276,13 +287,17 @@
             <section class="section">
                 <div class="section-heading" data-reveal>
                     <p class="eyebrow">Topic log</p>
-                    <h2>Latest topic added to the running queue.</h2>
-                    <p>A lightweight log for keeping the memo stream diverse rather than circling the same mechanisms.</p>
+                    <h2>A running ledger of narrow questions.</h2>
+                    <p>Useful as a sanity check against repetition and as a map of what the memo series is actually circling.</p>
                 </div>
-                <article class="panel" data-reveal>
-                    <ul>
-                        <li><strong>June 14, 2026:</strong> Why induction heads emerge as a phase change: copy circuits, training dynamics, and the mechanistic onset of copy-based in-context learning.</li>
-                        <li><strong>June 14, 2026:</strong> Why TruthfulQA shows inverse scaling: imitative falsehoods, uncertainty, and the limits of scaling for truthfulness.</li>
+
+                <article class="card" data-reveal>
+                    <ul class="card-list">
+                        <li><strong>June 14, 2026:</strong> whether hidden-state truth directions remain readable when surface outputs are false.</li>
+                        <li><strong>June 14, 2026:</strong> why induction heads emerge as a phase change in copy-based in-context learning.</li>
+                        <li><strong>June 14, 2026:</strong> why TruthfulQA exhibits inverse scaling under stronger imitation of human misconceptions.</li>
+                        <li><strong>March 2, 2026:</strong> when DPO really is equivalent to KL-regularized reward optimization.</li>
+                        <li><strong>February 17, 2026:</strong> why layer norm placement changes transformer stability.</li>
                     </ul>
                 </article>
             </section>
