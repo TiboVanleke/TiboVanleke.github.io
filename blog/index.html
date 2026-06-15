@@ -53,7 +53,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-06-14-truth-directions-latent-knowledge.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html">Start with the latest memo</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
                     <ul class="tag-list" aria-label="Note topics">
@@ -64,7 +64,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>15 published</strong>
+                            <strong>16 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -118,6 +118,7 @@
                             <span class="topic-chip">Feature geometry</span>
                             <span class="topic-chip">Induction heads</span>
                             <span class="topic-chip">Truth directions</span>
+                            <span class="topic-chip">Reversal curse</span>
                         </div>
                     </section>
                 </div>
@@ -133,19 +134,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">June 15, 2026 / 17 min read</p>
+                            <h3>Why next-token prediction creates the reversal curse</h3>
+                            <p>
+                                A longer review of why autoregressive LLMs often fail to infer reverse facts
+                                from forward statements, and what that says about knowledge representation.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">June 14, 2026 / 14 min read</p>
                             <h3>Can hidden states reveal what an LLM thinks is true?</h3>
                             <p>
                                 A longer review of whether LLM hidden states linearly encode truth even when
                                 model outputs are false, misleading, or steered by bad prompts.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-06-14-truth-directions-latent-knowledge.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-06-14-truth-directions-latent-knowledge.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">June 14, 2026 / 19 min read</p>
                             <h3>Why induction heads emerge as a phase change</h3>
@@ -154,16 +165,6 @@
                                 its sudden emergence tracks copy-based in-context learning.
                             </p>
                             <a class="inline-link" href="/blog/2026-06-14-induction-heads-phase-change-copying.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 14, 2026 / 18 min read</p>
-                            <h3>Why TruthfulQA shows inverse scaling</h3>
-                            <p>
-                                A deeper review of why larger language models can become less truthful on
-                                TruthfulQA by better imitating human misconceptions.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-14-truthfulqa-inverse-scaling-imitative-falsehoods.html">Open memo</a>
                         </article>
                     </div>
                 </div>
@@ -177,6 +178,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">June 15, 2026 / Theory</p>
+                        <h3>Why next-token prediction creates the reversal curse</h3>
+                        <p>Why LLMs often learn directional factual retrieval without learning stable reverse access to the same relation.</p>
+                        <a class="inline-link" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">June 14, 2026 / Alignment</p>
                         <h3>Can hidden states reveal what an LLM thinks is true?</h3>
@@ -293,11 +301,11 @@
 
                 <article class="card" data-reveal>
                     <ul class="card-list">
+                        <li><strong>June 15, 2026:</strong> why next-token prediction learns directional fact retrieval but not stable reverse lookup.</li>
                         <li><strong>June 14, 2026:</strong> whether hidden-state truth directions remain readable when surface outputs are false.</li>
                         <li><strong>June 14, 2026:</strong> why induction heads emerge as a phase change in copy-based in-context learning.</li>
                         <li><strong>June 14, 2026:</strong> why TruthfulQA exhibits inverse scaling under stronger imitation of human misconceptions.</li>
                         <li><strong>March 2, 2026:</strong> when DPO really is equivalent to KL-regularized reward optimization.</li>
-                        <li><strong>February 17, 2026:</strong> why layer norm placement changes transformer stability.</li>
                     </ul>
                 </article>
             </section>
