@@ -58,6 +58,7 @@
     </script>
 </head>
 <body class="page-research">
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="site-shell">
         <header class="topbar" data-reveal>
             <a class="brand" href="/" aria-label="Tibo Vanleke home">
@@ -77,7 +78,7 @@
             </nav>
         </header>
 
-        <main class="site-main site-main--stack">
+        <main class="site-main site-main--stack" id="main">
             <section class="hero">
                 <div class="hero-main panel" data-reveal>
                     <p class="eyebrow">PhD candidate / Technical AI safety</p>
@@ -107,7 +108,7 @@
                             <span>Based in Brussels, collaborating broadly</span>
                         </div>
                         <div class="stat">
-                            <strong>12 notes</strong>
+                            <strong>16 notes</strong>
                             <span>Public memos spanning safety, theory, and interpretability</span>
                         </div>
                     </div>
@@ -244,15 +245,15 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
-                            <p class="card-meta">Latest note / March 2, 2026</p>
-                            <h3>DPO as implicit reward optimization under KL constraints</h3>
+                            <p class="card-meta">Latest note / June 15, 2026</p>
+                            <h3>Why next-token prediction creates the reversal curse</h3>
                             <p>
-                                A memo on when Direct Preference Optimization really matches
-                                KL-regularized reward optimization, and where that story breaks.
+                                A memo on why autoregressive models can learn directional factual retrieval
+                                without learning stable reverse access to the same relation.
                             </p>
                         </div>
                         <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">Read the memo</a>
+                            <a class="btn btn-primary" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html">Read the memo</a>
                             <a class="btn btn-secondary" href="/blog/">Browse all notes</a>
                         </div>
                     </article>
@@ -260,22 +261,22 @@
                     <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">Recent note</p>
-                            <h3>Pre-LN vs Post-LN</h3>
+                            <h3>Can hidden states reveal what an LLM thinks is true?</h3>
                             <p>
-                                Why layer norm placement changes gradient flow, residual amplification,
-                                and training stability in deep Transformers.
+                                Whether latent truth directions remain readable when surface outputs are
+                                false, misleading, or steered by bad prompts.
                             </p>
-                            <a class="inline-link" href="/blog/2026-02-17-pre-ln-post-ln-transformer-stability.html">Open the note</a>
+                            <a class="inline-link" href="/blog/2026-06-14-truth-directions-latent-knowledge.html">Open the note</a>
                         </article>
 
                         <article class="card" data-reveal>
                             <p class="card-meta">Recent note</p>
-                            <h3>Hard attention and Turing completeness</h3>
+                            <h3>Why induction heads emerge as a phase change</h3>
                             <p>
-                                A short guide to when Transformers become Turing complete and what those
-                                expressivity results actually buy us.
+                                A review of the copy circuit that appears abruptly during training and
+                                tracks the onset of copy-based in-context learning.
                             </p>
-                            <a class="inline-link" href="/blog/2026-02-16-hard-attention-turing-completeness-transformers.html">Open the note</a>
+                            <a class="inline-link" href="/blog/2026-06-14-induction-heads-phase-change-copying.html">Open the note</a>
                         </article>
                     </div>
                 </div>
@@ -423,7 +424,7 @@
 
         <footer class="footer">
             <span>Based in Belgium / Open to research collaboration</span>
-            <span>Refreshed March 2026</span>
+            <span>Refreshed June 2026</span>
         </footer>
     </div>
 </body>

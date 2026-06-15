@@ -29,6 +29,7 @@
     <script defer src="/assets/site.js"></script>
 </head>
 <body class="page-running">
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="site-shell">
         <header class="topbar" data-reveal>
             <a class="brand" href="/" aria-label="Tibo Vanleke home">
@@ -47,7 +48,7 @@
             </nav>
         </header>
 
-        <main class="site-main site-main--stack">
+        <main class="site-main site-main--stack" id="main">
             <section class="hero">
                 <div class="hero-main panel" data-reveal>
                     <p class="eyebrow">Running profile</p>
@@ -73,8 +74,8 @@
                             <span>3000m steeplechase personal best in Bruxelles on August 2, 2025</span>
                         </div>
                         <div class="stat">
-                            <strong>846</strong>
-                            <span>Current World Athletics ranking in the men's 3000m steeplechase</span>
+                            <strong>#858</strong>
+                            <span>World Athletics ranking in the men's 3000m steeplechase on June 15, 2026</span>
                         </div>
                         <div class="stat">
                             <strong>791</strong>
@@ -86,13 +87,17 @@
                 <div class="hero-side">
                     <figure class="portrait-card panel" data-reveal>
                         <div class="portrait-media portrait-media--landscape">
-                            <img
-                                src="/Running_in_pain.JPG"
-                                alt="Tibo Vanleke landing the water jump in a steeplechase race."
-                                width="1400"
-                                height="933"
-                                fetchpriority="high"
-                            >
+                            <picture>
+                                <source srcset="/assets/images/running-in-pain-1400.webp" type="image/webp">
+                                <img
+                                    src="/Running_in_pain.JPG"
+                                    alt="Tibo Vanleke landing the water jump in a steeplechase race."
+                                    width="1400"
+                                    height="933"
+                                    fetchpriority="high"
+                                    decoding="async"
+                                >
+                            </picture>
                         </div>
                         <figcaption class="portrait-caption">
                             <p class="eyebrow">Race image</p>
@@ -162,8 +167,8 @@
                             <h3>Official PBs, seasonal results, and world ranking progression.</h3>
                             <p>
                                 The World Athletics profile currently lists a 9:23.84 steeplechase personal
-                                best, a current world ranking of 846 in the men's 3000m steeplechase, and a
-                                best world ranking of 791.
+                                best, a world ranking of #858 in the men's 3000m steeplechase on June 15,
+                                2026, and a best recorded world ranking of 791.
                             </p>
                         </div>
                         <div class="button-row">
@@ -302,12 +307,17 @@
                 <div class="photo-grid">
                     <figure class="photo-card photo-card--wide" data-reveal>
                         <div class="photo-media photo-media--wide">
-                            <img
-                                src="/Running_in_pain.JPG"
-                                alt="Tibo Vanleke splashing through the water jump during a steeplechase race."
-                                width="1400"
-                                height="933"
-                            >
+                            <picture>
+                                <source srcset="/assets/images/running-in-pain-1400.webp" type="image/webp">
+                                <img
+                                    src="/Running_in_pain.JPG"
+                                    alt="Tibo Vanleke splashing through the water jump during a steeplechase race."
+                                    width="1400"
+                                    height="933"
+                                    loading="lazy"
+                                    decoding="async"
+                                >
+                            </picture>
                         </div>
                         <figcaption>
                             <p class="card-meta">Steeplechase</p>
@@ -317,12 +327,17 @@
 
                     <figure class="photo-card" data-reveal>
                         <div class="photo-media">
-                            <img
-                                src="/Running_side.jpeg"
-                                alt="Side-profile running photo of Tibo Vanleke striding on the track."
-                                width="1691"
-                                height="2542"
-                            >
+                            <picture>
+                                <source srcset="/assets/images/running-side-1100.webp" type="image/webp">
+                                <img
+                                    src="/Running_side.jpeg"
+                                    alt="Side-profile running photo of Tibo Vanleke striding on the track."
+                                    width="1691"
+                                    height="2542"
+                                    loading="lazy"
+                                    decoding="async"
+                                >
+                            </picture>
                         </div>
                         <figcaption>
                             <p class="card-meta">Stride</p>
@@ -332,12 +347,17 @@
 
                     <figure class="photo-card" data-reveal>
                         <div class="photo-media">
-                            <img
-                                src="/Running_steeple.jpg"
-                                alt="Tibo Vanleke clearing a barrier in stadium competition."
-                                width="533"
-                                height="799"
-                            >
+                            <picture>
+                                <source srcset="/assets/images/running-steeple-800.webp" type="image/webp">
+                                <img
+                                    src="/Running_steeple.jpg"
+                                    alt="Tibo Vanleke clearing a barrier in stadium competition."
+                                    width="533"
+                                    height="799"
+                                    loading="lazy"
+                                    decoding="async"
+                                >
+                            </picture>
                         </div>
                         <figcaption>
                             <p class="card-meta">Barrier rhythm</p>
@@ -347,12 +367,17 @@
 
                     <figure class="photo-card" data-reveal>
                         <div class="photo-media">
-                            <img
-                                src="/Running_podium.JPG"
-                                alt="Podium photo featuring Tibo Vanleke after competition."
-                                width="6000"
-                                height="4000"
-                            >
+                            <picture>
+                                <source srcset="/assets/images/running-podium-1600.webp" type="image/webp">
+                                <img
+                                    src="/Running_podium.JPG"
+                                    alt="Podium photo featuring Tibo Vanleke after competition."
+                                    width="6000"
+                                    height="4000"
+                                    loading="lazy"
+                                    decoding="async"
+                                >
+                            </picture>
                         </div>
                         <figcaption>
                             <p class="card-meta">After the race</p>
@@ -378,7 +403,7 @@
 
         <footer class="footer">
             <span>Official profiles plus race photography</span>
-            <span>Updated March 2026</span>
+            <span>Updated June 2026</span>
         </footer>
     </div>
 </body>

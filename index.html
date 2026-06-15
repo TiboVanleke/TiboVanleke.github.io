@@ -29,6 +29,7 @@
     <script defer src="/assets/site.js"></script>
 </head>
 <body class="page-landing">
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="site-shell">
         <header class="topbar" data-reveal>
             <a class="brand" href="/" aria-label="Tibo Vanleke home">
@@ -46,15 +47,15 @@
             </nav>
         </header>
 
-        <main class="site-main site-main--stack">
+        <main class="site-main site-main--stack" id="main">
             <section class="landing-hero">
                 <div class="landing-copy panel" data-reveal>
-                    <p class="eyebrow">Two main pages</p>
-                    <h1>One site, split between research and running.</h1>
+                    <p class="eyebrow">Personal website</p>
+                    <h1>Tibo Vanleke</h1>
                     <p class="lede">
-                        I wanted the website to feel clearer and more intentional: one path for my PhD,
-                        research notes, and professional profile, and another for athletics, results, and
-                        the rhythm that keeps long projects moving.
+                        AI safety researcher, PhD candidate at VUB, and steeplechase runner. The site splits
+                        cleanly into research, public notes, and the running profile that keeps the longer
+                        work honest.
                     </p>
                     <div class="button-row">
                         <a class="btn btn-primary" href="/research/">Open research &amp; PhD</a>
@@ -70,7 +71,7 @@
                             <span>3000m steeplechase personal best</span>
                         </div>
                         <div class="stat">
-                            <strong>12 notes</strong>
+                            <strong>16 notes</strong>
                             <span>Public memos on interpretability and safety</span>
                         </div>
                     </div>
@@ -112,6 +113,8 @@
                                 alt="Portrait of Tibo Vanleke smiling in a navy suit and tie."
                                 width="2636"
                                 height="2636"
+                                loading="lazy"
+                                decoding="async"
                             >
                         </figure>
                         <div class="route-copy">
@@ -135,12 +138,17 @@
 
                     <article class="route-card route-card--running panel" data-reveal>
                         <figure class="route-media">
-                            <img
-                                src="/Running_in_pain.JPG"
-                                alt="Tibo Vanleke clearing a water jump during a steeplechase race."
-                                width="1400"
-                                height="933"
-                            >
+                            <picture>
+                                <source srcset="/assets/images/running-in-pain-1400.webp" type="image/webp">
+                                <img
+                                    src="/Running_in_pain.JPG"
+                                    alt="Tibo Vanleke clearing a water jump during a steeplechase race."
+                                    width="1400"
+                                    height="933"
+                                    loading="lazy"
+                                    decoding="async"
+                                >
+                            </picture>
                         </figure>
                         <div class="route-copy">
                             <p class="eyebrow">Running</p>

@@ -25,6 +25,7 @@
     <script defer src="/assets/site.js"></script>
 </head>
 <body class="page-notes">
+    <a class="skip-link" href="#main">Skip to content</a>
     <div class="site-shell">
         <header class="topbar" data-reveal>
             <a class="brand" href="/" aria-label="Tibo Vanleke home">
@@ -35,15 +36,16 @@
                 </span>
             </a>
             <nav class="nav" aria-label="Primary">
-                <a href="/" data-nav>Home</a>
+                <a href="/" data-nav>Overview</a>
+                <a href="/research/" data-nav>Research</a>
                 <a href="/blog/" data-nav>Notes</a>
                 <a href="/running/" data-nav>Running</a>
                 <a href="/cv.pdf">CV</a>
-                <a href="mailto:tibo@vanleke.com">Contact</a>
+                <a href="/research/#contact">Contact</a>
             </nav>
         </header>
 
-        <main class="site-main">
+        <main class="site-main" id="main">
             <section class="hero">
                 <div class="hero-main panel" data-reveal>
                     <p class="eyebrow">Research notes</p>
@@ -54,6 +56,7 @@
                     </p>
                     <div class="button-row">
                         <a class="btn btn-primary" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html">Start with the latest memo</a>
+                        <a class="btn btn-minimal" href="/blog/2026-06-14-induction-heads-phase-change-copying.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
                     <ul class="tag-list" aria-label="Note topics">
