@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why next-token prediction creates the reversal curse | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why autoregressive LLMs often fail to infer B is A from training on A is B, and what that reveals about knowledge representation." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 18px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(800px 500px at 10% 0%, var(--bg-2), transparent 60%),
+                radial-gradient(700px 500px at 90% 10%, #fef3c7, transparent 55%),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why next-token prediction creates the reversal curse</h1>
+            <div class="meta">June 15, 2026 &#183; 17 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo examines a narrow but revealing failure mode in language models: if a model learns a fact in
+                the form "A is B," why does it often fail to answer the reversed query "Who is B?" Berglund et al.
+                (2023) named this the <em>reversal curse</em>. The phenomenon matters because it separates surface fluency
+                from a more basic kind of relational generalization. A model that truly stored a reversible association
+                between an entity and a description should often recover either side when prompted from the other. Yet
+                autoregressive LLMs frequently do not. My reading of the literature is that this is not just a quirky
+                benchmark artifact. It exposes a structural bias of next-token prediction: the training objective
+                strongly rewards modeling <em>p(B|A)</em> when text is written in that direction, but gives much weaker
+                pressure to model <em>p(A|B)</em> unless the reverse pattern also appears in data or context. The
+                reversal curse therefore says something fundamental about what a causal LM learns from text: it learns
+                directional conditionals extremely well, but it does not automatically convert them into symmetric,
+                query-robust knowledge.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Berglund et al. (2023), which demonstrated the effect both in controlled
+                finetuning experiments with fictitious facts and in prompting experiments on real-world celebrity
+                relations. Their key finding was stark: models can answer "Tom Cruise's mother is?" much more reliably
+                than "Mary Lee Pfeiffer's son is?" even though both names are individually known and the relation is
+                conceptually simple.
+            </p>
+            <p>
+                Two follow-up lines matter for interpretation. First, Grosse et al. (2023) studied generalization with
+                influence functions and found that training-example influence drops sharply when key phrase order is
+                flipped, which independently supports the idea that LLM knowledge is often stored in an order-sensitive
+                way rather than as an abstract bidirectional rule. Second, Zhang et al. (2024) argued that the training
+                objective itself is central: standard next-token prediction amplifies the curse, while more
+                bidirectional objectives such as autoregressive blank infilling can reduce it. Golovneva et al. (2024)
+                then pushed the mitigation idea further with reverse training, explicitly exposing the model to both
+                forward and reversed strings while preserving entity boundaries.
+            </p>
+            <p>
+                Together, these papers shift the question from "Do models sometimes fail on reverse lookup?" to "What
+                kind of representation is induced by causal language modeling, and why is it so asymmetric?"
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The core mechanism is easiest to see probabilistically. If pretraining repeatedly contains sentences
+                such as "Valentina Tereshkova was the first woman to travel to space," then next-token prediction gets
+                many gradient updates that help estimate continuations after the prefix "Valentina Tereshkova was..."
+                and perhaps after "the first woman to..." only insofar as that exact phrasing appears often enough. The
+                objective never directly says: from the fact that one string predicts the other, infer the reverse
+                conditional by logical closure.
+            </p>
+            <p>
+                In other words, causal LMs are excellent at sequence continuation, not guaranteed to build a
+                relation-centric database. If entity <em>A</em> usually appears before descriptor <em>B</em> in text, then
+                training concentrates probability mass on forward retrieval. Reverse retrieval requires either explicit
+                evidence, a separate learned schema for inverse relations, or enough in-context structure for the model
+                to reason on the fly. Berglund et al. showed the last case can happen: when "A is B" is placed
+                directly in context, models often can answer "Who is B?" correctly. That distinction is important. The
+                failure is not pure incapacity; it is a failure of what gets stored and made directly queryable by
+                pretraining.
+            </p>
+            <p>
+                This also explains why the curse is stronger for rare relations and long-tail entities. If the web
+                rarely phrases a fact in both directions, then the model has little incentive to compress both sides
+                into one abstract reversible representation. The learned knowledge remains tied to textual direction,
+                lexical surface form, and retrieval cueing.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the mechanism concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: fictitious fact finetuning.</strong> Berglund et al. fine-tuned models on
+                    synthetic statements such as "Uriah Hawthorne is the composer of Abyssal Melodies" and then tested
+                    both the trained direction and the reversed question. Models learned the trained direction but were
+                    often near chance on the reverse query. This is strong evidence because it strips away confounds
+                    from pretraining knowledge and world familiarity.
+                </li>
+                <li>
+                    <strong>Case study 2: objective-level mitigation.</strong> Zhang et al. report that GLM models
+                    trained with autoregressive blank infilling, where masked tokens can use both left and right
+                    context, are much more robust on reversed retrieval than causal next-token models trained on the
+                    same type of data. That result points away from "LLMs just do not understand inverse relations" and
+                    toward "the training objective determines which directions become directly accessible."
+                </li>
+            </ul>
+            <p>
+                Five crisp insights follow from the literature:
+            </p>
+            <ul>
+                <li><strong>Knowledge in LLMs is often conditional, not relational.</strong> The model may know how to continue a familiar string without storing an explicit reversible fact object.</li>
+                <li><strong>Autoregressive training bakes in directional asymmetry.</strong> If text usually presents facts one way, learning pressure is concentrated in that same direction.</li>
+                <li><strong>Reverse success in context does not imply reverse knowledge in weights.</strong> Models can reason over an explicit sentence they just saw, while still failing to retrieve the reverse relation from parametric memory.</li>
+                <li><strong>The curse is partly architectural-objective, not merely data scarcity.</strong> Bidirectional or reverse-aware objectives alleviate the problem without needing entirely new capabilities.</li>
+                <li><strong>This is a retrieval-shape problem with alignment consequences.</strong> Systems that appear factual may still be brittle when users query the same fact through an unfamiliar access path.</li>
+            </ul>
+            <p>
+                A useful extra observation is that the reversal curse is not really about simple logic in isolation. It
+                is about whether pretraining creates representations that are stable under paraphrase and inversion.
+                That puts it closer to robustness and knowledge access than to textbook deductive reasoning.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The benchmark setups are intentionally clean, which is a strength for causal diagnosis but a weakness
+                for external validity. Many real prompts include multiple cues, not just a bare inverse relation, and
+                those cues can rescue performance. So the curse should not be read as "LLMs cannot infer inverses at
+                all." It is better read as: absent supporting context, parametric retrieval is poorly conditioned on
+                the reverse query.
+            </p>
+            <p>
+                There is also an ambiguity between representation and search. A model might contain all the ingredients
+                needed for reverse lookup, but fail because decoding does not find the right path reliably. The
+                objective-based mitigation results make me think the storage story is primary, but retrieval dynamics
+                still matter. Finally, most published experiments concern binary relation pairs or short descriptive
+                facts. Harder structures, like compositional relations or multi-hop inverse retrieval, remain less
+                mapped.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                One promising direction is to separate three candidate causes more carefully: asymmetric data
+                frequency, asymmetric objective pressure, and asymmetric entity representation. Objective-level
+                mitigations already suggest that bidirectional prediction helps, but it remains unclear how much of the
+                gain comes from better relational abstraction versus simply seeing more reverse-format strings.
+            </p>
+            <p>
+                Another direction is mechanistic: where exactly is the asymmetry encoded? Is the relevant limitation in
+                early token-level binding, in mid-layer factual recall, or near the output head where one query form
+                maps more easily to a name than the other? That is the kind of question circuit-level analysis could
+                make precise.
+            </p>
+            <p>
+                For alignment, the important application is evaluation. Truthfulness audits should not only ask whether
+                a model knows a fact under the most common wording; they should ask whether knowledge survives changes
+                in direction, paraphrase, and entity-description order. A model that fails those tests is epistemically
+                more brittle than raw benchmark accuracy suggests.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we design a training objective that preserves the scaling and
+                generation advantages of causal next-token modeling while inducing genuinely relation-centric, order-robust
+                factual representations?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The reversal curse is one of the clearest signs that LLM knowledge is often organized around directional
+                prediction rather than abstract relational access. Berglund et al. exposed the failure behavior,
+                influence-function work reinforced that it reflects real generalization asymmetry, and later mitigation
+                papers showed that changing the training objective can reduce the effect. The deeper lesson is not that
+                models are bad at a party trick. It is that next-token prediction alone does not force knowledge to be
+                query-invariant. For alignment and reliability, that matters: users do not always ask facts in the
+                direction the internet happened to write them.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Berglund et al. "The Reversal Curse: LLMs trained on 'A is B' fail to learn 'B is A'." 2023.
+                    <a href="https://arxiv.org/abs/2309.12288">https://arxiv.org/abs/2309.12288</a>
+                </li>
+                <li>
+                    Auxiliary: Grosse et al. "Studying Large Language Model Generalization with Influence Functions." 2023.
+                    <a href="https://arxiv.org/abs/2308.03296">https://arxiv.org/abs/2308.03296</a>
+                </li>
+                <li>
+                    Auxiliary: Zhang et al. "An Analysis and Mitigation of the Reversal Curse." EMNLP 2024.
+                    <a href="https://aclanthology.org/2024.emnlp-main.754/">https://aclanthology.org/2024.emnlp-main.754/</a>
+                </li>
+                <li>
+                    Auxiliary: Golovneva et al. "Reverse Training to Nurse the Reversal Curse." COLM 2024.
+                    <a href="https://openreview.net/forum?id=HDkNbfLQgu">https://openreview.net/forum?id=HDkNbfLQgu</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
