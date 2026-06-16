@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why self-consistency decoding improves reasoning | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why sampling multiple chains of thought and voting on the answer often outperforms greedy decoding on reasoning tasks." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why self-consistency decoding improves reasoning</h1>
+            <div class="meta">June 16, 2026 &#183; 18 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                This memo examines one narrow inference-time question: why does <em>self-consistency</em> decoding,
+                which samples multiple reasoning traces and then chooses the most common final answer, work so much
+                better than greedy chain-of-thought decoding on many reasoning tasks? Wang et al. (2022) showed that
+                the gain is large and robust: on top of chain-of-thought prompting, self-consistency substantially
+                improves arithmetic and commonsense benchmarks without any weight updates. The mechanism is often
+                described casually as "majority vote," but that undersells what is happening. The more precise view is
+                that chain-of-thought introduces a latent variable, the hidden reasoning path, and greedy decoding makes
+                a brittle single-sample decision about it. Self-consistency instead approximates marginalization over
+                several plausible reasoning paths and then extracts the answer that remains stable across them. On
+                problems with one correct endpoint but many acceptable paths, that is exactly the right bias. My read of
+                the literature is that self-consistency works not because language models become better reasoners in one
+                shot, but because sampling exposes internal redundancy: the model already contains multiple partially
+                competent trajectories, and answer-level aggregation recovers the signal that any one trajectory may miss.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Wang et al. (2022), which introduced self-consistency as a decoding replacement
+                for greedy chain-of-thought prompting. Their framing is simple but important: instead of forcing the
+                model to commit to the single highest-probability reasoning continuation, sample diverse chains and
+                select the answer that is most consistent across them.
+            </p>
+            <p>
+                That paper sits directly on top of three earlier shifts. First, Wei et al. (2022) showed that
+                chain-of-thought prompting can elicit multi-step reasoning with a few exemplars. Second, Kojima et al.
+                (2022) showed that even zero-shot prompts like "Let's think step by step" can expose similar latent
+                reasoning structure. Third, STaR (Zelikman et al., 2022) made clear that reasoning traces are not just a
+                presentation format; they can be treated as useful intermediate objects that improve downstream answer
+                quality. Self-consistency belongs to this same family, but its contribution is narrower and cleaner: it
+                changes only decoding, not prompts, data, or parameters.
+            </p>
+            <p>
+                That narrowness is exactly why the result matters. If reasoning performance jumps after changing only
+                the inference rule, then part of the "reasoning problem" is really an aggregation problem over noisy
+                latent trajectories rather than a pure capability deficit.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The core mechanism is easiest to express as a latent-variable story. Let a question <em>x</em> admit many
+                possible reasoning paths <em>r</em>, each of which may terminate in an answer <em>y</em>. Standard greedy
+                chain-of-thought effectively picks one high-probability path and inherits whatever local mistake that
+                path makes. Self-consistency instead samples multiple paths from the model, then approximates the answer
+                distribution by aggregating over those paths. In the Wang et al. formulation, the final answer is chosen
+                by marginalizing the latent reasoning paths rather than trusting a single decoded rationale.
+            </p>
+            <p>
+                Why should this help? Because reasoning traces are high-entropy objects. There are usually many valid
+                ways to solve a problem, but only a small number of final answers, often exactly one. That means path
+                diversity can be healthy even when token-level agreement is low. Greedy decoding is optimized for local
+                likelihood, which often favors fluent but brittle continuations. Sampling allows the model to explore
+                alternative decompositions, intermediate checks, or equation orderings. Once those paths are projected
+                down to an answer, correct solutions can reinforce one another while idiosyncratic mistakes cancel out.
+            </p>
+            <p>
+                This also explains why self-consistency helps more on multi-step reasoning than on ordinary factual
+                recall. The method is most valuable when there is a one-to-many map from answer to rationale. If the
+                task has little latent reasoning structure, multiple samples mostly waste compute. But if the task has
+                many semantically distinct valid derivations, answer-level consensus becomes an effective denoiser.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two concrete case studies make the mechanism visible:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: GSM8K arithmetic.</strong> Wang et al. report a large gain on GSM8K from
+                    replacing greedy chain-of-thought with self-consistency. This is a canonical setting where several
+                    natural language derivations can encode the same arithmetic structure. One sample may misread a
+                    subtraction step, another may make a formatting mistake, but several independent paths still converge
+                    on the same numeric answer. Aggregation recovers that convergence.
+                </li>
+                <li>
+                    <strong>Case study 2: StrategyQA commonsense reasoning.</strong> The gain is smaller than on GSM8K but
+                    still meaningful. That contrast is informative. Commonsense tasks often have less rigidly checkable
+                    step sequences than arithmetic, so path diversity helps less dramatically. Self-consistency still
+                    improves results, but the margin shrinks when the latent path space is less tightly anchored to a
+                    unique derivation.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow from the literature:
+            </p>
+            <ul>
+                <li><strong>Self-consistency is better understood as marginalization than as voting.</strong> The important move is not democracy over strings; it is integrating over noisy latent rationales.</li>
+                <li><strong>Greedy decoding is a poor default for reasoning traces.</strong> Token-level probability can prefer a locally fluent path that is globally fragile.</li>
+                <li><strong>The method exploits redundancy already present in model weights.</strong> No new reasoning skill is added; inference simply becomes better at extracting stable answers from multiple partial trajectories.</li>
+                <li><strong>Task structure determines the upside.</strong> The more a task permits many valid paths to one answer, the more self-consistency should help.</li>
+            </ul>
+            <p>
+                A fifth insight is more practical than theoretical: self-consistency revealed early that "reasoning"
+                benchmarks often confound capability with search. When a method improves performance without changing
+                the model, it weakens any story that attributes the original failure entirely to missing knowledge.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                Self-consistency is expensive. It trades one forward pass for many, so the gain is bought with extra
+                latency and token cost. That matters because a decoding trick that is attractive in a paper may be less
+                attractive in a production system constrained by throughput.
+            </p>
+            <p>
+                It is also not a truth guarantee. If the model's sampled paths share the same misconception, then
+                consensus only makes the error more confident. In that sense, self-consistency improves variance more
+                reliably than bias. It reduces sensitivity to one unlucky trajectory, but it does not repair systematic
+                hallucinations or flawed world models.
+            </p>
+            <p>
+                Finally, answer aggregation throws away rationale quality. Two paths that reach the same answer are
+                treated as equally supportive even if one is coherent and the other is spurious. Later work on verifier
+                models and process supervision can be read as attempts to keep the diversity benefit of self-consistency
+                while becoming more selective about which paths count.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The natural next question is when consensus should happen at the answer level versus the rationale
+                level. Majority vote over final answers is cheap and robust, but it ignores whether the intermediate
+                path is faithful. A more principled system might weight samples by internal consistency, execution
+                checks, or external verification.
+            </p>
+            <p>
+                Another direction is adaptive sampling. Wang et al. show that multiple samples help, but not every query
+                needs the same budget. Ideally, the model would detect when the answer distribution is already sharp and
+                stop early, or continue sampling only when the candidate answers remain unstable.
+            </p>
+            <p>
+                For alignment, the deeper issue is interpretability of search. If reasoning quality depends heavily on
+                how many latent trajectories we sample and how we aggregate them, then evaluation should separate model
+                competence from decoding policy more explicitly. A benchmark score under one-sample greedy decoding is
+                not a complete measure of what the underlying model "knows how" to do.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we design an inference rule that keeps self-consistency's robustness to
+                path noise while rewarding only those reasoning traces that are both answer-correct and causally
+                faithful?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Self-consistency works because chain-of-thought reasoning is a noisy latent-path problem, and greedy
+                decoding is a brittle way to solve it. Sampling several paths and aggregating at the answer level lets
+                correct trajectories reinforce one another while many local reasoning mistakes wash out. The primary
+                paper showed this cleanly across arithmetic and commonsense benchmarks, and adjacent work on CoT,
+                zero-shot reasoning, and STaR helps explain why the effect appears: language models often already hold
+                multiple useful reasoning trajectories, but standard decoding exposes only one. The broader lesson is
+                that some apparent reasoning failures are really inference failures. Changing the search rule can reveal
+                more of the capability that was already there.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Wang et al. "Self-Consistency Improves Chain of Thought Reasoning in Language Models." ICLR 2023.
+                    <a href="https://arxiv.org/abs/2203.11171">https://arxiv.org/abs/2203.11171</a>
+                </li>
+                <li>
+                    Auxiliary: Wei et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." NeurIPS 2022.
+                    <a href="https://arxiv.org/abs/2201.11903">https://arxiv.org/abs/2201.11903</a>
+                </li>
+                <li>
+                    Auxiliary: Kojima et al. "Large Language Models are Zero-Shot Reasoners." NeurIPS 2022.
+                    <a href="https://arxiv.org/abs/2205.11916">https://arxiv.org/abs/2205.11916</a>
+                </li>
+                <li>
+                    Auxiliary: Zelikman et al. "STaR: Bootstrapping Reasoning With Reasoning." NeurIPS 2022.
+                    <a href="https://arxiv.org/abs/2203.14465">https://arxiv.org/abs/2203.14465</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
