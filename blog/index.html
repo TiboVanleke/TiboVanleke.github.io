@@ -55,8 +55,8 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html">Start with the latest memo</a>
-                        <a class="btn btn-minimal" href="/blog/2026-06-14-induction-heads-phase-change-copying.html" data-random-note>Surprise me</a>
+                        <a class="btn btn-primary" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html">Start with the latest memo</a>
+                        <a class="btn btn-minimal" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
                     <ul class="tag-list" aria-label="Note topics">
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>16 published</strong>
+                            <strong>17 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -114,13 +114,13 @@
                         <p class="eyebrow">Recent focus</p>
                         <h2 class="panel-title">A few themes keep resurfacing.</h2>
                         <div class="topic-cloud">
+                            <span class="topic-chip">Self-consistency</span>
                             <span class="topic-chip">Preference optimization</span>
                             <span class="topic-chip">Layer norm placement</span>
                             <span class="topic-chip">Truthfulness</span>
                             <span class="topic-chip">Length extrapolation</span>
                             <span class="topic-chip">Feature geometry</span>
                             <span class="topic-chip">Induction heads</span>
-                            <span class="topic-chip">Truth directions</span>
                             <span class="topic-chip">Reversal curse</span>
                         </div>
                     </section>
@@ -137,19 +137,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">June 16, 2026 / 18 min read</p>
+                            <h3>Why self-consistency decoding improves reasoning</h3>
+                            <p>
+                                A longer review of why sampling multiple chains of thought and aggregating their
+                                answers often beats greedy decoding on reasoning tasks.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">June 15, 2026 / 17 min read</p>
                             <h3>Why next-token prediction creates the reversal curse</h3>
                             <p>
                                 A longer review of why autoregressive LLMs often fail to infer reverse facts
                                 from forward statements, and what that says about knowledge representation.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">June 14, 2026 / 14 min read</p>
                             <h3>Can hidden states reveal what an LLM thinks is true?</h3>
@@ -158,16 +168,6 @@
                                 model outputs are false, misleading, or steered by bad prompts.
                             </p>
                             <a class="inline-link" href="/blog/2026-06-14-truth-directions-latent-knowledge.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 14, 2026 / 19 min read</p>
-                            <h3>Why induction heads emerge as a phase change</h3>
-                            <p>
-                                A deeper review of the specific attention circuit that copies repeated patterns and why
-                                its sudden emergence tracks copy-based in-context learning.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-14-induction-heads-phase-change-copying.html">Open memo</a>
                         </article>
                     </div>
                 </div>
@@ -181,6 +181,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">June 16, 2026 / Reasoning</p>
+                        <h3>Why self-consistency decoding improves reasoning</h3>
+                        <p>Why sampling several chains of thought and aggregating answers approximates marginalization over noisy reasoning paths.</p>
+                        <a class="inline-link" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">June 15, 2026 / Theory</p>
                         <h3>Why next-token prediction creates the reversal curse</h3>
@@ -304,6 +311,7 @@
 
                 <article class="card" data-reveal>
                     <ul class="card-list">
+                        <li><strong>June 16, 2026:</strong> why sampling several chains of thought and aggregating answers improves reasoning without changing model weights.</li>
                         <li><strong>June 15, 2026:</strong> why next-token prediction learns directional fact retrieval but not stable reverse lookup.</li>
                         <li><strong>June 14, 2026:</strong> whether hidden-state truth directions remain readable when surface outputs are false.</li>
                         <li><strong>June 14, 2026:</strong> why induction heads emerge as a phase change in copy-based in-context learning.</li>
