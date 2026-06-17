@@ -55,8 +55,8 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html">Start with the latest memo</a>
-                        <a class="btn btn-minimal" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html" data-random-note>Surprise me</a>
+                        <a class="btn btn-primary" href="/blog/2026-06-17-why-attention-sinks-stabilize-long-context-decoding.html">Start with the latest memo</a>
+                        <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
                     <ul class="tag-list" aria-label="Note topics">
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>17 published</strong>
+                            <strong>18 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -122,6 +122,7 @@
                             <span class="topic-chip">Feature geometry</span>
                             <span class="topic-chip">Induction heads</span>
                             <span class="topic-chip">Reversal curse</span>
+                            <span class="topic-chip">Attention sinks</span>
                         </div>
                     </section>
                 </div>
@@ -137,19 +138,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">June 17, 2026 / 18 min read</p>
+                            <h3>Why attention sinks stabilize long-context decoding</h3>
+                            <p>
+                                A longer review of why autoregressive transformers learn sink tokens, why
+                                preserving them rescues streaming inference, and what that reveals about softmax attention.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-06-17-why-attention-sinks-stabilize-long-context-decoding.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">June 16, 2026 / 18 min read</p>
                             <h3>Why self-consistency decoding improves reasoning</h3>
                             <p>
                                 A longer review of why sampling multiple chains of thought and aggregating their
                                 answers often beats greedy decoding on reasoning tasks.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">June 15, 2026 / 17 min read</p>
                             <h3>Why next-token prediction creates the reversal curse</h3>
@@ -158,16 +169,6 @@
                                 from forward statements, and what that says about knowledge representation.
                             </p>
                             <a class="inline-link" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 14, 2026 / 14 min read</p>
-                            <h3>Can hidden states reveal what an LLM thinks is true?</h3>
-                            <p>
-                                A longer review of whether LLM hidden states linearly encode truth even when
-                                model outputs are false, misleading, or steered by bad prompts.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-14-truth-directions-latent-knowledge.html">Open memo</a>
                         </article>
                     </div>
                 </div>
@@ -181,6 +182,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">June 17, 2026 / Mechanism</p>
+                        <h3>Why attention sinks stabilize long-context decoding</h3>
+                        <p>Why a few early tokens absorb surplus attention mass and become necessary for stable streaming inference.</p>
+                        <a class="inline-link" href="/blog/2026-06-17-why-attention-sinks-stabilize-long-context-decoding.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">June 16, 2026 / Reasoning</p>
                         <h3>Why self-consistency decoding improves reasoning</h3>
@@ -311,12 +319,12 @@
 
                 <article class="card" data-reveal>
                     <ul class="card-list">
+                        <li><strong>June 17, 2026:</strong> why long-context decoding depends on early attention sinks that absorb surplus softmax mass.</li>
                         <li><strong>June 16, 2026:</strong> why sampling several chains of thought and aggregating answers improves reasoning without changing model weights.</li>
                         <li><strong>June 15, 2026:</strong> why next-token prediction learns directional fact retrieval but not stable reverse lookup.</li>
                         <li><strong>June 14, 2026:</strong> whether hidden-state truth directions remain readable when surface outputs are false.</li>
                         <li><strong>June 14, 2026:</strong> why induction heads emerge as a phase change in copy-based in-context learning.</li>
                         <li><strong>June 14, 2026:</strong> why TruthfulQA exhibits inverse scaling under stronger imitation of human misconceptions.</li>
-                        <li><strong>March 2, 2026:</strong> when DPO really is equivalent to KL-regularized reward optimization.</li>
                     </ul>
                 </article>
             </section>

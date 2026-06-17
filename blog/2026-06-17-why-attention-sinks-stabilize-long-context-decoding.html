@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why attention sinks stabilize long-context decoding | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why autoregressive transformers develop attention sinks, why keeping them restores long-context decoding, and what that reveals about softmax attention." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why attention sinks stabilize long-context decoding</h1>
+            <div class="meta">June 17, 2026 &#183; 18 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                One of the strangest facts about modern autoregressive transformers is that a handful of semantically
+                unimportant early tokens can become operationally indispensable. Remove them from the KV cache during
+                long-context decoding and perplexity spikes; keep them and the model remains stable far beyond its
+                nominal context window. Xiao et al. (2023) named these tokens <em>attention sinks</em>. The narrow
+                question in this memo is not whether sinks are useful in practice, but why they appear at all. My
+                reading of the literature is that attention sinks are a structural byproduct of softmax attention in
+                residual architectures: every head must allocate probability mass somewhere, even when no past token is
+                semantically worth attending to, so models learn special positions that absorb this surplus mass with
+                minimal disruption to the value stream. That makes sinks look less like memory slots and more like
+                normalization valves. The deeper consequence is conceptual. Long-context behavior is partly stabilized
+                not by better semantic retention, but by a learned mechanism for safely dumping unavoidable attention.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The central source is Xiao et al. (2023), introduced as StreamingLLM. Their headline result was
+                practical: sliding-window decoding breaks once the prompt length exceeds the cache, but performance is
+                largely restored by preserving only the most recent tokens plus a few initial tokens. The paper argues
+                that those early tokens become universal attention recipients even when they contain little semantic
+                content, which is why evicting them destabilizes decoding.
+            </p>
+            <p>
+                Later work made the mechanism more explicit. Bondarenko et al. (2023) studied activation outliers in
+                transformers and argued that some heads effectively try to perform a no-op residual update; under
+                softmax, achieving an exact no-op is awkward because attention weights must still sum to one, so the
+                network drives certain logits to extreme values. Wan et al. (2025) then investigated when attention
+                sink emerges during pretraining and found that it appears after effective optimization on sufficient
+                data, can shift to other positions when the data distribution changes, and weakens when softmax is
+                replaced by non-normalized alternatives. Zhai et al. (2023), while not about sinks directly, provide a
+                useful adjacent lens: sharp, low-entropy attention distributions are a recurrent optimization tendency
+                in transformers rather than an isolated artifact.
+            </p>
+            <p>
+                Taken together, these papers suggest that the sink is not a quirky prompt hack. It is a learned answer
+                to a persistent optimization constraint created by normalized attention.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The mechanism starts from an asymmetry in the attention computation. Softmax enforces that each query
+                distributes one unit of probability mass across previous keys. But many decoding steps do not truly
+                need external information from all heads. Some heads, at some layers, would ideally contribute almost
+                nothing. In a residual architecture, the cleanest behavior for such a head is to leave the residual
+                stream mostly unchanged.
+            </p>
+            <p>
+                Softmax makes that awkward. A head cannot literally attend to nobody. It must put weight somewhere.
+                The model therefore benefits from creating token positions whose values are relatively harmless and
+                whose keys reliably attract leftover attention. Early sequence positions are convenient for that role:
+                they are globally visible, stable across examples, and often weak in semantic content compared with the
+                task-relevant middle context. Over training, those positions accumulate large attention scores and can
+                develop unusually large hidden-state norms or key biases, making them persistent recipients of
+                otherwise wasted mass.
+            </p>
+            <p>
+                This also explains why the sink matters specifically for streaming. In ordinary full-context decoding,
+                the sink token remains present, so the head can continue dumping excess mass there. In naive windowed
+                decoding, that token gets evicted. The head is then forced to redirect its mass onto recent tokens that
+                actually carry content, causing unwanted mixing and degraded predictions. Preserving a few initial
+                tokens keeps the learned pressure-release path intact.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the story concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: retain 4 initial tokens, recover long-context decoding.</strong> In
+                    StreamingLLM, standard sliding-window decoding degrades badly once the sequence exceeds the cache
+                    length. But retaining just the first few tokens alongside the recent window largely restores
+                    perplexity and enables stable decoding into the millions of tokens. That is hard to explain unless
+                    those initial tokens are functionally special.
+                </li>
+                <li>
+                    <strong>Case study 2: the sink can move if training changes the privileged position.</strong> Wan
+                    et al. show that if a fixed token is placed consistently in position two or three during training,
+                    the sink shifts there rather than remaining on the literal first token. This is strong evidence
+                    against the idea that the sink is only a BOS-token quirk. The model is learning a role, not merely
+                    inheriting a fixed token identity.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Attention sinks are more like normalization infrastructure than semantic memory.</strong> Their job is often to absorb excess score mass, not store task content.</li>
+                <li><strong>The phenomenon is induced by the objective-mechanism pair, not just by prompt format.</strong> It emerges during successful pretraining and weakens when attention normalization is changed.</li>
+                <li><strong>Long-context failure under window eviction is partly self-inflicted.</strong> Removing sinks does not just remove old information; it breaks a learned way of avoiding harmful mixing.</li>
+                <li><strong>The sink is positional but not intrinsically first-token-specific.</strong> Training can relocate it, which means evaluations should distinguish role from location.</li>
+            </ul>
+            <p>
+                A fifth insight matters for alignment-adjacent reasoning: if some internal machinery exists mainly to
+                route around architectural constraints, then interpreting attention maps naively is risky. High
+                attention on a token does not always mean high semantic relevance. Sometimes it means "this is where
+                the model safely dumps unavoidable probability."
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The current evidence is persuasive but not fully unified. StreamingLLM established the phenomenon
+                functionally, while later papers isolate candidate causes such as key bias, hidden-state outliers, and
+                softmax normalization. These stories are compatible, but not yet reduced to one compact theorem that
+                covers realistic LLMs. There is still a gap between simple mechanistic explanations and the exact
+                behavior of large production architectures with RoPE, grouped-query attention, and finetuning.
+            </p>
+            <p>
+                There is also a measurement issue. Attention weight concentration, activation outliers, and sink
+                usefulness are related but not identical notions. A model may display one strongly and another weakly.
+                Finally, most sink analyses focus on language modeling loss or perplexity recovery. We know less about
+                how sink preservation affects downstream reasoning quality, truthfulness, or safety behavior under very
+                long adversarial contexts.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                One obvious direction is architectural: can we design attention mechanisms that let a head represent
+                "attend to nobody" directly, instead of forcing it to learn a sink token? That would test whether sinks
+                are an optimization crutch or an actually useful inductive bias. Non-normalized or rectified attention
+                variants are one route, but they need to preserve the robustness that softmax still provides.
+            </p>
+            <p>
+                A second direction is interpretability. It should be possible to separate semantically meaningful heads
+                from sink-dependent heads using causal interventions rather than raw attention maps. That would sharpen
+                mechanistic analyses of long-context reasoning and reduce overinterpretation of visually salient early
+                tokens.
+            </p>
+            <p>
+                For evaluation, I would also like to see long-context benchmarks report whether performance depends on
+                preserving designated sink tokens. If so, "effective context length" is partly a property of cache
+                policy, not just the pretrained model.
+            </p>
+            <p>
+                <strong>Open question:</strong> can transformers be given an explicit low-distortion no-op pathway that
+                removes the need for attention sinks without sacrificing the optimization stability that made them
+                emerge in the first place?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Attention sinks look accidental at first, but the literature suggests they are an adaptive response to
+                a real constraint of softmax attention. StreamingLLM showed that keeping a few early sink tokens can
+                rescue long-context decoding; Bondarenko et al. linked related outliers to heads trying to do nothing;
+                Wan et al. showed sink behavior emerges through training and can move when the data distribution
+                changes. The common lesson is that some transformer internals are best understood as control systems for
+                the architecture itself, not as clean representations of meaning. In long-context LLMs, stable
+                generation sometimes depends on preserving that internal plumbing.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Xiao et al. "Efficient Streaming Language Models with Attention Sinks." ICLR 2024.
+                    <a href="https://arxiv.org/abs/2309.17453">https://arxiv.org/abs/2309.17453</a>
+                </li>
+                <li>
+                    Auxiliary: Bondarenko et al. "Quantizable Transformers: Removing Outliers by Helping Attention Heads Do Nothing." NeurIPS 2023.
+                    <a href="https://arxiv.org/abs/2306.12929">https://arxiv.org/abs/2306.12929</a>
+                </li>
+                <li>
+                    Auxiliary: Wan et al. "When Attention Sink Emerges in Language Models: An Empirical View." ICLR 2025.
+                    <a href="https://proceedings.iclr.cc/paper_files/paper/2025/file/f1b04face60081b689ba740d39ea8f37-Paper-Conference.pdf">https://proceedings.iclr.cc/paper_files/paper/2025/file/f1b04face60081b689ba740d39ea8f37-Paper-Conference.pdf</a>
+                </li>
+                <li>
+                    Auxiliary: Zhai et al. "Stabilizing Transformer Training by Preventing Attention Entropy Collapse." ICML 2023.
+                    <a href="https://arxiv.org/abs/2303.06296">https://arxiv.org/abs/2303.06296</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
