@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why SwiGLU replaced standard Transformer MLPs | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why SwiGLU-style gated feed-forward blocks outperform standard ReLU and GELU MLPs in Transformers, and what that implies about conditional computation inside LLMs." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why SwiGLU replaced standard Transformer MLPs</h1>
+            <div class="meta">June 23, 2026 &#183; 17 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                A surprisingly durable design choice in modern language models is that many of them no longer use a
+                plain ReLU or GELU feed-forward block. Instead, they use a gated variant such as SwiGLU. The narrow
+                question in this memo is why that change keeps surviving contact with scale. My reading is that
+                SwiGLU helps because it turns the Transformer MLP from a simple pointwise expansion-and-compression
+                block into a lightweight conditional-computation module. One pathway proposes a feature to write into
+                the residual stream, and a second pathway decides how strongly that feature should pass through. The
+                smooth Swish gate then makes that routing decision without the brittle thresholding of ReLU. The result
+                is not merely a parameter-count artifact. Even under compute-matched comparisons, gated MLPs seem to
+                use width more selectively and make each FFN update more context dependent.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The central source is Shazeer (2020), which tested several gated feed-forward variants inside a
+                T5-style Transformer and found that GEGLU and SwiGLU beat both ReLU and GELU on pretraining
+                perplexity. That result matters because the comparison was parameter matched: the gated blocks use
+                three weight matrices instead of two, so Shazeer reduced the hidden width to keep the total budget
+                fixed. The improvement therefore cannot be dismissed as simply "more parameters."
+            </p>
+            <p>
+                A useful precursor is Dauphin et al. (2017), which introduced GLU in gated convolutional language
+                models and argued that multiplicative gates create a more direct gradient path than conventional
+                nonlinearities. Modern LLM papers then turned the empirical win into a default architectural choice.
+                PaLM explicitly uses SwiGLU in its dense Transformer blocks, and LLaMA keeps the same family of gated
+                MLPs. That sequence is instructive: the original evidence came from a relatively controlled
+                architecture study, and later large-scale model builders kept the change after scaling everything else.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                In a standard Transformer FFN, the residual stream is projected up, passed through an activation such
+                as ReLU or GELU, and projected back down. SwiGLU changes that structure by splitting the expanded
+                representation into two learned pathways. One projection creates a candidate feature vector. The other
+                creates a gate. After a Swish nonlinearity is applied to the gate side, the two vectors are multiplied
+                elementwise before the final projection returns the result to model width.
+            </p>
+            <p>
+                That simple product changes the role of the MLP. A plain GELU block says, roughly, "expand features,
+                squash them independently, then compress." A SwiGLU block says, "expand a candidate feature, but only
+                let it flow when another learned signal says this context should activate it." In other words, content
+                and selection are partially separated. That is valuable in language modeling because many useful
+                computations are conditional: a feature should fire only for certain syntactic, semantic, or positional
+                contexts, not for every token that weakly matches it.
+            </p>
+            <p>
+                The Swish gate also matters. ReLU makes hard zero-or-positive decisions. GELU softens that, but still
+                treats each neuron as a single transformed channel. SwiGLU adds a second channel whose magnitude can
+                attenuate or amplify the candidate feature continuously. This creates a richer local interaction while
+                preserving a relatively direct gradient route through the multiplicative structure.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the mechanism concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: T5-style controlled comparisons.</strong> In Shazeer's experiments, GEGLU and
+                    SwiGLU produced the best held-out log-perplexities among the tested FFN variants, despite matching
+                    parameter count and computation against the ReLU baseline. This is the cleanest evidence that the
+                    gain comes from representational structure rather than scale alone.
+                </li>
+                <li>
+                    <strong>Case study 2: persistence in large open and closed LLM families.</strong> PaLM and LLaMA both
+                    retain gated MLP variants in model families built for very different scales and training regimes.
+                    That is strong external validation that the advantage survives inside frontier-scale training
+                    pipelines.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>SwiGLU makes FFNs more conditional.</strong> The extra gate lets the model decide when a candidate feature should matter, not just what the feature is.</li>
+                <li><strong>Multiplicative routing can outperform extra width.</strong> When compute is held fixed, a narrower gated block can beat a wider ungated one.</li>
+                <li><strong>Smooth gates appear friendlier to optimization than hard thresholds.</strong> Swish-based gating preserves nuanced gradient signals that ReLU-style truncation discards.</li>
+                <li><strong>The MLP is doing more than tokenwise feature expansion.</strong> In practice it behaves more like a context-sensitive write operation into the residual stream.</li>
+            </ul>
+            <p>
+                One way to summarize the empirical picture is that SwiGLU increases the expressivity of each FFN layer
+                without requiring the model to widen everything indiscriminately. For LLMs, where feed-forward blocks
+                dominate parameter count and a large share of flops, that is a highly leveraged trade.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The evidence is still more empirical than mechanistic. Shazeer's paper showed consistent improvements,
+                but not a decomposition proving which part of the gain comes from gating, which part from the specific
+                Swish nonlinearity, and which part from changed optimization dynamics over long training runs. The
+                adoption of SwiGLU in PaLM- and LLaMA-style models is suggestive, but those reports bundle many other
+                architectural decisions together.
+            </p>
+            <p>
+                There is also a measurement problem. Better perplexity does not automatically tell us whether gated MLPs
+                produce sparser features, more stable gradients, cleaner specialization across neurons, or just a more
+                favorable loss landscape. The gain may also depend on scale, normalization scheme, and data mix.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The next useful step is not another leaderboard comparison but a causal account. We should be able to
+                ask whether SwiGLU works by increasing activation sparsity, by improving gradient conditioning, by
+                enabling more selective feature composition, or by some combination of all three. Activation statistics,
+                gate entropy, and intervention studies on MLP outputs seem more promising here than broader benchmark
+                sweeps.
+            </p>
+            <p>
+                <strong>Open question:</strong> if SwiGLU helps by implementing context-dependent feature selection, can
+                we directly measure that selectivity in trained LLMs and connect it to interpretable circuits or token
+                categories rather than only to perplexity gains?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                SwiGLU replaced standard Transformer MLP activations because it gives the feed-forward block a better
+                way to decide when a feature should be written, not just how large an intermediate vector should be.
+                Shazeer's compute-matched results show that gated variants can beat ReLU and GELU without simply buying
+                more width. Dauphin et al. provide the older gating intuition, and large-model families such as PaLM
+                and LLaMA show that the design remains attractive at scale. The deepest lesson is that Transformer MLPs
+                are not merely generic nonlinear expansions. They are selective routing modules, and gated variants seem
+                to fit that role better.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Shazeer. "GLU Variants Improve Transformer." arXiv, 2020.
+                    <a href="https://arxiv.org/abs/2002.05202">https://arxiv.org/abs/2002.05202</a>
+                </li>
+                <li>
+                    Auxiliary: Dauphin et al. "Language Modeling with Gated Convolutional Networks." ICML, 2017.
+                    <a href="https://arxiv.org/abs/1612.08083">https://arxiv.org/abs/1612.08083</a>
+                </li>
+                <li>
+                    Auxiliary: Chowdhery et al. "PaLM: Scaling Language Modeling with Pathways." arXiv, 2022.
+                    <a href="https://arxiv.org/abs/2204.02311">https://arxiv.org/abs/2204.02311</a>
+                </li>
+                <li>
+                    Auxiliary: Touvron et al. "LLaMA: Open and Efficient Foundation Language Models." arXiv, 2023.
+                    <a href="https://arxiv.org/abs/2302.13971">https://arxiv.org/abs/2302.13971</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>

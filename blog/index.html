@@ -55,7 +55,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-06-22-why-low-rank-updates-are-enough-for-llm-adaptation.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-06-23-why-swiglu-replaced-standard-transformer-mlps.html">Start with the latest memo</a>
                         <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>19 published</strong>
+                            <strong>20 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -121,9 +121,11 @@
                             <span class="topic-chip">Length extrapolation</span>
                             <span class="topic-chip">Feature geometry</span>
                             <span class="topic-chip">Induction heads</span>
+                            <span class="topic-chip">Truth directions</span>
                             <span class="topic-chip">Reversal curse</span>
                             <span class="topic-chip">Attention sinks</span>
                             <span class="topic-chip">Low-rank adaptation</span>
+                            <span class="topic-chip">Gated MLPs</span>
                         </div>
                     </section>
                 </div>
@@ -139,19 +141,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">June 23, 2026 / 17 min read</p>
+                            <h3>Why SwiGLU replaced standard Transformer MLPs</h3>
+                            <p>
+                                A longer review of why gated feed-forward blocks keep outperforming standard
+                                ReLU and GELU MLPs in modern language models.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-06-23-why-swiglu-replaced-standard-transformer-mlps.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">June 22, 2026 / 19 min read</p>
                             <h3>Why low-rank updates are enough for LLM adaptation</h3>
                             <p>
                                 A longer review of why low-rank weight updates often suffice for downstream
                                 adaptation, and what that implies about the geometry of LLM fine-tuning.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-06-22-why-low-rank-updates-are-enough-for-llm-adaptation.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-06-22-why-low-rank-updates-are-enough-for-llm-adaptation.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">June 17, 2026 / 18 min read</p>
                             <h3>Why attention sinks stabilize long-context decoding</h3>
@@ -160,16 +172,6 @@
                                 preserving them rescues streaming inference, and what that reveals about softmax attention.
                             </p>
                             <a class="inline-link" href="/blog/2026-06-17-why-attention-sinks-stabilize-long-context-decoding.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 16, 2026 / 18 min read</p>
-                            <h3>Why self-consistency decoding improves reasoning</h3>
-                            <p>
-                                A longer review of why sampling multiple chains of thought and aggregating their
-                                answers often beats greedy decoding on reasoning tasks.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html">Open memo</a>
                         </article>
                     </div>
                 </div>
@@ -183,6 +185,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">June 23, 2026 / Architecture</p>
+                        <h3>Why SwiGLU replaced standard Transformer MLPs</h3>
+                        <p>Why gated feed-forward blocks beat plain ReLU and GELU MLPs, even under compute-matched comparisons.</p>
+                        <a class="inline-link" href="/blog/2026-06-23-why-swiglu-replaced-standard-transformer-mlps.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">June 22, 2026 / Adaptation</p>
                         <h3>Why low-rank updates are enough for LLM adaptation</h3>
@@ -327,13 +336,11 @@
 
                 <article class="card" data-reveal>
                     <ul class="card-list">
+                        <li><strong>June 23, 2026:</strong> why SwiGLU-style gated MLPs outperform standard transformer feed-forward blocks.</li>
                         <li><strong>June 22, 2026:</strong> why many downstream LLM adaptations can be captured by low-rank updates instead of dense retraining.</li>
                         <li><strong>June 17, 2026:</strong> why long-context decoding depends on early attention sinks that absorb surplus softmax mass.</li>
                         <li><strong>June 16, 2026:</strong> why sampling several chains of thought and aggregating answers improves reasoning without changing model weights.</li>
                         <li><strong>June 15, 2026:</strong> why next-token prediction learns directional fact retrieval but not stable reverse lookup.</li>
-                        <li><strong>June 14, 2026:</strong> whether hidden-state truth directions remain readable when surface outputs are false.</li>
-                        <li><strong>June 14, 2026:</strong> why induction heads emerge as a phase change in copy-based in-context learning.</li>
-                        <li><strong>June 14, 2026:</strong> why TruthfulQA exhibits inverse scaling under stronger imitation of human misconceptions.</li>
                     </ul>
                 </article>
             </section>
