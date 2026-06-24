@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why muP makes hyperparameters transfer across scale | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why maximal update parameterization makes learning rates and related hyperparameters transfer across transformer width, and where that promise breaks." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why muP makes hyperparameters transfer across scale</h1>
+            <div class="meta">June 24, 2026 &#183; 21 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                One of the least glamorous bottlenecks in large language model research is hyperparameter search.
+                Learning rates, initialization scales, and scheduler choices that look harmless in a 50M parameter
+                transformer can fail badly at 5B. The narrow question in this memo is why maximal update
+                parameterization, or muP, often makes those choices transfer across width. The core claim from Yang et
+                al. is that hyperparameter instability is not only a nuisance of scale; it is a consequence of using a
+                parameterization where different parts of the network learn at incompatible rates as width grows. muP
+                changes the scaling rules so that feature updates, logits, and residual pathways remain balanced in the
+                wide-model limit. That is why tuning on a small proxy can predict what will work on a larger
+                target. The deeper lesson is that optimizer settings are only meaningful relative to a scaling regime.
+                muP matters because it reframes hyperparameter transfer as a property of training dynamics, not as
+                folklore about picking a conservative learning rate.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Yang et al. (2022), "Tensor Programs V: Tuning Large Neural Networks via
+                Zero-Shot Hyperparameter Transfer." That paper introduces the practical muTransfer recipe: parameterize
+                the target network in muP, tune on a smaller model, and reuse those hyperparameters on the larger one
+                without another expensive sweep. The empirical headline is strong because it was tested on exactly the
+                settings people care about: transformers and large-scale language-model-style pretraining.
+            </p>
+            <p>
+                The conceptual precursor is Yang and Hu (2021), "Feature Learning in Infinite-Width Neural Networks."
+                That work argues that common parameterizations either collapse toward lazy kernel behavior or produce
+                badly imbalanced learning as width grows. The point is not merely asymptotic elegance. If the
+                infinite-width limit suppresses useful feature updates, then width scaling will scramble the meaning of
+                a fixed learning rate. muP emerges from that broader attempt to preserve feature learning rather than
+                freezing the network into a near-linear regime.
+            </p>
+            <p>
+                A useful later extension is Blake et al. (2024) on u-muP, which combines muP with unit scaling to make
+                implementation more robust, especially in low precision. The broader message is that the original idea
+                was right but operationally fiddly: real training stacks still need careful engineering around
+                initialization, width definitions, and numerical ranges.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                Why do hyperparameters stop transferring when width changes? In standard parameterization, different
+                tensors effectively see different update magnitudes as the network gets wider. Some layers become too
+                lazy, barely changing their learned features; others become too reactive, so the same nominal learning
+                rate causes outsized functional movement. The optimizer step is the same in parameter space, but not in
+                function space.
+            </p>
+            <p>
+                muP addresses this by choosing width-dependent scaling rules for initialization and learning rates so
+                that updates remain order-one in the parts of the network that matter. In loose terms, it tries to keep
+                the network in a regime where increasing width adds representational capacity without changing the basic
+                "meaning" of an optimizer step. That is why a sweep on a small proxy model can stay predictive: the
+                proxy and the target are no longer different optimization problems in disguise.
+            </p>
+            <p>
+                There is also a useful theoretical contrast with NTK-style scaling. NTK parameterizations are designed
+                to stabilize training in the infinite-width limit by making the model behave almost linearly around
+                initialization. That can make the dynamics analytically clean, but it downplays feature learning. muP
+                instead aims for maximal feature learning while preserving stable large-width behavior. In other words,
+                it tries to keep the network plastic rather than merely well behaved.
+            </p>
+            <p>
+                For transformers, that matters because widening attention and MLP channels should ideally give the model
+                more room to learn richer features, not force a retuning of every optimizer knob. muP says that if the
+                scaling is chosen correctly, width should mostly change capacity, while good hyperparameters should
+                remain close to invariant. That is the mechanism behind zero-shot transfer across width.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the argument concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: BERT-large from a much smaller proxy.</strong> Yang et al. report that
+                    hyperparameters transferred from a 13M parameter proxy model can beat published BERT-large results.
+                    The conceptual point is sharper: if a small model can
+                    predict a 350M model's preferred learning-rate region, then the parameterization has preserved the
+                    geometry of optimization surprisingly well.
+                </li>
+                <li>
+                    <strong>Case study 2: GPT-style scaling without a fresh sweep.</strong> The same paper reports
+                    transfer from a 40M parameter proxy to a 6.7B GPT-3-style model, with tuning cost far below a full
+                    large-scale search. This is the kind of result that makes muP interesting for LLM training
+                    specifically, because the gap between exploratory runs and full training runs is exactly where
+                    research budgets usually get burned.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Hyperparameter fragility is often a parameterization problem.</strong> Width changes break transfer when they silently change which features can move.</li>
+                <li><strong>The useful invariant is functional update scale, not raw parameter step size.</strong> Equal parameter deltas can correspond to very different behavioral changes as width grows.</li>
+                <li><strong>muP preserves feature learning where NTK-style scaling tends to linearize it away.</strong> That makes it more relevant for pretrained transformers than purely lazy limits.</li>
+                <li><strong>Proxy tuning works only when the proxy and target inhabit the same optimization regime.</strong> muP is valuable because it makes that statement closer to true rather than treating transfer as luck.</li>
+            </ul>
+            <p>
+                One alignment-adjacent implication is easy to miss. Safety interventions often depend on comparing many
+                training runs under small recipe changes. If width scaling changes the interpretation of the optimizer,
+                then observed safety effects may partly reflect accidental optimization-regime shifts rather than the
+                intervention itself. muP offers a cleaner way to compare scaling experiments because it reduces one
+                source of confounding.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                muP is not magic. First, its cleanest promise is widthwise transfer, not universal transfer across
+                depth, data mixtures, architectures, optimizers, or regularization choices. If the larger model differs
+                in more ways than width alone, hyperparameter portability can still fail. Second, the theory is more
+                elegant than the implementation. Real training stacks need explicit base shapes, consistent width
+                definitions, and careful handling of tied embeddings and residual branches. That friction partly
+                explains why muP is respected but not yet universal.
+            </p>
+            <p>
+                There is also a scope issue. The central evidence shows that many optimal hyperparameters become more
+                stable, not that all of them do. Scheduler length, batch size, regularization, and data curriculum can
+                still interact with scale in ways muP does not erase. Finally, some of the broader tensor-programs
+                intuition remains hard for practitioners to audit. When a method depends on subtle scaling identities,
+                debugging mis-specification can become difficult enough that teams retreat to brute-force sweeps anyway.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The most important next step is broadening the invariance story beyond width. Large language model
+                practice now changes depth, sequence length, optimizer families, precision, and MoE structure all at
+                once. A parameterization that handles width but not those other axes still leaves a lot of tuning on
+                the table. Recent work on Depth-muP and optimizer-specific extensions suggests progress, but it is not
+                yet a single unified recipe for modern transformer stacks.
+            </p>
+            <p>
+                Another direction is interpretability of optimization itself. muP says that good scaling preserves
+                comparable feature updates across model sizes. That invites a more direct empirical question: can we
+                measure that invariance in activation space or residual-stream geometry, instead of inferring it from
+                loss curves and validation sweeps? If yes, hyperparameter transfer could become easier to diagnose and
+                perhaps partially automatable.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we derive a scaling recipe that preserves hyperparameter transfer
+                simultaneously across width, depth, optimizer choice, and sparse architectures without reintroducing a
+                lazy-learning regime?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                muP works because it treats width scaling as an optimization-dynamics problem rather than a purely
+                architectural one. Yang et al. showed that, with the right scaling rules, a small proxy transformer can
+                predict learning-rate choices for a much larger target. The mechanism is that feature updates remain
+                balanced instead of drifting toward either instability or laziness as width grows. The broader lesson is
+                that hyperparameters are not portable by default; they become portable when the parameterization makes
+                model size preserve the meaning of a training step.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Yang et al. "Tensor Programs V: Tuning Large Neural Networks via Zero-Shot Hyperparameter
+                    Transfer." NeurIPS 2021 / arXiv 2022.
+                    <a href="https://arxiv.org/abs/2203.03466">https://arxiv.org/abs/2203.03466</a>
+                </li>
+                <li>
+                    Auxiliary: Yang and Hu. "Feature Learning in Infinite-Width Neural Networks." ICML 2021.
+                    <a href="https://arxiv.org/abs/2011.14522">https://arxiv.org/abs/2011.14522</a>
+                </li>
+                <li>
+                    Auxiliary: Yang et al. "Tensor Programs VI: Feature Learning in Infinite-Depth Neural Networks."
+                    arXiv 2023.
+                    <a href="https://arxiv.org/abs/2310.02244">https://arxiv.org/abs/2310.02244</a>
+                </li>
+                <li>
+                    Auxiliary: Blake et al. "u-muP: The Unit-Scaled Maximal Update Parametrization." OPT 2024.
+                    <a href="https://arxiv.org/abs/2407.17465">https://arxiv.org/abs/2407.17465</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
