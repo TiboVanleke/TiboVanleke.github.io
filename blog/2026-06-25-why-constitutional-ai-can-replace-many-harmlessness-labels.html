@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Constitutional AI can replace many harmlessness labels | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why Constitutional AI can improve harmlessness with written principles and AI feedback, and where that mechanism remains weak." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why Constitutional AI can replace many harmlessness labels</h1>
+            <div class="meta">June 25, 2026 &#183; 18 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                A central bottleneck in alignment is that harmlessness data is expensive, slow, and psychologically
+                costly to collect from humans. Constitutional AI asks a narrower and more technical question than
+                "how do we align a model?": when can a written list of principles, plus AI-generated critiques and
+                preferences, stand in for direct human harmlessness labels? The core answer from Bai et al. (2022) is
+                that a pretrained language model already knows enough about many social and safety norms to use natural
+                language principles as a supervision interface. Once prompted with those principles, the model can
+                critique its own outputs, revise them, and later rank sampled responses for reinforcement learning.
+                That does not remove humans from the loop entirely, because humans still choose the constitution and
+                often provide helpfulness data. But it does shift a large fraction of the expensive harmlessness
+                labeling work into a higher-level control problem: writing and revising the rules. Constitutional AI is
+                interesting because it suggests that alignment signal can be compressed into principles when the base
+                model already has enough latent competence to interpret those principles and apply them consistently.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Bai et al. (2022), "Constitutional AI: Harmlessness from AI Feedback." That
+                paper introduced a two-stage pipeline. In the supervised stage, a model samples a response, critiques
+                it using one constitutional principle, revises it, and is then fine-tuned on the revision. In the
+                reinforcement-learning stage, the model generates paired responses, an AI judge chooses the better one
+                according to the constitution, and those pairwise judgments train a preference model used for RLAIF:
+                reinforcement learning from AI feedback. The headline result is that harmlessness can improve
+                substantially without collecting human labels on harmful outputs themselves.
+            </p>
+            <p>
+                Kundu et al. (2024) ask whether long lists of targeted rules are actually necessary, or whether a short
+                principle such as "do what is best for humanity" already generalizes to many harmful behaviors. Their
+                answer is mixed in a productive way: very general principles can steer broad behavior surprisingly far,
+                but more specific constitutions still offer finer control over concrete failure modes.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The mechanism behind Constitutional AI is not magic supervision from nowhere. It relies on a
+                precondition: the base model must already have internalized a broad amount of world knowledge, social
+                regularity, and linguistic skill. The constitution then acts less like a full reward specification and
+                more like a routing signal. It tells the model which region of its existing behavior manifold should be
+                selected, amplified, and preferred over nearby alternatives.
+            </p>
+            <p>
+                In the supervised phase, the model first produces an initial answer. It is then prompted to critique
+                that answer under a single principle, such as avoiding illegal or harmful assistance while remaining
+                helpful. Finally, it rewrites the answer in light of its own critique. This matters because the
+                training target is not a bare refusal label. It is a full natural-language revision, which teaches the
+                model how to stay engaged while changing the policy of the answer. That is one reason the resulting
+                assistant can become more harmless without becoming purely evasive.
+            </p>
+            <p>
+                In the RL phase, the same idea becomes a preference-learning problem. The model samples candidate
+                answers; an AI evaluator, guided by the constitution, picks the better one; and those choices train a
+                preference model. The preference model then supplies the reward signal for RL. This is the key
+                substitution. Instead of asking humans to review large volumes of toxic or manipulative content, the
+                system asks humans once to define principles and then repeatedly reuses those principles through AI
+                evaluation.
+            </p>
+            <p>
+                Mechanistically, this works only when the constitution is rich enough to disambiguate local choices and
+                the model is competent enough to apply it. If the base model cannot already recognize the relevant
+                norm, the constitution is only text on the page. Constitutional AI is therefore best understood as a
+                method for eliciting and stabilizing norms that are already at least partially representable inside the
+                model.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the mechanism concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: harmful-request revision.</strong> In the original paper's prompt examples,
+                    the starting model can answer a request like how to burn down a house for insurance money. The
+                    critique-revision loop changes the target from "refuse" in the abstract to a concrete rewritten
+                    answer that explains why the request is unsafe or unethical while staying conversational. That is a
+                    stronger supervision object than a binary harmlessness tag.
+                </li>
+                <li>
+                    <strong>Case study 2: reducing preachiness by changing the principles.</strong> Anthropic later
+                    described a recurrent failure mode where CAI-trained models could sound judgmental or obnoxious.
+                    They addressed it by adding principles that explicitly prefer less condescending and less reactive
+                    responses. This is important because it shows the control surface is not only about blocking harm.
+                    It can also shape style, proportionality, and tone.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Constitutions work as interface compression.</strong> A short set of written principles can replace many individual harmlessness labels when the base model already understands the domain well enough.</li>
+                <li><strong>Natural-language critiques are richer than scalar rewards.</strong> The critique-revision step teaches not only what to avoid, but how to rewrite toward a better answer.</li>
+                <li><strong>AI feedback is strongest on normatively legible tasks.</strong> Harmlessness, tone, and explicit policy compliance are easier to steer than skills whose quality depends on tacit expertise.</li>
+                <li><strong>The constitution defines a controllable failure surface.</strong> If the model becomes too preachy, too permissive, or too anthropomorphic, developers can often write a principle that directly targets that behavior.</li>
+            </ul>
+            <p>
+                The deeper alignment implication is that Constitutional AI moves part of the problem from dataset
+                collection into specification design. Instead of asking only how many harmful examples can be labeled,
+                it asks which principles actually induce the behavior we want when interpreted by a strong model.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The obvious limitation is that constitutions are only as good as the model's ability to interpret them.
+                Written principles are under-specified, and language models can satisfy them superficially, over-apply
+                them, or exploit ambiguities. A principle like "be harmless" does not uniquely determine behavior in
+                edge cases. It still requires the model to operationalize tradeoffs among safety, helpfulness,
+                honesty, and context.
+            </p>
+            <p>
+                There is also a governance limitation. Choosing the constitution is itself a value-laden act. Anthropic
+                explicitly notes that the constitution reflects design choices, draws from particular institutions, and
+                is not final. Making values explicit is better than hiding them, but it does not resolve disagreement
+                about which values should dominate, how general they should be, or who gets to edit them.
+            </p>
+            <p>
+                Redgate et al. also show a narrower practical limit: detailed constitutions improved emotive qualities
+                in medical dialogue, but not clear gains on more practically oriented information gathering and
+                provision. That suggests AI feedback may capture some human-valued dimensions much better than others.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                One direction is better constitution design. Kundu et al. suggest that broad principles such as "good
+                for humanity" can generalize surprisingly far, but specific rules still help with precise control. The
+                unresolved technical question is how to compose these two levels so that general norms provide coherent
+                defaults while specific principles patch predictable edge cases without making the model brittle.
+            </p>
+            <p>
+                A second direction is auditing. If constitutions act as compressed interfaces into latent norms, then
+                we need better tools to measure when the model truly internalized a principle versus merely learned a
+                polished response style around it. That points toward combining Constitutional AI with mechanistic
+                interpretability, evaluator stress tests, and more adversarial task design.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we identify principled tests that distinguish when Constitutional AI
+                is genuinely eliciting pre-existing normative competence from when it is merely training a model to
+                imitate constitution-compatible surface language?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Constitutional AI works when a strong base model already knows enough to treat written principles as a
+                usable control signal. Critique-revision turns those principles into concrete rewritten answers, and
+                RLAIF scales the same logic into a reusable reward model. The method looks strongest for harmlessness,
+                tone, and explicit behavioral constraints, but weaker for tacit competence and disputed value choices.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Bai et al. "Constitutional AI: Harmlessness from AI Feedback." 2022.
+                    <a href="https://arxiv.org/abs/2212.08073">https://arxiv.org/abs/2212.08073</a>
+                </li>
+                <li>
+                    Auxiliary: Kundu et al. "Specific versus General Principles for Constitutional AI." 2024.
+                    <a href="https://arxiv.org/abs/2310.13798">https://arxiv.org/abs/2310.13798</a>
+                </li>
+                <li>
+                    Auxiliary: Redgate et al. "Evaluating the role of 'Constitutions' for learning from AI feedback." 2024.
+                    <a href="https://openreview.net/forum?id=Pf3ow4YbFl">https://openreview.net/forum?id=Pf3ow4YbFl</a>
+                </li>
+                <li>
+                    Auxiliary: Anthropic. "Claude's Constitution." 2023, updated 2026.
+                    <a href="https://www.anthropic.com/news/claudes-constitution">https://www.anthropic.com/news/claudes-constitution</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
