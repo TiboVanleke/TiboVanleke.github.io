@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why open-ended decoding needs tail truncation | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why likelihood-maximizing decoding degenerates in open-ended generation, why truncating the tail helps, and what later theory says about the mechanism." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why open-ended decoding needs tail truncation</h1>
+            <div class="meta">June 26, 2026 &#183; 20 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                A narrow but important question in language modeling is why decoding strategies that maximize model
+                probability often produce bad text in open-ended settings. Holtzman et al. made the puzzle vivid:
+                beam search and greedy decoding can turn strong language models into machines for repetition, blandness,
+                and local dead ends, while stochastic truncation methods such as nucleus sampling produce more natural
+                continuations. The best explanation is not that search is weak. It is that next-token distributions in
+                open-ended generation contain an unreliable tail: many individually small token probabilities become
+                dangerous in aggregate, while the globally highest-probability continuations are often too safe,
+                too repetitive, and too unsurprising to match human text. Later work sharpens that picture. Typical
+                decoding reframes the issue in terms of local surprisal, and more recent theory connects the bad tail
+                to systematic modeling error, including limits imposed by the output softmax. The result is a useful
+                lesson about LLMs: generation quality depends not just on what a model knows, but on how inference
+                navigates uncertainty at each step.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The central source is Holtzman et al. (2020), "The Curious Case of Neural Text Degeneration." That
+                paper showed that open-ended text generation behaves very differently from tasks like translation, where
+                beam search is often helpful. In story continuation and long-form generation, maximizing likelihood
+                produced text that was too probable, too repetitive, and too narrow compared with human continuations.
+                Their proposed fix was nucleus sampling: dynamically truncate the distribution to the smallest set of
+                tokens containing most of the probability mass, then sample within that set.
+            </p>
+            <p>
+                Meister et al. (2023) pushed the question from "which tokens are likely?" to "which tokens have the
+                right amount of information?" Their typical decoding work argues that human text tends to stay near the
+                model's local conditional entropy rather than always choosing the top-probability token. Finlayson et
+                al. (2024) then supplied missing theory for why truncation works at all. Their account shows that
+                threshold-based truncation can be understood as a way to avoid sampling tokens that may have zero true
+                probability, and that the softmax bottleneck is one plausible source of these tail errors. Welleck et
+                al. (2020) provide a useful complement on the training side: if repetitive continuations receive too
+                much probability mass, one can modify the objective itself with unlikelihood training rather than only
+                repairing the decoder afterward.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The core mechanism starts with a mismatch between sequence likelihood and human quality. In open-ended
+                writing there are many acceptable next moves. Human continuations therefore wander through moderately
+                probable but informative tokens. Beam search does the opposite: it compounds locally high-probability
+                choices into globally dull trajectories. Holtzman et al. showed that this makes generated text less
+                surprising than human text and more likely to fall into repetition loops.
+            </p>
+            <p>
+                Full ancestral sampling fails in the opposite direction. If one samples from the entire predicted
+                distribution, the tail injects too many low-quality continuations. The problem is not any single token
+                in isolation. It is the aggregate effect of thousands of low-probability candidates whose estimates are
+                noisy. Nucleus sampling addresses exactly that point: keep the high-mass "nucleus" that the model seems
+                confident about, discard the long tail, and preserve randomness only inside the surviving set. Because
+                the cutoff adapts to context, the candidate set stays small in peaked contexts and broadens when many
+                continuations are genuinely plausible.
+            </p>
+            <p>
+                Typical decoding offers a more refined intuition. It says that human-like text is not merely high
+                probability; it is locally typical relative to the model's own entropy. Tokens that are too predictable
+                make text collapse into generic loops, while tokens that are too surprising push it into incoherence.
+                Later theory from Finlayson et al. makes the tail story more mechanistic by showing how truncation can
+                be seen as support recovery under bounded error assumptions. Their basis-aware analysis goes further:
+                if output-layer structure causes some low-probability estimates to be wrong for geometric reasons, then
+                smarter truncation could keep good rare tokens while rejecting bad ones, instead of relying on a blunt
+                threshold alone.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two concrete case studies make the literature easier to trust:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: GPT-2 story continuation under beam search.</strong> Holtzman et al. show
+                    that even with strong context and a capable model, beam search drifts into repeated phrases and
+                    overconfident continuations. The key empirical clue is that beam-generated text has lower
+                    perplexity than human text under the model, which means the decoder is not failing to find the
+                    model's favorite continuation. It is finding it too well.
+                </li>
+                <li>
+                    <strong>Case study 2: unlikelihood training reduces repetition at the model level.</strong>
+                    Welleck et al. report large drops in repeated n-grams after fine-tuning against repeated tokens and
+                    sequences. That matters because it separates two problems: bad decoding can expose distributional
+                    flaws, but training objectives can also create or suppress the flaws that decoding later has to
+                    manage.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Likelihood is not the right objective for open-ended decoding.</strong> Human text is not usually the argmax continuation, because interesting writing repeatedly chooses informative but non-maximal tokens.</li>
+                <li><strong>The dangerous part of the distribution is the tail in aggregate.</strong> Many small probability errors become harmful when sampled over long horizons.</li>
+                <li><strong>Dynamic truncation works because uncertainty is context-dependent.</strong> A fixed top-k cutoff ignores whether the model is currently certain or genuinely undecided.</li>
+                <li><strong>Decoder fixes and training fixes target different layers of the same problem.</strong> Nucleus sampling repairs inference locally, while unlikelihood training changes which continuations get probability mass in the first place.</li>
+            </ul>
+            <p>
+                One alignment-adjacent implication is that refusal quality, honesty, and deliberative behavior may be
+                partly decoder-sensitive. If bad tails contain sycophantic, evasive, or repetitive continuations, then
+                evaluation of aligned behavior should not treat decoding as a neutral wrapper around model competence.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                This line of work has clear limits. First, much of the classic evidence uses GPT-2-era models. The
+                phenomenon still matters, but the exact failure mix changes as base models improve. Second, open-ended
+                generation is subjective: quality, diversity, and coherence trade off against each other, and no single
+                automatic metric settles the issue. Third, truncation methods remain heuristic. Nucleus sampling often
+                works well, but it can still over-prune in low-entropy contexts or admit the wrong rare tokens in high
+                entropy ones. Finlayson et al.'s theory is promising here, but their more precise support-aware methods
+                are not yet the default practical decoder.
+            </p>
+            <p>
+                There is also a conceptual limit. Tail truncation explains how to avoid some decoding failures, but it
+                does not by itself explain why the model assigns too much probability to degenerate loops or generic
+                continuations. That part reaches back into training data, objective choice, and architectural
+                constraints in the model itself.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The most interesting next step is to replace hand-tuned truncation heuristics with decoders that reason
+                directly about calibrated support, local information content, and downstream utility. Another direction
+                is joint training-decoding design: if unlikelihood-style objectives and truncation methods solve
+                complementary parts of the same problem, they should probably be co-designed rather than studied in
+                isolation.
+            </p>
+            <p>
+                A third direction matters for alignment evaluation. Many safety benchmarks are effectively open-ended
+                generation tasks, so we should ask how much measured harmlessness or truthfulness depends on tail
+                control rather than on internal representation alone. Decoder choice may be part of the policy, not
+                just part of the interface.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we build a decoding rule that preserves nucleus sampling's
+                robustness to tail errors while selectively recovering low-probability tokens that are rare for good
+                reasons rather than bad ones?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Open-ended language generation breaks naive likelihood maximization because good text is not usually the
+                most probable path through a token-level model. Holtzman et al. showed that maximization collapses into
+                repetition and genericness, while full sampling exposes an unreliable tail. Nucleus sampling works
+                because it keeps randomness where the model is confident and cuts it where estimation error aggregates.
+                Typical decoding and later theory refine that story, but they preserve its core lesson: the decoder is
+                an essential part of language-model behavior, not a disposable afterthought.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Holtzman et al. "The Curious Case of Neural Text Degeneration." ICLR 2020.
+                    <a href="https://arxiv.org/abs/1904.09751">https://arxiv.org/abs/1904.09751</a>
+                </li>
+                <li>
+                    Auxiliary: Welleck et al. "Neural Text Generation with Unlikelihood Training." ICLR 2020.
+                    <a href="https://arxiv.org/abs/1908.04319">https://arxiv.org/abs/1908.04319</a>
+                </li>
+                <li>
+                    Auxiliary: Meister et al. "Locally Typical Sampling." TACL 2023.
+                    <a href="https://arxiv.org/abs/2202.00666">https://arxiv.org/abs/2202.00666</a>
+                </li>
+                <li>
+                    Auxiliary: Finlayson et al. "Closing the Curious Case of Neural Text Degeneration." ICLR 2024.
+                    <a href="https://arxiv.org/abs/2310.01693">https://arxiv.org/abs/2310.01693</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
