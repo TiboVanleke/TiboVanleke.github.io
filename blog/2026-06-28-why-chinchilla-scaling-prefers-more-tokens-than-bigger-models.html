@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Chinchilla scaling prefers more tokens than bigger models | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why compute-optimal language-model scaling usually prefers smaller models trained on more tokens, and what that says about undertraining." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why Chinchilla scaling prefers more tokens than bigger models</h1>
+            <div class="meta">June 28, 2026 &#183; 22 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                A narrow but important question in language-model scaling is why, under a fixed training-compute
+                budget, it is usually better to train a somewhat smaller model on many more tokens than to train a
+                larger model on too little data. Hoffmann et al. made this concrete with Chinchilla scaling: the
+                best frontier was not "largest possible model" but a more balanced allocation between parameters and
+                tokens. My reading is that the result is fundamentally about undertraining. Once models become large
+                enough, adding parameters faster than data and optimization steps creates excess representational
+                capacity that the training run never fully pays for. The model looks impressive in size but leaves
+                loss on the table because too many weights are insufficiently trained. Chinchilla therefore matters
+                for more than budget planning. It says that scaling is constrained not only by capacity, but by how
+                completely compute can convert that capacity into useful statistical structure.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Hoffmann et al. (2022), which revisited the scaling-law picture established by
+                Kaplan et al. (2020). Kaplan's earlier result suggested that test loss improved predictably with
+                model size, dataset size, and compute, and in practice many groups interpreted that as a reason to
+                push parameter counts aggressively. Hoffmann et al. argued that this reading was incomplete because
+                several large models had been trained on too few tokens for their size. When they swept model and
+                dataset scale more carefully, they found that compute-optimal performance comes from substantially
+                more training data than many headline models had used.
+            </p>
+            <p>
+                Later work refined rather than overturned that claim. Sardana et al. (2024) show that the exact
+                data-optimal ratio depends on the downstream use case, especially when inference cost matters rather
+                than pure training loss. That is useful because it sharpens the original result: Chinchilla is not a
+                universal law that "more data is always better," but a statement about the best training tradeoff for
+                a given objective and budget.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The key mechanism is easiest to state in terms of opportunity cost. With fixed compute, training a
+                model uses roughly the product of parameter count and token count. If you increase parameters, you
+                usually must decrease tokens or training steps unless compute also rises. A very large model trained
+                on too few tokens gets to express a rich function class, but many of those degrees of freedom remain
+                poorly updated. The result is an undertrained model: high capacity, low statistical efficiency.
+            </p>
+            <p>
+                Chinchilla's contribution was to show that this undertraining was not a marginal effect. It was large
+                enough that a smaller model, trained longer on more text, could beat a much larger one at the same
+                training budget. Intuitively, additional tokens keep paying down estimation error after additional
+                parameters start delivering diminishing returns. Parameters help only if the optimizer has enough data
+                and enough updates to fit them usefully. Tokens are therefore not just fuel for large models; they
+                are what convert dormant capacity into actual predictive competence.
+            </p>
+            <p>
+                Another way to frame the result is bias versus variance. Small models are capacity-limited and suffer
+                from approximation error. Oversized but undertrained models instead waste capacity because optimization
+                and data are the bottleneck. Compute-optimal scaling sits between those extremes: large enough to
+                represent the needed distribution, but not so large that the training run starves the model of tokens.
+                In that sense, Chinchilla scaling is a prescription for balancing model complexity against how much
+                evidence the training run can actually deliver.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the mechanism concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: Gopher versus Chinchilla.</strong> Hoffmann et al. showed that Chinchilla,
+                    with about 70B parameters and far more training tokens, outperformed the much larger 280B-parameter
+                    Gopher model across a wide range of evaluations while using roughly the same training compute. The
+                    lesson is stark: scale alone was not the missing ingredient; the missing ingredient was sufficient
+                    data and optimization to realize the value of scale.
+                </li>
+                <li>
+                    <strong>Case study 2: training-optimal versus deployment-optimal choices.</strong> Later work on
+                    post-Chinchilla scaling argues that if inference is expensive and repeated many times, one may
+                    prefer a smaller model trained even longer, because every extra parameter raises serving cost.
+                    This extends the basic mechanism rather than contradicting it. Once "total lifecycle compute"
+                    replaces "training compute" as the objective, the optimal balance shifts again toward token-rich
+                    training.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Large parameter counts can hide undertraining.</strong> A bigger model is not automatically a better-trained model.</li>
+                <li><strong>Tokens are a first-class scaling resource.</strong> They do not merely support scale; they determine whether scale is usable.</li>
+                <li><strong>Compute-optimal does not mean capacity-maximal.</strong> The best frontier balances representational power against the chance to fit it.</li>
+                <li><strong>Serving constraints change the optimum.</strong> If inference dominates cost, the best model may be smaller and trained on even more data.</li>
+            </ul>
+            <p>
+                One alignment-adjacent implication is easy to miss. If many frontier models are limited by the
+                completeness of training rather than raw width, then some observed behavior differences between models
+                may reflect data allocation and optimization budget more than mysterious emergent size effects. That
+                matters when interpreting capabilities, truthfulness, or harmlessness changes across scales: some may
+                be consequences of training regime choice, not only of parameter count.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                Chinchilla scaling is an empirical law fitted inside a specific regime, not a timeless theorem.
+                First, the result depends on the loss being optimized. Cross-entropy on next-token prediction rewards
+                one balance of parameters and tokens; tool use, retrieval-heavy systems, or multimodal objectives may
+                prefer another. Second, the exact exponents are sensitive to data quality. "More tokens" only helps if
+                those tokens add real signal rather than repeated or low-value text.
+            </p>
+            <p>
+                There is also a practical caveat around data availability. The prescription becomes harder to follow
+                when high-quality internet-scale corpora are exhausted or legally constrained. In that regime, groups
+                may return to synthetic data, curriculum design, or retrieval augmentation rather than continuing the
+                original Chinchilla tradeoff directly. Finally, downstream benchmarks can blur the story because some
+                tasks reward memorized breadth while others reward reasoning efficiency, calibration, or robustness.
+                A single compute-optimal frontier may not summarize all of those at once.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The most interesting next step is objective-aware scaling laws. Instead of one ratio for all language
+                models, can we derive different optima for pretraining aimed at reasoning, retrieval, agency, or
+                alignment robustness? Another direction is data-quality-aware scaling: if token quality can be priced,
+                the real question becomes how to trade parameter count against both token quantity and token value.
+            </p>
+            <p>
+                A third direction is systems-level. Training-optimal and inference-optimal frontiers should probably
+                be modeled jointly with distillation, quantization, and test-time compute. A model that is slightly
+                suboptimal under pure pretraining loss may dominate after compression or repeated deployment. That
+                suggests the next generation of scaling laws should cover the whole pipeline rather than the training
+                run in isolation.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we build a scaling law that jointly predicts the optimal balance of
+                parameters, data, and inference budget once data quality and repeated deployment are treated as
+                explicit variables rather than background assumptions?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Chinchilla scaling changed the practical meaning of "bigger is better." Hoffmann et al. showed that
+                many large language models were simply too large for the number of tokens they saw, and that smaller
+                models trained on more data used the same compute more effectively. Kaplan et al. explain why the
+                earlier scaling-law picture made aggressive parameter growth look attractive; later post-Chinchilla
+                work explains why the optimum can move again once deployment costs matter. The durable lesson is that
+                scale is not only about adding parameters. It is about choosing a model size that the available data
+                and optimization budget can genuinely train.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Hoffmann et al. "Training Compute-Optimal Large Language Models." 2022.
+                    <a href="https://arxiv.org/abs/2203.15556">https://arxiv.org/abs/2203.15556</a>
+                </li>
+                <li>
+                    Auxiliary: Kaplan et al. "Scaling Laws for Neural Language Models." 2020.
+                    <a href="https://arxiv.org/abs/2001.08361">https://arxiv.org/abs/2001.08361</a>
+                </li>
+                <li>
+                    Auxiliary: Sardana et al. "Beyond Chinchilla-Optimal: Accounting for Inference in Language Model Scaling Laws." 2024.
+                    <a href="https://arxiv.org/abs/2401.00448">https://arxiv.org/abs/2401.00448</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
