@@ -55,7 +55,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-06-26-why-open-ended-decoding-needs-tail-truncation.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-06-28-why-chinchilla-scaling-prefers-more-tokens-than-bigger-models.html">Start with the latest memo</a>
                         <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>23 published</strong>
+                            <strong>24 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -129,6 +129,7 @@
                             <span class="topic-chip">muP scaling</span>
                             <span class="topic-chip">Constitutional AI</span>
                             <span class="topic-chip">Tail truncation</span>
+                            <span class="topic-chip">Compute-optimal scaling</span>
                         </div>
                     </section>
                 </div>
@@ -144,19 +145,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">June 28, 2026 / 22 min read</p>
+                            <h3>Why Chinchilla scaling prefers more tokens than bigger models</h3>
+                            <p>
+                                A longer review of why compute-optimal LLM training often favors smaller models
+                                trained on more tokens, and what that reveals about undertraining.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-06-28-why-chinchilla-scaling-prefers-more-tokens-than-bigger-models.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">June 26, 2026 / 20 min read</p>
                             <h3>Why open-ended decoding needs tail truncation</h3>
                             <p>
                                 A longer review of why likelihood-maximizing decoding degenerates in open-ended
                                 generation, why nucleus sampling works, and what later theory says about the tail.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-06-26-why-open-ended-decoding-needs-tail-truncation.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-06-26-why-open-ended-decoding-needs-tail-truncation.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">June 25, 2026 / 18 min read</p>
                             <h3>Why Constitutional AI can replace many harmlessness labels</h3>
@@ -187,16 +198,6 @@
                             <a class="inline-link" href="/blog/2026-06-23-why-swiglu-replaced-standard-transformer-mlps.html">Open memo</a>
                         </article>
 
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 22, 2026 / 19 min read</p>
-                            <h3>Why low-rank updates are enough for LLM adaptation</h3>
-                            <p>
-                                A longer review of why low-rank weight updates often suffice for downstream
-                                adaptation, and what that implies about the geometry of LLM fine-tuning.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-22-why-low-rank-updates-are-enough-for-llm-adaptation.html">Open memo</a>
-                        </article>
-
                     </div>
                 </div>
             </section>
@@ -209,6 +210,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">June 28, 2026 / Scaling</p>
+                        <h3>Why Chinchilla scaling prefers more tokens than bigger models</h3>
+                        <p>Why compute-optimal language-model training often rewards smaller models trained longer on more data.</p>
+                        <a class="inline-link" href="/blog/2026-06-28-why-chinchilla-scaling-prefers-more-tokens-than-bigger-models.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">June 26, 2026 / Decoding</p>
                         <h3>Why open-ended decoding needs tail truncation</h3>
@@ -381,6 +389,7 @@
 
                 <article class="card" data-reveal>
                     <ul class="card-list">
+                        <li><strong>June 28, 2026:</strong> why compute-optimal scaling usually favors more training tokens over a much larger but undertrained model.</li>
                         <li><strong>June 26, 2026:</strong> why open-ended generation needs dynamic tail truncation instead of likelihood-maximizing decoding.</li>
                         <li><strong>June 25, 2026:</strong> why written principles plus AI-generated critiques can replace many direct harmlessness labels in alignment training.</li>
                         <li><strong>June 24, 2026:</strong> why maximal update parameterization makes learning-rate and optimizer-scale choices transfer across transformer width.</li>
