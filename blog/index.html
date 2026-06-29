@@ -55,7 +55,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-06-28-why-chinchilla-scaling-prefers-more-tokens-than-bigger-models.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-06-29-why-speculative-decoding-preserves-target-distribution.html">Start with the latest memo</a>
                         <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>24 published</strong>
+                            <strong>25 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -130,6 +130,7 @@
                             <span class="topic-chip">Constitutional AI</span>
                             <span class="topic-chip">Tail truncation</span>
                             <span class="topic-chip">Compute-optimal scaling</span>
+                            <span class="topic-chip">Speculative decoding</span>
                         </div>
                     </section>
                 </div>
@@ -145,19 +146,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">June 29, 2026 / 24 min read</p>
+                            <h3>Why speculative decoding preserves the target distribution</h3>
+                            <p>
+                                A longer review of why draft-and-verify generation can accelerate LLM inference
+                                without changing the target model's sampling distribution.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-06-29-why-speculative-decoding-preserves-target-distribution.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">June 28, 2026 / 22 min read</p>
                             <h3>Why Chinchilla scaling prefers more tokens than bigger models</h3>
                             <p>
                                 A longer review of why compute-optimal LLM training often favors smaller models
                                 trained on more tokens, and what that reveals about undertraining.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-06-28-why-chinchilla-scaling-prefers-more-tokens-than-bigger-models.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-06-28-why-chinchilla-scaling-prefers-more-tokens-than-bigger-models.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">June 26, 2026 / 20 min read</p>
                             <h3>Why open-ended decoding needs tail truncation</h3>
@@ -210,6 +221,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">June 29, 2026 / Inference</p>
+                        <h3>Why speculative decoding preserves the target distribution</h3>
+                        <p>Why draft-and-verify generation can speed up autoregressive sampling without changing the large model's distribution.</p>
+                        <a class="inline-link" href="/blog/2026-06-29-why-speculative-decoding-preserves-target-distribution.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">June 28, 2026 / Scaling</p>
                         <h3>Why Chinchilla scaling prefers more tokens than bigger models</h3>
@@ -389,6 +407,7 @@
 
                 <article class="card" data-reveal>
                     <ul class="card-list">
+                        <li><strong>June 29, 2026:</strong> why speculative decoding can draft several tokens ahead yet still sample exactly from the target model after verification.</li>
                         <li><strong>June 28, 2026:</strong> why compute-optimal scaling usually favors more training tokens over a much larger but undertrained model.</li>
                         <li><strong>June 26, 2026:</strong> why open-ended generation needs dynamic tail truncation instead of likelihood-maximizing decoding.</li>
                         <li><strong>June 25, 2026:</strong> why written principles plus AI-generated critiques can replace many direct harmlessness labels in alignment training.</li>

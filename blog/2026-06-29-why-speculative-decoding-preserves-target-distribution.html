@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why speculative decoding preserves the target distribution | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why speculative decoding can accelerate LLM generation without changing the target model's output distribution, and where that guarantee weakens." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why speculative decoding preserves the target distribution</h1>
+            <div class="meta">June 29, 2026 &#183; 24 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                Speculative decoding asks a sharp question: can a large language model generate faster by letting a
+                smaller draft model guess several tokens ahead, while still sampling exactly from the large target
+                model? Leviathan et al. showed that the answer is yes. The narrow mechanism is a rejection-sampling
+                correction step that verifies a block of draft tokens against the target model and only falls back
+                when the draft overcommits probability mass. My reading is that speculative decoding works because it
+                separates <em>proposal</em> from <em>authority</em>. The draft model handles cheap guesswork; the target model keeps
+                final control over the distribution. Exact autoregressive sampling can therefore be decomposed into
+                fast approximate proposals plus a precise accept-reject rule.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Leviathan et al. (2023), which introduced speculative decoding as an exact
+                acceleration method for transformer inference. The central claim was unusually strong for an inference
+                speedup paper: if the verification step is implemented correctly, the final samples are distributed
+                exactly as if the target model had decoded token by token on its own. This distinguishes speculative
+                decoding from approximate caching or heuristic early-exit methods that trade speed for changed output
+                behavior.
+            </p>
+            <p>
+                Chen et al. (2023) independently developed speculative sampling for large language models and helped
+                establish the practical regime where the method pays off: the draft model must be substantially
+                cheaper than the target yet similar enough that many proposed tokens survive verification. More recent
+                work such as Medusa (Cai et al., 2024) broadens the design space by replacing an external draft model
+                with multiple decoding heads attached to the same backbone. The exactness guarantee comes from the
+                acceptance rule, not from any particular choice of proposer.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                Standard decoding with a target model samples one token, appends it to the prefix, and runs the model
+                again. The latency bottleneck is therefore serial: every new token needs another expensive forward
+                pass. Speculative decoding tries to amortize that serial cost. A draft model proposes several next
+                tokens in sequence, producing a short candidate continuation. The target model is then run once on the
+                whole candidate block and produces its own token distributions for each position in that block.
+            </p>
+            <p>
+                The subtle part is the correction step. Suppose the draft proposes token <em>x</em> at a position where it
+                assigns probability <em>q(x)</em>, while the target assigns <em>p(x)</em>. If the draft has not overestimated that
+                token too much, the proposal can be accepted with probability proportional to <em>p(x) / q(x)</em>. If the
+                proposal is rejected, sampling resumes from a residual distribution that subtracts the draft's excess
+                mass and restores the target distribution exactly. The block is processed left to right, so every
+                accepted draft token advances the prefix "for free" relative to a naive target-only decode.
+            </p>
+            <p>
+                This is why exactness holds. The draft model is never trusted as the final sampler. It only provides
+                proposals. The target model either endorses those proposals at the correct rate or replaces them using
+                the residual distribution that accounts for the mismatch. In probabilistic terms, speculative decoding
+                is a structured rejection-sampling scheme adapted to autoregressive factorization. The large model's
+                distribution remains the invariant object being sampled from at every position.
+            </p>
+            <p>
+                The acceptance rate then becomes the key systems variable. If the draft closely matches the target on
+                easy continuation steps, many tokens are accepted and the expensive model validates several positions
+                at once. If the draft diverges, the algorithm stays correct but loses speed because rejections force
+                more fallback sampling and reduce the average number of accepted tokens per target pass.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the mechanism concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: T5-XXL with a smaller proposal model.</strong> Leviathan et al. reported
+                wall-clock gains around 2x to 3x in text generation settings while preserving exact sampling from
+                the large model. A much smaller model can handle a large share of token-level prediction labor because many next-token
+                decisions are locally easy.
+                </li>
+                <li>
+                    <strong>Case study 2: Medusa-style internal proposals.</strong> Cai et al. showed that proposal
+                    tokens can also come from extra decoding heads attached to the same model family rather than a
+                    separate draft model. This weakens the dependence on maintaining two independent models and
+                suggests that the scarce resource is access to cheap approximate forecasts that correlate with the
+                target's next few choices.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Speculative decoding is exact because correction, not proposal quality, carries the guarantee.</strong> A bad draft hurts speed, not correctness.</li>
+                <li><strong>Autoregressive decoding contains predictable slack.</strong> Many token decisions are easy enough that a smaller model can guess them cheaply and often correctly.</li>
+                <li><strong>The main control knob is acceptance rate.</strong> Draft quality matters only insofar as it determines how many guessed tokens survive verification.</li>
+                <li><strong>Inference algorithms can exploit distributional similarity across models.</strong> Capability gaps matter less than calibrated agreement on local next-token structure.</li>
+            </ul>
+            <p>
+                An alignment-adjacent implication follows from that last point. If a weaker model can anticipate many
+                local continuations of a stronger one, then some important behavior differences may be concentrated in
+                relatively rare branching points rather than spread uniformly across tokens.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The exactness theorem does not mean speculative decoding is universally profitable. First, hardware
+                details matter. The method saves sequential target passes, but it also adds bookkeeping, larger
+                verification batches, and dependence on a second proposal path. On bandwidth-limited or poorly
+                optimized stacks, the savings can shrink.
+            </p>
+            <p>
+                Second, acceptance rate depends strongly on domain and sampling regime. Greedy or low-temperature
+                decoding often makes the target easier to predict, while diverse high-temperature sampling can widen
+                the draft-target gap and reduce the payoff. Third, exactness only covers the target distribution that
+                the algorithm is asked to preserve. If the deployment stack already uses approximations such as
+                quantization, constrained vocabularies, or custom logits processors, then the practical guarantee is
+                only as exact as the surrounding pipeline.
+            </p>
+            <p>
+                There is also an architectural limit. The method does not remove the need for the target model to
+                evaluate accepted positions eventually; it only changes how many can be checked per expensive pass.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                One direction is adaptive drafting. Instead of fixing one proposal depth or one draft model, can the
+                system predict when the next segment is easy and speculate more aggressively only there? Another is
+                co-training: perhaps draft and target models should be trained jointly so that draft-target agreement,
+                not only standalone perplexity, becomes the optimization target.
+            </p>
+            <p>
+                A second direction is hybrid exactness. Medusa-like internal heads, tree-based verification, and
+                retrieval-aware proposals all hint that the proposal channel can be specialized without giving up the
+                exact correction principle.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we predict acceptance rate from measurable draft-target statistics
+                such as KL divergence, calibration error, or entropy overlap well enough to choose the optimal
+                speculative policy before deployment?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Speculative decoding is a precise answer to a narrow question: how can an LLM generate faster without
+                changing what the large model would have sampled? Leviathan et al. showed that exactness comes from an
+                autoregressive rejection-sampling correction step, not from having a perfect draft model. Chen et al.
+                clarified the practical dependence on draft-target agreement, and Medusa showed that the proposal path
+                can be internalized rather than outsourced. The durable lesson is that generation latency is partly a
+                search problem. If cheap proposals can be verified and corrected exactly, then the large model does not
+                need to do all token-level work in the slowest possible serial loop.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Leviathan et al. "Fast Inference from Transformers via Speculative Decoding." ICML 2023.
+                    <a href="https://arxiv.org/abs/2211.17192">https://arxiv.org/abs/2211.17192</a>
+                </li>
+                <li>
+                    Auxiliary: Chen et al. "Accelerating Large Language Model Decoding with Speculative Sampling." 2023.
+                    <a href="https://arxiv.org/abs/2302.01318">https://arxiv.org/abs/2302.01318</a>
+                </li>
+                <li>
+                    Auxiliary: Cai et al. "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads." ICML 2024.
+                    <a href="https://arxiv.org/abs/2401.10774">https://arxiv.org/abs/2401.10774</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
