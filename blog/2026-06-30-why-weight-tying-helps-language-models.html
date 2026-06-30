@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why weight tying helps language models | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why tying input and output embeddings improves language models, what shared geometry buys, and where the assumption breaks." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why weight tying helps language models</h1>
+            <div class="meta">June 30, 2026 &#183; 23 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                Weight tying asks a narrow but surprisingly deep question: why should a language model use the same
+                matrix both to encode tokens at the input and to score tokens at the output? Press and Wolf's 2017
+                paper showed that the answer is not just parameter efficiency. Tying the input embedding matrix to the
+                output classifier often improves perplexity, especially in settings where the vocabulary is large and
+                the output layer dominates the parameter count. My reading of the mechanism is that tying works because
+                next-token prediction is a geometric matching problem. The model learns a hidden state that should sit
+                near the embedding of the correct next word while far from embeddings of implausible words. If the
+                output weights and input embeddings live in the same space, training pressure from prediction and
+                representation no longer pull in unrelated directions. The result is better lexical geometry, a
+                stronger training signal for rare words, and less drift between the softmax layer and the
+                representation space the rest of the network uses.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Press and Wolf (2017), which argued that the topmost weight matrix in a language
+                model is itself a valid word embedding and that forcing it to equal the input embedding improves both
+                perplexity and parameter efficiency. The key observation was empirical but had conceptual bite: the
+                untied output embedding evolves differently from the input embedding during training, even though both
+                are attached to the same vocabulary. Tying closes that split.
+            </p>
+            <p>
+                Inan, Khosravi, and Socher (2017) reached a similar conclusion from a slightly different direction.
+                They reframed language modeling as a structure-aware prediction problem and derived an objective under
+                which sharing the classifier and embedding parameters appears naturally rather than as an ad hoc trick.
+                Later work such as Baevski and Auli (2018) combined tied embeddings with adaptive input
+                representations, showing that the idea still helps at larger scale when vocabularies are skewed and
+                frequency-dependent capacity matters.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                In an untied language model, one matrix maps a token id into a vector at the bottom of the network,
+                while a different matrix maps the final hidden state back into vocabulary logits at the top. Nothing
+                forces those two matrices to agree. A token can therefore be represented one way when it enters the
+                model and judged through a different geometry when it leaves. Weight tying removes that degree of
+                freedom by setting the output projection equal to the transpose-equivalent vocabulary embedding.
+            </p>
+            <p>
+                This matters because the output layer is not merely a lookup table for labels. It is the dictionary
+                against which hidden states are compared. If the hidden state for a prefix like "The capital of France
+                is" should point toward <em>Paris</em>, then the learned representation has to become compatible with the
+                vector for <em>Paris</em> used elsewhere in the model. Tying makes that compatibility explicit. The same
+                vector that helps the model understand a token in context also becomes the vector that token must align
+                with when it is predicted.
+            </p>
+            <p>
+                There are at least three concrete mechanisms behind the gain. First, tying acts as regularization. A
+                large untied output layer has enough freedom to memorize frequency quirks and local classifier
+                boundaries that do not correspond to useful lexical structure. Sharing weights narrows the solution
+                class toward one where token semantics and token prediction cohere. Second, it improves data
+                efficiency. Every occurrence of a word now updates one shared representation rather than splitting its
+                evidence across separate input and output parameters. Rare words benefit most because they no longer
+                need enough data to learn two high-quality vectors. Third, tying encourages metric consistency. The
+                final hidden state can be interpreted as a query into the same embedding space used to build the model's
+                internal token representations, which makes the softmax decision boundary less arbitrary.
+            </p>
+            <p>
+                This does not mean the model literally learns a symmetric "read equals write" process. Bias terms,
+                intermediate nonlinearities, and contextual computation still make input usage and output scoring very
+                different. But tying says they should terminate in a shared lexical basis. That is stronger than
+                parameter saving and weaker than full representational symmetry, which is why it works so often.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the mechanism concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: perplexity gains on Penn Treebank and Wikitext-2.</strong> Press and Wolf
+                    showed that tied models beat untied baselines while using substantially fewer parameters. The
+                    practical lesson is that the output matrix was not just redundant storage. Constraining it to share
+                    structure with the input embeddings produced a better inductive bias.
+                </li>
+                <li>
+                    <strong>Case study 2: adaptive inputs at larger vocabulary scale.</strong> Baevski and Auli kept
+                    the shared input-output principle while allocating more capacity to frequent words and less to rare
+                    ones. Their results suggest that tying survives contact with a more realistic large-vocabulary
+                    regime: the benefit is not limited to small LSTM benchmarks, but extends when the lexical space is
+                    made more frequency-aware.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Weight tying is a geometric constraint.</strong> It forces the model to predict words in the same lexical basis it uses to represent them.</li>
+                <li><strong>The output layer is part of the representation, not just the loss head.</strong> Treating it as disposable misses where much of the vocabulary structure lives.</li>
+                <li><strong>Rare words gain from shared evidence.</strong> When one vector serves both reading and prediction, sparse tokens get denser learning signal per occurrence.</li>
+                <li><strong>Parameter reduction is the side effect, not the whole story.</strong> The performance gain comes from regularized sharing, not merely from deleting weights.</li>
+            </ul>
+            <p>
+                One alignment-adjacent implication is that lexical priors are partly encoded in the same vectors used
+                for both understanding prompts and choosing completions. If you want to intervene on how a model
+                represents sensitive categories or normative descriptors, shared embeddings mean those interventions
+                may affect both recognition and generation pathways at once.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The central limitation is that tying assumes input and output distributions should share the same
+                semantic basis. That is often approximately true in language modeling, but not always. Tasks with
+                asymmetric vocabularies, multilingual mismatch, or very different encoder and decoder roles may want
+                more flexibility than a fully shared matrix allows. Even in pure next-token prediction, the best vector
+                for recognizing a word in context may not be identical to the best vector for separating it from
+                competing output tokens.
+            </p>
+            <p>
+                There are also scaling caveats. Tying reduces parameters, but it can constrain capacity if the model
+                would otherwise benefit from specialized output-only structure. Adaptive softmax variants and
+                factorized vocabularies exist partly because the long tail of word frequency is hard to model with one
+                uniform representation budget. The empirical evidence is also strongest in perplexity and compression
+                metrics, not in downstream behavior questions such as calibration or factual precision.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                One direction is mechanistic rather than benchmark-driven: can we identify which semantic relations are
+                preserved better when embeddings are tied, and whether that preservation shows up in hidden-state
+                linear structure or only in output logits? Another is architectural: modern subword tokenization,
+                multilingual vocabularies, and mixture-of-experts routing all complicate the simple one-vocabulary
+                story from early recurrent language models.
+            </p>
+            <p>
+                A second direction matters for safety and controllability. If shared lexical geometry couples input
+                interpretation and output generation, then editing token embeddings may have broader effects than
+                expected.
+            </p>
+            <p>
+                <strong>Open question:</strong> in modern decoder-only LLMs with subword vocabularies and heavy
+                pretraining, how much of the benefit of tying comes from regularization versus from enforcing a shared
+                semantic metric between hidden states and the vocabulary?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Weight tying is one of those deceptively small design decisions that reveals a lot about language
+                modeling. Press and Wolf showed that sharing input and output embeddings improves perplexity and cuts
+                parameters; Inan et al. gave a complementary objective-based argument; Baevski and Auli showed the idea
+                survives in larger, frequency-skewed settings. The deeper lesson is that predicting the next word is
+                easiest when the model reads and writes in the same lexical coordinate system. Tying therefore works
+                less like a compression hack and more like a structural prior on what a word representation should mean
+                throughout the network.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Press and Wolf. "Using the Output Embedding to Improve Language Models." EACL 2017.
+                    <a href="https://aclanthology.org/E17-2025/">https://aclanthology.org/E17-2025/</a>
+                </li>
+                <li>
+                    Auxiliary: Inan, Khosravi, and Socher. "Tying Word Vectors and Word Classifiers: A Loss Framework for Language Modeling." ICLR 2017.
+                    <a href="https://openreview.net/forum?id=r1aPbsFle">https://openreview.net/forum?id=r1aPbsFle</a>
+                </li>
+                <li>
+                    Auxiliary: Baevski and Auli. "Adaptive Input Representations for Neural Language Modeling." ICLR 2019.
+                    <a href="https://arxiv.org/abs/1809.10853">https://arxiv.org/abs/1809.10853</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>

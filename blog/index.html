@@ -55,7 +55,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-06-29-why-speculative-decoding-preserves-target-distribution.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-06-30-why-weight-tying-helps-language-models.html">Start with the latest memo</a>
                         <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>25 published</strong>
+                            <strong>26 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -131,6 +131,7 @@
                             <span class="topic-chip">Tail truncation</span>
                             <span class="topic-chip">Compute-optimal scaling</span>
                             <span class="topic-chip">Speculative decoding</span>
+                            <span class="topic-chip">Weight tying</span>
                         </div>
                     </section>
                 </div>
@@ -146,19 +147,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">June 30, 2026 / 23 min read</p>
+                            <h3>Why weight tying helps language models</h3>
+                            <p>
+                                A longer review of why sharing input and output embeddings improves language models,
+                                what shared lexical geometry buys, and where the assumption breaks.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-06-30-why-weight-tying-helps-language-models.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">June 29, 2026 / 24 min read</p>
                             <h3>Why speculative decoding preserves the target distribution</h3>
                             <p>
                                 A longer review of why draft-and-verify generation can accelerate LLM inference
                                 without changing the target model's sampling distribution.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-06-29-why-speculative-decoding-preserves-target-distribution.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-06-29-why-speculative-decoding-preserves-target-distribution.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">June 28, 2026 / 22 min read</p>
                             <h3>Why Chinchilla scaling prefers more tokens than bigger models</h3>
@@ -221,6 +232,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">June 30, 2026 / Language modeling</p>
+                        <h3>Why weight tying helps language models</h3>
+                        <p>Why sharing input and output embeddings regularizes lexical geometry and often improves perplexity.</p>
+                        <a class="inline-link" href="/blog/2026-06-30-why-weight-tying-helps-language-models.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">June 29, 2026 / Inference</p>
                         <h3>Why speculative decoding preserves the target distribution</h3>
@@ -407,6 +425,7 @@
 
                 <article class="card" data-reveal>
                     <ul class="card-list">
+                        <li><strong>June 30, 2026:</strong> why sharing input and output embeddings helps language models read and predict words in the same lexical space.</li>
                         <li><strong>June 29, 2026:</strong> why speculative decoding can draft several tokens ahead yet still sample exactly from the target model after verification.</li>
                         <li><strong>June 28, 2026:</strong> why compute-optimal scaling usually favors more training tokens over a much larger but undertrained model.</li>
                         <li><strong>June 26, 2026:</strong> why open-ended generation needs dynamic tail truncation instead of likelihood-maximizing decoding.</li>
