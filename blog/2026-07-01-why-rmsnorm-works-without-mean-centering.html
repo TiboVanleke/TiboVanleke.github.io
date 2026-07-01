@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why RMSNorm works without mean-centering | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why RMSNorm keeps most of LayerNorm's benefits without subtracting the mean, and where that simplification stops being enough." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why RMSNorm works without mean-centering</h1>
+            <div class="meta">July 1, 2026 &#183; 19 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                LayerNorm became standard in sequence models because it stabilizes activations and makes optimization
+                less brittle. RMSNorm asks a narrower question: how much of that benefit really comes from subtracting
+                the mean, and how much comes from simply controlling scale? Zhang and Sennrich's 2019 paper argues
+                that the re-centering part is often dispensable. RMSNorm divides by root mean square rather than by
+                standard deviation around the mean, so it preserves rescaling invariance while removing the explicit
+                mean-subtraction step. That sounds like a small algebraic tweak, but it carries a strong mechanistic
+                claim: for many deep networks, the main optimization problem is uncontrolled magnitude, not nonzero
+                mean. My reading is that RMSNorm works because the residual stream mostly needs a stable gain control.
+                Once activations are kept on a predictable radius, the network can tolerate shifts in offset far better
+                than it can tolerate swings in norm.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Zhang and Sennrich, <em>Root Mean Square Layer Normalization</em> (2019). Their
+                starting point is explicit: LayerNorm provides both re-centering and re-scaling invariance, but the
+                authors hypothesize that only the second is essential for most of the observed training benefit. They
+                test that claim across machine translation, question answering, image-caption retrieval, and image
+                classification, and report quality roughly comparable to LayerNorm with meaningful runtime savings.
+            </p>
+            <p>
+                The obvious baseline is Ba, Kiros, and Hinton's original <em>Layer Normalization</em> paper (2016),
+                which made normalization practical for recurrent and variable-length settings by computing statistics
+                within a single example instead of across the batch. RMSNorm should be read as a surgical ablation of
+                that idea, not a rejection of it. It keeps per-example normalization and learned gain parameters while
+                dropping only the mean correction.
+            </p>
+            <p>
+                A useful neighboring paper is Nguyen and Salazar's <em>Transformers without Tears</em> (2019), which
+                also argues that normalization in transformers is largely about keeping activation scale under control.
+                Their ScaleNorm result is not identical to RMSNorm, but it supports the same broader intuition: in
+                transformer optimization, simple norm control often matters more than exact distribution matching.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                Standard LayerNorm subtracts the mean of a layer's activations and then divides by their standard
+                deviation. RMSNorm removes the first operation and normalizes only by the root mean square. The
+                immediate effect is computational: fewer reductions and fewer arithmetic steps. The more interesting
+                effect is geometric. RMS normalization forces the activation vector onto a roughly fixed-radius sphere,
+                but it does not require the vector to be centered around zero.
+            </p>
+            <p>
+                Why might that be enough? First, scaling is the failure mode that compounds most directly through deep
+                residual stacks. If the norm of hidden states drifts upward, attention logits, MLP outputs, and
+                residual additions all become harder to control. Stabilizing the radius limits that escalation. Second,
+                the network can usually learn to absorb mean offsets through biases, residual pathways, and subsequent
+                linear maps. A nonzero mean is often annoying but not catastrophic; an unstable norm is catastrophic.
+            </p>
+            <p>
+                Zhang and Sennrich also argue that RMSNorm produces an implicit learning-rate adaptation effect.
+                Because the normalized activations are invariant to input rescaling, gradients become less sensitive to
+                raw activation magnitude. That does not make optimization magically invariant to everything, but it does
+                damp one major source of instability. In practical terms, RMSNorm behaves like a lighter-weight gain
+                controller: keep the vector length bounded, let the model decide what directional and offset structure
+                it still wants to use.
+            </p>
+            <p>
+                This explains why RMSNorm tends to fit especially well with modern decoder-only LLMs. The residual
+                stream in such models already acts as the main information highway. What that highway most needs is
+                consistent amplitude, not repeated recentering at every block. RMSNorm preserves the useful signal in
+                direction and relative feature magnitudes while stripping out a normalization step that may be more
+                expensive than necessary.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the claim concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: GRU-based neural machine translation.</strong> In the original paper,
+                    LayerNorm reduced training loss faster per optimization step on RNNSearch, but its extra
+                    computation erased part of that gain in wall-clock time. RMSNorm was motivated precisely by this
+                    gap: keep the stabilization effect while removing enough overhead that the efficiency gain survives
+                    real training time.
+                </li>
+                <li>
+                    <strong>Case study 2: multi-task comparisons beyond translation.</strong> Zhang and Sennrich report
+                    comparable quality to LayerNorm across machine translation, question answering, image-caption
+                    retrieval, and CIFAR-10 classification, with speedups ranging from 7% to 64% depending on model
+                    and implementation. That matters because it suggests the simplification is not a niche trick for
+                    one architecture.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Norm control does most of the optimization work.</strong> For many networks, keeping activation magnitude stable matters more than forcing zero mean.</li>
+                <li><strong>LayerNorm bundles two ideas that should be separated analytically.</strong> Re-centering and re-scaling are not equally important, and RMSNorm makes that visible.</li>
+                <li><strong>Efficiency changes the real value of a stabilization trick.</strong> Faster convergence per step is not enough if the normalization layer is too expensive in wall-clock time.</li>
+                <li><strong>Residual networks often tolerate offset better than gain drift.</strong> Deep stacks can absorb mean shifts downstream, but exploding or vanishing scale corrupts every block.</li>
+            </ul>
+            <p>
+                There is also a conceptual payoff. RMSNorm weakens a common folk explanation that normalization layers
+                work mainly because they "standardize the distribution." The empirical story looks narrower and more
+                operational: a large part of the benefit comes from keeping amplitudes predictable for downstream
+                computation.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The main limitation is that "mean does not matter much" is not a theorem. Some tasks or architectures
+                may genuinely benefit from re-centering, especially when offset interacts strongly with activation
+                nonlinearities, gating, or narrow bottlenecks. RMSNorm also does not solve every depth-related problem.
+                It is one component in a larger stabilization recipe involving residual scaling, initialization,
+                optimizer tuning, and attention design.
+            </p>
+            <p>
+                There is also a historical limitation in the evidence base. The primary paper predates today's largest
+                decoder-only LLM regimes, so the argument that RMSNorm is the right default for modern language models
+                partly extrapolates from smaller architectures and later practice. That inference is plausible, but it
+                is still an inference. Finally, the speed gains are implementation-dependent. If normalization is only
+                a tiny fraction of the runtime, the theoretical savings may matter less than expected.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                One direction is mechanistic measurement: when RMSNorm underperforms LayerNorm, can we attribute the
+                gap to mean-shift sensitivity in specific sublayers rather than treating normalization choice as a
+                global hyperparameter? Another is architectural hybridization: some blocks may only need scale control,
+                while others benefit from fuller whitening-like corrections. A mixed normalization stack might be more
+                principled than choosing one method for every layer.
+            </p>
+            <p>
+                This also matters for alignment and interpretability. If residual-stream magnitude is a key control
+                variable, then interventions that change feature norms may have broader behavioral effects than their
+                semantic content alone would suggest. Normalization is not just a training convenience; it shapes the
+                coordinate system in which behavior is represented.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we predict from layer statistics or circuit structure which parts
+                of a transformer genuinely need re-centering, and which only need reliable norm control?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                RMSNorm works because much of what practitioners want from LayerNorm is stable scale, not exact
+                zero-mean activations. Zhang and Sennrich made that claim concrete by removing mean subtraction and
+                showing that quality often stays comparable while runtime improves; the original LayerNorm paper
+                clarifies what was removed; and later normalization work supports the broader view that transformer
+                optimization is unusually sensitive to gain control. The result is a good example of a small
+                architectural simplification uncovering a deeper fact about what deep networks actually need.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Zhang and Sennrich. "Root Mean Square Layer Normalization." NeurIPS 2019.
+                    <a href="https://arxiv.org/abs/1910.07467">https://arxiv.org/abs/1910.07467</a>
+                </li>
+                <li>
+                    Auxiliary: Ba, Kiros, and Hinton. "Layer Normalization." 2016.
+                    <a href="https://arxiv.org/abs/1607.06450">https://arxiv.org/abs/1607.06450</a>
+                </li>
+                <li>
+                    Auxiliary: Nguyen and Salazar. "Transformers without Tears: Improving the Normalization of Self-Attention." IWSLT 2019.
+                    <a href="https://arxiv.org/abs/1910.05895">https://arxiv.org/abs/1910.05895</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
