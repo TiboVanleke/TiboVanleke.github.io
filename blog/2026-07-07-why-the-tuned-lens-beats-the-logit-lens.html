@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why the tuned lens beats the logit lens | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why the raw logit lens misreads intermediate transformer states, how the tuned lens corrects representation drift, and what that reveals about layerwise computation." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why the tuned lens beats the logit lens</h1>
+            <div class="meta">July 7, 2026 &#183; 20 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                A natural way to inspect a transformer is to ask what each intermediate layer already "believes" about
+                the next token. The classic logit lens does this by taking a hidden state from some layer and applying
+                the model's final unembedding matrix directly. The narrow question in this memo is why that simple
+                trick often feels insightful in some models yet brittle or misleading in others. The best answer from
+                the literature is that intermediate residual states are not expressed in the same coordinate system as
+                the final readout layer. As activations drift across layers, direct unembedding confuses geometry with
+                belief. Belrose et al. (2023) formalize that problem and propose the tuned lens, which learns a small
+                affine translator for each layer before projecting into token space. My view is that this matters not
+                just because the tuned lens is a better interpretability tool, but because it sharpens a deeper claim:
+                transformer layers do not simply reveal progressively clearer logits in a fixed basis. They repeatedly
+                re-encode information before handing it to the final decoder.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The central source is Belrose et al., <em>Eliciting Latent Predictions from Transformers with the Tuned
+                Lens</em> (2023). The paper starts from the popularity of the logit lens and then shows why naive
+                unembedding is unreliable across modern autoregressive transformers. The authors document two core
+                failures: systematic bias in the layerwise predictions and representation drift between earlier hidden
+                states and the final-layer space expected by the unembedding matrix.
+            </p>
+            <p>
+                A useful conceptual predecessor is the original logit-lens idea, which treated the tied unembedding
+                matrix as a window into intermediate computations. That framing was appealing because it required no
+                training and made hidden states legible in token space. But the tuned-lens paper shows that this
+                convenience comes with a strong assumption: namely, that the same decoder basis is semantically valid
+                at every depth. The literature now treats that assumption much more cautiously.
+            </p>
+            <p>
+                An auxiliary perspective comes from Hou and Tsvetkov (2023), who likewise argue that internal layers do
+                not map cleanly back to token space without additional care. Their decoding method is aimed at
+                saliency rather than next-token forecasting, but it reinforces the same lesson: later layers are more
+                decision-oriented, and simple projections from arbitrary hidden states can blur the actual computation.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The logit lens is simple. Take the hidden state at layer <em>l</em>, apply the final layer norm if needed,
+                multiply by the model's unembedding matrix, and interpret the resulting token distribution as the
+                layer's current next-token prediction. If all layers lived in nearly the same representational basis,
+                this would give a faithful trajectory of belief updating through depth.
+            </p>
+            <p>
+                The tuned-lens paper argues that this assumption fails for two reasons. First, the raw logit lens is
+                biased: averaged over a dataset, it systematically overweights some vocabulary items and underweights
+                others relative to the model's actual final output. Second, hidden-state covariance drifts across
+                layers. Earlier states can contain outlier directions and layer-specific geometry that make the final
+                unembedding matrix a poor decoder for them. In effect, the model is still "thinking" in an internal
+                dialect that the last-layer readout only partially understands.
+            </p>
+            <p>
+                The tuned lens inserts a learned affine translator for each layer before unembedding. Each translator
+                is trained to make the translated hidden state predict the same token distribution as the final layer,
+                using a KL objective. Mechanistically, this is modest: it does not claim that early layers already know
+                the full answer, only that whatever predictive information they do contain should first be expressed in
+                the final layer's basis before we read it out. That correction turns the tool from "apply the last
+                decoder everywhere" into "learn the right local change of coordinates, then decode."
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the distinction concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: GPT-Neo-2.7B shows systematic logit-lens bias.</strong> Belrose et al.
+                    report that the raw logit lens is not merely noisy; it is predictably biased toward certain
+                    vocabulary items across layers. That means a layerwise probability trajectory can look like gradual
+                    evidence accumulation when part of the movement is really decoder mismatch.
+                </li>
+                <li>
+                    <strong>Case study 2: BLOOM and OPT-125M expose brittleness on modern models.</strong> The paper
+                    finds that on some architectures the raw logit lens often predicts the input token or other
+                    implausible continuations in many layers, while the tuned lens substantially lowers perplexity.
+                    This is the strongest practical evidence that decoder mismatch is not a small calibration issue; it
+                    can qualitatively distort what we think a layer represents.
+                </li>
+            </ul>
+            <p>
+                Five crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Intermediate states are not natively in token space.</strong> They may contain predictive information without being directly readable by the final unembedding.</li>
+                <li><strong>Layerwise interpretability needs coordinate awareness.</strong> A bad basis can create fake narratives about when a model "decides."</li>
+                <li><strong>Low perplexity is not the only criterion.</strong> The tuned lens also reduces systematic vocabulary bias, which matters if we want to interpret probability trajectories as beliefs.</li>
+                <li><strong>Transformers repeatedly reformat information.</strong> Hidden states appear to be optimized for computation first and human-readable decoding only at the end.</li>
+                <li><strong>Interpretability tools can fail by projection error rather than conceptual weakness.</strong> Sometimes the model contains the signal and the probe is what is misaligned.</li>
+            </ul>
+            <p>
+                One alignment-relevant implication is methodological. Many attempts to diagnose latent reasoning,
+                deception, or factual recall use layerwise token-space readouts as evidence for what the model "knew"
+                at a given depth. The tuned-lens result says those claims should be discounted when the probe itself is
+                mismatched to the layer geometry. A misleading readout can turn a probe artifact into a story about the
+                model's cognition.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The tuned lens is still a probe, not a proof of computation. Matching final-layer token distributions
+                does not guarantee that a layer internally represents a clean next-token belief state. The translator
+                could partially hallucinate a readable distribution from imperfect clues, especially if several latent
+                states support similar final outputs. So the method improves faithfulness relative to the logit lens,
+                but it does not collapse the gap between "decodable" and "causally used."
+            </p>
+            <p>
+                There is also a dependence on the final output as supervision. The method learns translators to agree
+                with the model's own last-layer distribution, which is excellent for consistency but limits what it can
+                say about representations that are useful internally yet never surface in the final logits. And while
+                the affine form is elegant, it may underfit genuinely nonlinear layer-to-layer changes in basis.
+            </p>
+            <p>
+                Finally, the tool is best for autoregressive models with a relatively clean iterative residual-stream
+                story. The paper itself is most compelling in pre-LN settings. Other architectures may require a more
+                careful notion of where and how to insert the translator.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                One direction is causal validation: combine tuned-lens readouts with interventions that test whether
+                the decoded token preferences are actually used downstream. Another is richer geometry. If affine
+                translators already help this much, then more structured probes might capture when specific subspaces,
+                not whole hidden states, carry token-space commitments.
+            </p>
+            <p>
+                A second direction concerns mechanistic workflows. The tuned lens could be paired with circuit tracing
+                or feature-level methods to separate two questions that are often conflated: what token-space
+                prediction is decodable at a layer, and which internal features or heads make that prediction possible.
+                That would connect layerwise readout tools to more causal interpretability traditions.
+            </p>
+            <p>
+                A third direction matters for alignment diagnostics. If we want to detect hidden knowledge, emerging
+                deception, or latent goal conflict before it appears in outputs, we need readout methods whose failure
+                modes are well characterized. The tuned lens is valuable partly because it identifies a concrete probe
+                failure mode, representation drift, and fixes part of it.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we build layerwise readout methods that are not only better
+                calibrated than the tuned lens, but also demonstrably faithful to the causal computations that later
+                layers actually consume rather than merely to the final logits they eventually produce?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The tuned lens beats the logit lens because intermediate transformer states are not written in the same
+                basis that the final unembedding expects. Belrose et al. show that raw direct decoding is biased and
+                brittle; a learned affine translator per layer recovers more faithful token-space readouts and lowers
+                perplexity across several models. The broader lesson is that hidden states should be treated as
+                computational states first, readable language objects second. If we ignore that distinction, we risk
+                misreading projection artifacts as evidence about model cognition.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Belrose et al. "Eliciting Latent Predictions from Transformers with the Tuned Lens." 2023.
+                    <a href="https://arxiv.org/abs/2303.08112">https://arxiv.org/abs/2303.08112</a>
+                </li>
+                <li>
+                    Auxiliary: Hou and Tsvetkov. "Decoding Layer Saliency in Language Transformers." ICML 2023.
+                    <a href="https://proceedings.mlr.press/v202/hou23a.html">https://proceedings.mlr.press/v202/hou23a.html</a>
+                </li>
+                <li>
+                    Auxiliary: Logit Lens original writeup by nostalgebraist. 2020.
+                    <a href="https://www.greaterwrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens">https://www.greaterwrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
