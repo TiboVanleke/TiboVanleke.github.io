@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why many emergent abilities are measurement artifacts | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of whether sharp emergent abilities in LLMs mostly come from discontinuous metrics, limited evaluation resolution, or real capability thresholds." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why many emergent abilities are measurement artifacts</h1>
+            <div class="meta">July 12, 2026 &#183; 20 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                One of the sharpest disputes in LLM scaling research is whether "emergent abilities" are genuinely
+                abrupt capability births or mostly a measurement illusion. The narrow question in this memo is not
+                whether larger models become better. They do. The question is why some benchmark curves look flat for a
+                long time and then appear to jump from failure to competence at a particular scale. My read of the
+                literature is that many famous emergence plots are indeed artifacts of coarse metrics such as exact
+                match, accuracy, or pass/fail thresholds applied to smoothly improving underlying behavior. But the
+                mirage story is not the whole story either. Later work suggests that once performance is indexed by
+                pretraining loss rather than parameter count, some tasks still exhibit threshold-like transitions from
+                random guessing to useful behavior. The strongest conclusion is therefore narrower than both sides
+                often claim: apparent emergence by model size is often a property of the measurement pipeline,
+                while real threshold behavior may still exist in training or loss space.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Schaeffer, Miranda, and Koyejo, <em>Are Emergent Abilities of Language
+                Models a Mirage?</em> (2023). Their central claim is methodological. If the underlying probability of
+                success rises smoothly with scale, then nonlinear or discontinuous evaluation metrics can manufacture
+                abrupt-looking jumps. They back that claim with a simple mathematical argument, a meta-analysis of
+                BIG-Bench-style tasks, and empirical checks on GPT-3 and InstructGPT families.
+            </p>
+            <p>
+                The backdrop is Wei et al., <em>Emergent Abilities of Large Language Models</em> (2022), which made the
+                phenomenon famous by highlighting task curves that appeared unpredictable from smaller models. That
+                paper mattered because it shifted attention from scaling laws for loss toward the harder
+                question of downstream capability forecasting.
+            </p>
+            <p>
+                Two useful follow-ups sharpen the debate rather than simply resolving it. Hu et al. (2023) argue that
+                some small models already show measurable progress on "emergent" tasks once evaluation resolution is
+                increased, for example with more sensitive code-generation metrics. Xia et al. (2024) go further and
+                ask whether pretraining loss, rather than parameter count, is the right horizontal axis. On their
+                account, different model-size and data-size combinations with the same loss often land on similar task
+                performance, and some tasks still show threshold-like behavior when loss crosses a critical region.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The mirage mechanism is simple. Suppose a model's latent competence on a task improves smoothly from
+                1% to 5% to 15% to 35% as scale increases. If we evaluate with a binary metric like exact-answer
+                accuracy on a hard benchmark, the early regime can look like pure failure. A move from 1% to 5% still
+                rounds to "almost never right." Only later, once the success probability passes the benchmark's coarse
+                detection threshold, the curve looks like it suddenly turns on. Nothing discontinuous happened inside
+                the model; the discontinuity came from mapping a smooth latent variable onto a hard observable.
+            </p>
+            <p>
+                This gets stronger when the metric is both nonlinear and low-resolution. Exact match ignores partial
+                correctness. Pass/fail metrics collapse near misses and random guesses into the same bucket. Small test
+                sets add statistical noise, so a tiny underlying gain may not even be detectable. Schaeffer et al.
+                show that once one switches to more continuous metrics, better statistics, or repeated sampling, many
+                canonical emergence curves become smoother and more predictable.
+            </p>
+            <p>
+                But there is a second mechanism that the mirage critique does not eliminate. If tasks depend on a
+                prerequisite skill that remains below random-guess level until training loss falls under some value,
+                then the observed transition can still be genuinely threshold-like. Xia et al. argue that this is
+                easier to see when models are compared by pretraining loss rather than by raw parameter count. In that
+                view, the key question is not "At how many parameters does ability X appear?" but "What learning state
+                must the model reach before signal rises above the random baseline?"
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the distinction concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: BIG-Bench-style accuracy curves.</strong> The original emergence literature
+                    highlighted tasks where smaller models scored near zero and larger models jumped upward. The mirage
+                    paper shows that this pattern is exactly what one should expect when smooth probability changes are
+                    filtered through discontinuous task metrics. A flat-looking early regime is not evidence of zero
+                    underlying progress.
+                </li>
+                <li>
+                    <strong>Case study 2: code generation under higher-resolution evaluation.</strong> Hu et al. show
+                    that when code tasks are measured with more sensitive "try until success" style evaluation,
+                    smaller models already exhibit systematic gains that conventional metrics miss. They even report
+                    highly accurate prediction of a 2.4B model's code performance before training, which would be hard
+                    to reconcile with a story of wholly unpredictable capability birth.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Emergence by parameter count is often an axis problem.</strong> Parameter size mixes together model width, data quality, token budget, and optimization state.</li>
+                <li><strong>Benchmark design can create phase transitions out of smooth curves.</strong> Exact match and binary accuracy are especially prone to this distortion on hard tasks.</li>
+                <li><strong>Resolution matters as much as metric type.</strong> More samples, repeated attempts, or partial-credit measures can reveal progress long before standard reporting does.</li>
+                <li><strong>The right conclusion is not "emergence is fake" but "emergence needs a better definition."</strong> Loss-threshold accounts preserve the idea of tipping points without tying them to arbitrary model scales.</li>
+            </ul>
+            <p>
+                A fifth implication matters for forecasting. If many dramatic-looking jumps are evaluation artifacts,
+                then capability prediction should be less mystified and more measurement-driven. But if some tasks
+                really do sit behind shared loss thresholds, then smooth scaling laws for training loss still will not
+                automatically translate into smooth progress on every downstream benchmark.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The mirage argument is strongest against a specific target: claims that sharpness in benchmark curves
+                directly implies abrupt internal capability change. It is weaker as a universal debunking story. A
+                benchmark can be badly measured and still be tracking a real latent threshold. Likewise, replacing
+                binary metrics with continuous ones does not guarantee that all discontinuities disappear; it only
+                removes one major source of artifact.
+            </p>
+            <p>
+                The loss-threshold view also has limits. Pretraining loss depends on tokenizer choice, corpus
+                distribution, and architecture, so thresholds are not obviously portable across model families. The
+                result is more satisfying scientifically than raw parameter thresholds, but it is not yet a universal
+                coordinate system for capability forecasting. There is also a practical issue: many deployed models are
+                evaluated after instruction tuning or RLHF, where downstream behavior can shift for reasons not well
+                summarized by base-model loss alone.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The most important next step is benchmark refactoring. For every task that allegedly exhibits
+                emergence, researchers should report at least one continuous or higher-resolution metric alongside the
+                headline binary one. A second direction is mechanistic: if some skills truly turn on around a shared
+                loss threshold, what internal circuits or representations become available there? That would connect
+                the emergence debate to the more concrete circuit-birth stories seen elsewhere in interpretability.
+            </p>
+            <p>
+                A third direction matters for alignment. Safety evaluations often rely on thresholded outcomes such as
+                "refused" versus "did not refuse" or "passed" versus "failed." If those outcomes hide smooth latent
+                changes in dangerous capability, then governance decisions based on coarse dashboards may systematically
+                underestimate gradual risk accumulation.
+            </p>
+            <p>
+                <strong>Open question:</strong> which frontier-relevant benchmarks still show robust threshold behavior
+                after controlling for metric discontinuity, sample size, prompting, and pretraining-loss alignment?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Many celebrated emergent abilities in LLMs are better understood as measurement artifacts than as
+                magical capability births. Schaeffer et al. make the core case: coarse nonlinear metrics can turn
+                smooth performance gains into sharp-looking jumps. Hu et al. show that higher-resolution evaluation can
+                recover predictable scaling that the coarse metrics conceal. Xia et al. then recover a narrower, more
+                defensible notion of emergence by tying it to pretraining-loss thresholds rather than parameter count.
+                The net result is a cleaner research program: distrust dramatic plots by default, upgrade the
+                measurement stack, and only then ask whether a real capability threshold remains.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Schaeffer, Miranda, and Koyejo. "Are Emergent Abilities of Large Language Models a Mirage?" 2023.
+                    <a href="https://arxiv.org/abs/2304.15004">https://arxiv.org/abs/2304.15004</a>
+                </li>
+                <li>
+                    Auxiliary: Wei et al. "Emergent Abilities of Large Language Models." 2022.
+                    <a href="https://arxiv.org/abs/2206.07682">https://arxiv.org/abs/2206.07682</a>
+                </li>
+                <li>
+                    Auxiliary: Hu et al. "Unlock Predictable Scaling from Emergent Abilities." 2023.
+                    <a href="https://arxiv.org/abs/2310.03262">https://arxiv.org/abs/2310.03262</a>
+                </li>
+                <li>
+                    Auxiliary: Xia et al. "Understanding Emergent Abilities of Language Models from the Loss Perspective." 2024.
+                    <a href="https://arxiv.org/abs/2403.15796">https://arxiv.org/abs/2403.15796</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
