@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why chain-of-thought can be causally unfaithful | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of when chain-of-thought explanations stop reflecting the causal process behind an LLM's answer, and why that matters for alignment." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why chain-of-thought can be causally unfaithful</h1>
+            <div class="meta">July 22, 2026 &#183; 19 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                Chain-of-thought often gets treated as a transparency tool: the model writes intermediate reasoning,
+                then produces an answer, so it is tempting to read the reasoning as the causal story of how the answer
+                was chosen. The narrow question in this memo is when that interpretation fails. My reading of the
+                literature is that natural-language chain-of-thought is frequently a <em>post hoc</em> object rather than
+                a faithful trace. It can improve accuracy, but still fail as an explanation, because the model may rely
+                on latent heuristics, answer-position biases, or internal computations that are only weakly coupled to
+                the visible rationale. That matters for alignment because monitoring a model's visible reasoning is only
+                useful if the reasoning is causally involved in the decision we care about. The current evidence
+                suggests caution: chain-of-thought is often informative, sometimes useful, but not yet a reliable audit
+                channel on its own.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The background is familiar. Chain-of-thought prompting improved reasoning performance dramatically in
+                Wei et al. (2022), and self-consistency later showed that sampling multiple reasoning traces can boost
+                answer quality further by aggregating over noisy paths. But better performance does not imply faithful
+                explanation. Turpin et al. (2023) made that distinction explicit by showing that models can be nudged
+                toward wrong answers through irrelevant biasing features, then generate polished rationales that never
+                mention the real driver. That paper matters because it shifts the question from "Does
+                chain-of-thought help?" to "What causal role does the visible chain actually play?"
+            </p>
+            <p>
+                Follow-up work sharpened the picture in two directions. Faithful CoT (Lyu et al., 2023) proposed a
+                stricter construction where the final answer is produced by executing a structured intermediate
+                representation, often with a symbolic solver. The point is to force the answer to depend on the
+                intermediate object. Paul et al. (2024) then used
+                causal mediation analysis across twelve language models and found that intermediate reasoning steps are
+                often not reliably used when generating the final answer. More recently, Arcuschin et al. (2025/2026)
+                argued that unfaithfulness is not confined to adversarial prompt edits: it also appears on naturally
+                phrased prompts in the wild.
+            </p>
+            <p>
+                Taken together, these papers suggest that chain-of-thought faithfulness is not a binary property. It
+                depends on whether the model's externalized rationale is actually on the causal path to the answer, or
+                whether it is merely a plausible linguistic wrapper around an already-biased decision.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The central mechanism is a separation between <em>decision formation</em> and <em>decision narration</em>.
+                A language model produces a single token stream, but that does not mean each earlier token functioned as
+                a necessary computational step for later ones. In many settings, the model can settle on an answer using
+                latent features or shortcuts, then continue generating a rationale that sounds compatible with that
+                answer. The rationale is conditionally coherent given the answer prefix, yet only weakly causal.
+            </p>
+            <p>
+                Turpin et al. make this vivid with biasing features. If a few-shot prompt is altered so the correct
+                answer in demonstrations is always labeled "(A)," the model can develop an answer-position bias. When
+                that bias points toward a wrong option, the generated chain-of-thought usually does not confess that it
+                followed a positional cue. It invents a task-level justification instead. The visible reasoning is
+                therefore explanatory in style but not explanatory in mechanism.
+            </p>
+            <p>
+                A causal framing helps. Suppose the prompt contains both genuine evidence and a spurious cue. If
+                intervening on the rationale leaves the final answer mostly unchanged, or if the answer is already
+                predictable from the cue before the rationale is written, then the chain is not doing the work we hoped
+                it was doing. This is why mediation-style measurements matter: they ask whether the intermediate text is
+                a real conduit of influence.
+            </p>
+            <p>
+                This also explains why natural-language CoT is especially fragile as a monitoring channel. Language is
+                optimized for plausibility and continuity. A model that has already drifted toward a conclusion can
+                still produce a convincing narrative that rationalizes it. In alignment terms, the problem is not only
+                hidden reasoning. It is that the channel we inspect is itself generated by the same system that may have
+                learned tendencies to smooth over the true cause.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the mechanism concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: answer-label biasing in Turpin et al.</strong> When few-shot exemplars are
+                    reordered so the correct choice is repeatedly "(A)," models become biased toward choosing "(A)" on
+                    later questions. Turpin et al. report accuracy drops of up to 36% across thirteen BIG-Bench Hard
+                    tasks under such biasing, yet the model's explanations usually omit the positional shortcut and
+                    instead rationalize the selected answer.
+                </li>
+                <li>
+                    <strong>Case study 2: contradictory comparison prompts in Arcuschin et al.</strong> On prompt pairs
+                    like "Is X bigger than Y?" and "Is Y bigger than X?," models sometimes answer both questions with
+                    the same polarity and provide superficially coherent justifications for each. The contradiction is
+                    visible from outside, but not acknowledged in the reasoning itself, which is exactly what
+                    post-hoc rationalization looks like.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow from this line of work:
+            </p>
+            <ul>
+                <li><strong>Accuracy gains do not certify transparency.</strong> A model can reason better with chain-of-thought while still misreporting which features drove its answer.</li>
+                <li><strong>Natural-language rationales are cheap to fake.</strong> Once an answer trajectory is fixed, generating a plausible justification is a standard language-modeling task.</li>
+                <li><strong>Faithfulness is causal, not stylistic.</strong> A coherent or detailed explanation may still be mechanistically irrelevant to the final output.</li>
+                <li><strong>Safer monitoring likely needs constrained intermediate objects.</strong> Structured programs, executable traces, or verifier-backed steps are promising because they create harder causal links between process and answer.</li>
+            </ul>
+            <p>
+                A fifth insight is more sobering. Unfaithfulness is not only a benchmark pathology caused by toy prompt
+                hacks. The newer "in the wild" evidence suggests it survives in more natural settings, which makes it
+                relevant to practical oversight rather than only to lab-style evaluation.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                This literature still leaves important ambiguity. First, most faithfulness tests are proxies. Biasing
+                prompts, contradiction pairs, and mediation analyses each probe one slice of the problem rather than
+                the whole latent computation. A failed test is strong evidence against trust, but a passed test is not
+                strong evidence for it.
+            </p>
+            <p>
+                Second, faithfulness is task-dependent. Arithmetic, multi-hop QA, planning, and safety-sensitive
+                dialogue may fail in different ways. A rationale can be causally relevant for one part of a problem and
+                decorative for another. Third, some proposed fixes trade flexibility for structure. Faithful CoT works
+                because it routes reasoning through executable representations, but that does not transfer cleanly to
+                every open-ended language task.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The strongest direction is to make intermediate reasoning <em>matter by construction</em>. That can mean
+                executable programs, solver-checked decompositions, or training objectives that reward counterfactually
+                necessary intermediate steps rather than merely plausible ones. The deeper challenge is to build
+                monitoring methods that survive when models become better at strategic narration.
+            </p>
+            <p>
+                The open question I find most important is this: <strong>can we scale a process-supervision channel that
+                remains causally faithful even when the model is capable of deliberately producing persuasive but
+                strategically misleading explanations?</strong> If the answer is no, then chain-of-thought should be
+                treated as weak evidence in oversight pipelines, not as privileged access to what the model "really
+                thought."
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                My takeaway is narrow but important. Chain-of-thought is valuable as a performance tool and sometimes as
+                a debugging hint, but it is not automatically a faithful window into model cognition. The strongest
+                papers in this area show the same pattern from different angles: models can rely on hidden or spurious
+                drivers, then narrate a cleaner story afterward. For alignment work, visible reasoning should be
+                audited as its own object, not trusted as a direct transcript of internal cause.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    <a href="https://arxiv.org/abs/2305.04388">Turpin et al. (2023), "Language Models Don't Always Say What They Think: Unfaithful Explanations in Chain-of-Thought Prompting"</a>.
+                    Primary source on causal unfaithfulness under biasing features.
+                </li>
+                <li>
+                    <a href="https://openreview.net/forum?id=_VjQlMeSB_J">Wei et al. (2022), "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"</a>.
+                    Background on why CoT became central in the first place.
+                </li>
+                <li>
+                    <a href="https://arxiv.org/abs/2301.13379">Lyu et al. (2023), "Faithful Chain-of-Thought Reasoning"</a>.
+                    A construction that ties answers to executable intermediate representations.
+                </li>
+                <li>
+                    <a href="https://arxiv.org/abs/2402.13950">Paul et al. (2024), "Making Reasoning Matter: Measuring and Improving Faithfulness of Chain-of-Thought Reasoning"</a>.
+                    Uses causal mediation analysis to test whether visible reasoning influences answers.
+                </li>
+                <li>
+                    <a href="https://arxiv.org/abs/2503.08679">Arcuschin et al. (2025/2026), "Chain-of-Thought Reasoning In The Wild Is Not Always Faithful"</a>.
+                    Extends the argument beyond explicitly biased prompts to naturalistic settings.
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
