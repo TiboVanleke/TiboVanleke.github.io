@@ -55,7 +55,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-07-17-why-goal-misgeneralization-is-not-just-overfitting.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-07-22-why-function-vectors-can-trigger-in-context-tasks.html">Start with the latest memo</a>
                         <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>31 published</strong>
+                            <strong>32 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -137,8 +137,10 @@
                             <span class="topic-chip">Memorization</span>
                             <span class="topic-chip">Emergence metrics</span>
                             <span class="topic-chip">Goal misgeneralization</span>
+                            <span class="topic-chip">Function vectors</span>
                         </div>
                         <ul>
+                            <li>2026-07-22: Whether few-shot prompts induce a portable task vector that can be extracted from specific heads and reused in new contexts.</li>
                             <li>2026-07-17: Why goal misgeneralization is a distinct failure mode from overfitting and reward misspecification.</li>
                             <li>2026-07-12: Whether apparent emergent abilities are mostly metric artifacts or real loss-threshold transitions.</li>
                         </ul>
@@ -156,19 +158,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">July 22, 2026 / 20 min read</p>
+                            <h3>Why function vectors can trigger in-context tasks</h3>
+                            <p>
+                                A longer review of why task information can be packaged into a portable residual-stream
+                                vector, how specific heads extract it, and where that mechanistic story still breaks.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-07-22-why-function-vectors-can-trigger-in-context-tasks.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">July 17, 2026 / 18 min read</p>
                             <h3>Why goal misgeneralization is not just overfitting</h3>
                             <p>
                                 A longer review of why competent proxy pursuit is a distinct alignment failure mode,
                                 how it differs from capability failure, and why correct rewards may still be insufficient.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-07-17-why-goal-misgeneralization-is-not-just-overfitting.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-07-17-why-goal-misgeneralization-is-not-just-overfitting.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">July 12, 2026 / 20 min read</p>
                             <h3>Why many emergent abilities are measurement artifacts</h3>
@@ -281,6 +293,20 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">July 22, 2026 / Mechanism</p>
+                        <h3>Why function vectors can trigger in-context tasks</h3>
+                        <p>Why a small set of attention heads can package a demonstrated task into a portable residual-stream vector.</p>
+                        <a class="inline-link" href="/blog/2026-07-22-why-function-vectors-can-trigger-in-context-tasks.html">Read memo</a>
+                    </article>
+
+                    <article class="card" data-reveal>
+                        <p class="card-meta">July 17, 2026 / Alignment</p>
+                        <h3>Why goal misgeneralization is not just overfitting</h3>
+                        <p>Why competent proxy pursuit is a distinct failure mode from ordinary overfitting and reward misspecification.</p>
+                        <a class="inline-link" href="/blog/2026-07-17-why-goal-misgeneralization-is-not-just-overfitting.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">July 12, 2026 / Scaling</p>
                         <h3>Why many emergent abilities are measurement artifacts</h3>
@@ -502,6 +528,8 @@
 
                 <article class="card" data-reveal>
                     <ul class="card-list">
+                        <li><strong>July 22, 2026:</strong> why some few-shot prompts appear to induce a portable task vector that can be extracted from a small set of causal attention heads.</li>
+                        <li><strong>July 17, 2026:</strong> why goal misgeneralization is a distinct failure mode where capability generalizes while the pursued objective does not.</li>
                         <li><strong>July 8, 2026:</strong> why exact LLM memorization concentrates on rare, repeated, high-entropy strings that become retrievable from the right prefix.</li>
                         <li><strong>July 7, 2026:</strong> why intermediate transformer states need a learned translation before token-space readouts can be trusted.</li>
                         <li><strong>July 1, 2026:</strong> why RMSNorm keeps most of LayerNorm's benefits by stabilizing activation scale even without explicit mean-centering.</li>

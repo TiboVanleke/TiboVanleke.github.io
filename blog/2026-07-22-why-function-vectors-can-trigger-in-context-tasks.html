@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why function vectors can trigger in-context tasks | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why function vectors can transport task information across contexts, what mechanism extracts them from attention heads, and where that interpretation remains limited." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why function vectors can trigger in-context tasks</h1>
+            <div class="meta">July 22, 2026 &#183; 20 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                A narrow but revealing question about in-context learning is whether a model stores anything like a
+                portable representation of the task currently being demonstrated. Todd et al. (2024) argue that a small set
+                of attention heads carries a compact residual-stream vector that represents the demonstrated
+                input-output mapping. If that vector is extracted from a few-shot prompt and added back into a
+                different context, the model can often execute the task even when the surrounding prompt no longer
+                contains usable demonstrations. My view is that this result matters because it sharpens the mechanistic
+                story of in-context learning. The prompt is not only a place from which the model copies local
+                patterns; it can also induce a task-level state that gets transported forward by specific heads. That
+                makes function vectors a concrete bridge between induction-style copying stories and richer views of
+                prompt-conditioned computation.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Todd et al., <em>Function Vectors in Large Language Models</em> (ICLR 2024). The
+                paper studies decoder-only models including GPT-J, GPT-NeoX, and Llama 2, then uses causal mediation
+                analysis to isolate attention heads whose outputs are especially important for carrying task
+                information during few-shot prompting. Summing the task-conditioned outputs of those heads yields a
+                function vector, or FV.
+            </p>
+            <p>
+                A useful precursor is Akyurek et al. (2022), which asks what algorithm in-context learning resembles
+                on linear tasks and argues that transformers can implement update rules akin to learning algorithms in
+                their forward pass. A second precursor is von Oswald et al. (2023), which shows that transformers
+                trained on regression can behave like gradient descent. Those papers are more algorithmic than
+                mechanistic. They suggest what computation may be
+                happening, while the FV paper asks where in a real language model a portable task representation seems
+                to live.
+            </p>
+            <p>
+                A nearby but distinct line is activation steering, especially Turner et al. (2023) on Activation
+                Addition. That work shows that adding activation-space directions can steer topic, sentiment, or
+                truthfulness. Function vectors differ in a crucial way: they are not generic style directions but
+                task-conditioned vectors extracted from demonstrations of an input-output function.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The method starts with a deliberately adversarial setup. Instead of evaluating a model only on helpful
+                few-shot prompts, Todd et al. create corrupted prompts where the demonstrations keep the same surface
+                format but the labels are shuffled, so the examples no longer specify a coherent task. They then ask
+                which attention heads matter for recovering the correct answer when clean activations from the original
+                task prompt are patched into that corrupted run. This gives each head an average indirect effect: a
+                causal score for how much it helps transmit task-relevant information.
+            </p>
+            <p>
+                Once the high-effect heads are identified, the authors average those heads' outputs over prompts from
+                the same task and sum them to form a single vector in residual-stream space. That vector is the
+                function vector. At inference time, they inject it at the final token position in a new prompt,
+                usually at an early-middle or middle layer. If the model starts producing antonyms, translations, or
+                labels despite receiving a zero-shot or shuffled-label prompt, the intervention is taken as evidence
+                that the vector is carrying task information rather than just memorized lexical content.
+            </p>
+            <p>
+                Two details make the mechanism more credible than naive vector arithmetic. First, the effect peaks in
+                middle layers and collapses when the same vector is inserted late in the network. If the FV were just
+                a direct vocabulary-space offset, late injection should work too. Second, the paper shows that the
+                vector often contains output-space hints, but those hints alone do not reconstruct the full effect.
+                The model appears to treat the FV as an instruction that triggers downstream computation, not as a
+                simple logit bump for a set of answer words.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the claim concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: antonym generation.</strong> A function vector extracted from prompts of the
+                    form <em>good -&gt; bad</em>, <em>hot -&gt; cold</em>, and so on can be added to an unrelated prompt so
+                    that the model answers a fresh query like <em>bright -&gt;</em> with an antonym much more often than
+                    it does in the plain zero-shot setting. The point is not perfect task transfer; it is that the
+                    task identity survives the loss of the original exemplars.
+                </li>
+                <li>
+                    <strong>Case study 2: word translation.</strong> The same extraction procedure works for tasks
+                    like English-to-Spanish or English-to-French translation. An FV derived from translation examples
+                    can raise correct translation accuracy when inserted into a prompt that otherwise lacks usable
+                    demonstrations. That suggests the model is transporting something closer to "translate according to
+                    this relation" than to any one lexical pair.
+                </li>
+            </ul>
+            <p>
+                Five crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Task information is partly localized.</strong> A small subset of attention heads carries a disproportionate share of the causal burden for executing many few-shot tasks.</li>
+                <li><strong>Portable task states exist in the residual stream.</strong> The same extracted vector can induce behavior in zero-shot and corrupted contexts, so the task signal is not inseparable from the original prompt format.</li>
+                <li><strong>Middle layers are where the action is.</strong> Strong effects in early-middle layers and near-zero effects in late layers imply the vector must still pass through task-executing computation.</li>
+                <li><strong>Function vectors are not just label priors.</strong> Vocabulary-space clues help but do not explain the full intervention effect, which argues against a trivial "boost the likely outputs" story.</li>
+                <li><strong>In-context learning is mechanistically heterogeneous.</strong> Some heads implicated by FVs overlap with induction-style behavior, but not all high-effect heads look like simple prefix-matchers, so copying is not the whole mechanism.</li>
+            </ul>
+            <p>
+                The last point is the most interesting. The paper reports that some influential heads score highly on
+                induction-style prefix matching, but several other high-effect heads do not. That is evidence against
+                a reductionist view where all few-shot competence is just sophisticated copying. Function vectors look
+                more like a compositional control state assembled from several head outputs, some copy-like and some
+                not.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The main limitation is task simplicity. Many demonstrations involve word-level transformations,
+                classification labels, or compact mappings. Those are ideal for extracting a clean causal vector, but
+                they may understate how entangled open-ended tasks are. If a task requires long-range planning,
+                multi-step reasoning, or heavy world knowledge, a single compact FV may be an incomplete summary.
+            </p>
+            <p>
+                There is also a filtering issue in the evaluation. The paper often measures FV effects on prompts that
+                the base model can already solve with ordinary 10-shot ICL. That is a reasonable way to ask how much
+                of the model's existing competence is captured by the extracted vector, but it means the intervention
+                is not creating new capabilities. Finally, causal localization is not the same as a full explanation. Knowing which
+                heads transport the signal does not yet tell us the full downstream program that interprets it.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                One direction is scale and task complexity. Do function vectors stay compact for code generation,
+                multi-hop QA, or agentic tool use, or does the representation fragment across more heads and layers as
+                the task becomes less like a short symbolic mapping? Another direction is alignment: if task identity
+                can be extracted and reinserted as a residual-stream vector, then prompt injection and activation
+                steering may share more structure than they first appear to. That could matter both for understanding
+                jailbreaks and for designing more modular control mechanisms.
+            </p>
+            <p>
+                A third direction is composition. Todd et al. report partial success when summing function vectors to
+                induce more complex behavior. If that scales, it would suggest that some task abstractions are
+                represented in an algebraically reusable way rather than as brittle prompt-specific traces.
+            </p>
+            <p>
+                <strong>Open question:</strong> when function vectors fail on richer language tasks, is the bottleneck
+                that the task cannot be compressed into one portable vector, or that the downstream circuits needed to
+                interpret that vector are too distributed to be triggered by a single intervention?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                Function vectors are compelling because they turn a vague intuition about "the prompt tells the model
+                what task to do" into a concrete causal claim. Todd et al. show that a small set of attention heads can
+                carry a portable task representation that survives transfer into zero-shot or corrupted contexts. The
+                effect is strongest in middle layers, weaker in late layers, and not reducible to simple vocabulary
+                biasing. That does not solve the whole puzzle of in-context learning, but it does identify one sharp
+                mechanism: demonstrations can induce a compact task state that the model later executes.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Todd et al. "Function Vectors in Large Language Models." ICLR 2024.
+                    <a href="https://functions.baulab.info/">https://functions.baulab.info/</a>
+                </li>
+                <li>
+                    Auxiliary: Akyurek et al. "What learning algorithm is in-context learning? Investigations with linear models." 2022.
+                    <a href="https://arxiv.org/abs/2211.15661">https://arxiv.org/abs/2211.15661</a>
+                </li>
+                <li>
+                    Auxiliary: von Oswald et al. "Transformers Learn In-Context by Gradient Descent." ICML 2023.
+                    <a href="https://proceedings.mlr.press/v202/von-oswald23a.html">https://proceedings.mlr.press/v202/von-oswald23a.html</a>
+                </li>
+                <li>
+                    Auxiliary: Turner et al. "Activation Addition: Steering Language Models Without Optimization." 2023.
+                    <a href="https://arxiv.org/abs/2308.10248">https://arxiv.org/abs/2308.10248</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
