@@ -55,7 +55,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-07-22-why-function-vectors-can-trigger-in-context-tasks.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-07-22-why-sparse-moe-layers-scale-without-proportional-compute.html">Start with the latest memo</a>
                         <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>32 published</strong>
+                            <strong>33 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -138,8 +138,10 @@
                             <span class="topic-chip">Emergence metrics</span>
                             <span class="topic-chip">Goal misgeneralization</span>
                             <span class="topic-chip">Function vectors</span>
+                            <span class="topic-chip">Sparse MoE</span>
                         </div>
                         <ul>
+                            <li>2026-07-22: Why sparse MoE layers decouple parameter capacity from per-token compute.</li>
                             <li>2026-07-22: Whether few-shot prompts induce a portable task vector that can be extracted from specific heads and reused in new contexts.</li>
                             <li>2026-07-17: Why goal misgeneralization is a distinct failure mode from overfitting and reward misspecification.</li>
                             <li>2026-07-12: Whether apparent emergent abilities are mostly metric artifacts or real loss-threshold transitions.</li>
@@ -158,19 +160,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">July 22, 2026 / 21 min read</p>
+                            <h3>Why sparse MoE layers scale without proportional compute</h3>
+                            <p>
+                                A longer review of why sparse expert routing buys parameter scale without paying dense
+                                compute on every token, and where the trade turns back into systems overhead.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-07-22-why-sparse-moe-layers-scale-without-proportional-compute.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">July 22, 2026 / 20 min read</p>
                             <h3>Why function vectors can trigger in-context tasks</h3>
                             <p>
                                 A longer review of why task information can be packaged into a portable residual-stream
                                 vector, how specific heads extract it, and where that mechanistic story still breaks.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-07-22-why-function-vectors-can-trigger-in-context-tasks.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-07-22-why-function-vectors-can-trigger-in-context-tasks.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">July 17, 2026 / 18 min read</p>
                             <h3>Why goal misgeneralization is not just overfitting</h3>
@@ -293,6 +305,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">July 22, 2026 / Architecture</p>
+                        <h3>Why sparse MoE layers scale without proportional compute</h3>
+                        <p>Why conditional expert routing can add vast parameter capacity to language models without forcing dense compute on every token.</p>
+                        <a class="inline-link" href="/blog/2026-07-22-why-sparse-moe-layers-scale-without-proportional-compute.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">July 22, 2026 / Mechanism</p>
                         <h3>Why function vectors can trigger in-context tasks</h3>
