@@ -55,7 +55,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-07-22-why-chain-of-thought-can-be-causally-unfaithful.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-07-26-why-the-residual-stream-is-a-shared-linear-workspace.html">Start with the latest memo</a>
                         <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>34 published</strong>
+                            <strong>35 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -140,13 +140,14 @@
                             <span class="topic-chip">Function vectors</span>
                             <span class="topic-chip">Sparse MoE</span>
                             <span class="topic-chip">CoT faithfulness</span>
+                            <span class="topic-chip">Residual stream</span>
                         </div>
                         <ul>
+                            <li>2026-07-26: Why transformer components compose by writing to and reading from a shared residual-stream workspace.</li>
                             <li>2026-07-22: When visible chain-of-thought is a polished rationale rather than the causal process behind an answer.</li>
                             <li>2026-07-22: Why sparse MoE layers decouple parameter capacity from per-token compute.</li>
                             <li>2026-07-22: Whether few-shot prompts induce a portable task vector that can be extracted from specific heads and reused in new contexts.</li>
                             <li>2026-07-17: Why goal misgeneralization is a distinct failure mode from overfitting and reward misspecification.</li>
-                            <li>2026-07-12: Whether apparent emergent abilities are mostly metric artifacts or real loss-threshold transitions.</li>
                         </ul>
                     </section>
                 </div>
@@ -162,19 +163,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">July 26, 2026 / 20 min read</p>
+                            <h3>Why the residual stream is a shared linear workspace</h3>
+                            <p>
+                                A longer review of why transformer components compose through a common residual-stream
+                                communication substrate, and why that matters for interpretability and alignment.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-07-26-why-the-residual-stream-is-a-shared-linear-workspace.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">July 22, 2026 / 19 min read</p>
                             <h3>Why chain-of-thought can be causally unfaithful</h3>
                             <p>
                                 A longer review of when an LLM's visible reasoning stops reflecting the causal process
                                 behind its answer, and why that matters for alignment.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-07-22-why-chain-of-thought-can-be-causally-unfaithful.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-07-22-why-chain-of-thought-can-be-causally-unfaithful.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">July 22, 2026 / 21 min read</p>
                             <h3>Why sparse MoE layers scale without proportional compute</h3>
@@ -317,6 +328,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">July 26, 2026 / Mechanism</p>
+                        <h3>Why the residual stream is a shared linear workspace</h3>
+                        <p>Why transformer circuits compose by exchanging information through a shared residual-stream communication medium.</p>
+                        <a class="inline-link" href="/blog/2026-07-26-why-the-residual-stream-is-a-shared-linear-workspace.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">July 22, 2026 / Alignment</p>
                         <h3>Why chain-of-thought can be causally unfaithful</h3>
@@ -566,6 +584,7 @@
 
                 <article class="card" data-reveal>
                     <ul class="card-list">
+                        <li><strong>July 26, 2026:</strong> why transformer components compose by writing to and reading from a shared linear residual-stream workspace.</li>
                         <li><strong>July 22, 2026:</strong> why chain-of-thought can improve reasoning performance while still failing as a causal explanation of the answer.</li>
                         <li><strong>July 22, 2026:</strong> why sparse MoE layers decouple parameter capacity from per-token compute through conditional expert routing.</li>
                         <li><strong>July 22, 2026:</strong> why some few-shot prompts appear to induce a portable task vector that can be extracted from a small set of causal attention heads.</li>

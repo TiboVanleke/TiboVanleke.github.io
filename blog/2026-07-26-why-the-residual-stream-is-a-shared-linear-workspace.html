@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why the residual stream is a shared linear workspace | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why the transformer's residual stream acts like a shared linear workspace, and why that matters for mechanistic interpretability and alignment." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why the residual stream is a shared linear workspace</h1>
+            <div class="meta">July 26, 2026 &#183; 20 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                A great deal of mechanistic-interpretability work quietly relies on one architectural fact: transformers
+                do not pass information from layer to layer through a fresh hidden state each time. Instead, every
+                attention head and MLP reads from and writes back into the same running vector, the residual stream.
+                The narrow question in this memo is why that design matters so much. My reading of the literature is
+                that the residual stream is best understood as a shared linear workspace: a common communication medium
+                where modules deposit partial computations, later modules retrieve them through learned projections, and
+                many circuits compose by routing information through compatible subspaces rather than through explicit
+                symbolic variables. This framing helps explain why path expansion works, why induction heads can chain
+                into larger behaviors, and why interpretability often looks like tracing writes and reads rather than
+                analyzing whole layers in isolation. It also matters for alignment, because any attempt to monitor,
+                steer, or edit a model is often intervening on this communication substrate rather than on one neatly
+                isolated module.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Elhage et al. (2021), <em>A Mathematical Framework for Transformer Circuits</em>.
+                That paper introduced the residual stream not just as a bookkeeping device but as a linear communication
+                channel. The key move was conceptual: because each component adds a linear write into the stream and
+                later components linearly read from it, one can reason about implicit connections, or "virtual
+                weights," between distant parts of the model. This became the algebra behind path expansion, OV and QK
+                circuits, and much of the later circuits literature.
+            </p>
+            <p>
+                Olsson et al. (2022) made the idea operational in the induction-head story. Their argument was not only
+                that a specific two-head motif copies repeated patterns, but that the motif works because one head writes
+                useful information into the residual stream and another head later reads it in a form compatible with
+                its own computation. Wang et al. (2022) pushed the same logic into a richer natural-language setting in
+                their indirect-object-identification circuit analysis, where multiple head classes cooperate through the
+                stream to suppress distractors and amplify the correct name.
+            </p>
+            <p>
+                What makes these papers hang together is that none of them treat heads as standalone black boxes. The
+                interesting object is the traffic pattern between components. Once that perspective clicks, many
+                mechanistic claims become statements about what gets written where, how long it persists, and which later
+                components can read it back out.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The core mechanism is additive linear composition. At each layer, the residual stream already contains
+                the token embedding plus all prior writes from attention heads and MLPs. A new component does not
+                replace that state. It projects the current stream into its own working coordinates, performs its local
+                computation, then writes a result back by addition. Because these operations are linear at the read and
+                write boundaries, different modules can share the same workspace without needing a fixed canonical basis.
+                What matters is not that a feature lives in dimension 137 forever, but that a writer and a reader learn
+                compatible subspaces.
+            </p>
+            <p>
+                This is why the residual stream feels more like a whiteboard than a pipeline. In a pipeline, each stage
+                hands off one transformed object to the next. In a shared workspace, many partial objects coexist. Some
+                are reinforced by later writes, some are ignored, and some are actively overwritten or canceled. The
+                linearity means we can often expand the model into sums of paths: token embedding to head, head to head,
+                head to logits, or MLP to logits. The resulting paths are not metaphorical. They correspond to concrete
+                matrix products that tell us how information can flow.
+            </p>
+            <p>
+                A useful way to see the mechanism is to separate content from routing. Attention patterns decide which
+                positions exchange information, while the OV circuit determines what subspace is copied or transformed.
+                The residual stream is where these routed features accumulate. Later heads can then search for a
+                previously written pattern, amplify it, inhibit it, or map it into the unembedding. This is also why
+                basis dependence is subtle in interpretability: the stream has no privileged coordinate system, but
+                circuit claims can still be meaningful because reads and writes define stable relational structure even
+                when the raw coordinates rotate.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the shared-workspace view concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: induction heads as multi-step reuse.</strong> In Olsson et al. (2022), a
+                    previous-token head writes the identity of earlier context into the residual stream, and a later
+                    induction head uses that write to find the prior occurrence of the current token and copy what came
+                    next. The striking point is not only that the circuit copies. It is that the circuit composes across
+                    layers because the first write remains available in a form the second head can read.
+                </li>
+                <li>
+                    <strong>Case study 2: indirect object identification as cooperative editing.</strong> In Wang et al.
+                    (2022), name-mover heads, duplicate-token heads, and inhibition heads each manipulate candidate-name
+                    information in the residual stream. The behavior is distributed across many heads, but it is still
+                    legible because they are all editing a shared workspace rather than hiding their state in isolated
+                    private memories.
+                </li>
+            </ul>
+            <p>
+                Five crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>The residual stream is the real interface between modules.</strong> Many interpretability results are better framed as read-write compatibility claims than as head-level semantic labels.</li>
+                <li><strong>Circuit composition depends on subspace alignment.</strong> Components cooperate when later readers project onto the same directions earlier writers used.</li>
+                <li><strong>Linearity buys tractability.</strong> Path expansion, virtual weights, and direct logit-attribution methods work because the stream preserves additive structure long enough for algebraic analysis.</li>
+                <li><strong>Distributed computation does not imply total opacity.</strong> A behavior can involve many heads yet remain understandable if their interaction through the workspace is sparse enough.</li>
+                <li><strong>Alignment interventions often target communication rather than cognition-in-the-large.</strong> Steering vectors, feature ablations, and logit-facing probes typically work by perturbing what the stream carries forward.</li>
+            </ul>
+            <p>
+                One alignment-relevant implication is easy to miss. If the same workspace carries factual features,
+                stylistic policies, deceptive plans, and refusal templates, then a successful intervention may not be
+                "editing a belief" so much as changing which information remains legible to downstream readers. That is
+                useful, but it also means behavior changes may be more entangled than they first appear.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The shared-workspace story is powerful, but it can be oversold. First, most of the cleanest analyses
+                come from small or medium models, often attention-only or otherwise simplified. Large frontier models
+                still have the same residual architecture, but the number of simultaneously active features may make the
+                workspace much more crowded than our current circuit diagrams suggest.
+            </p>
+            <p>
+                Second, linear read and write boundaries do not mean the whole model is linear. Nonlinearities inside
+                MLPs, softmax attention, and normalization can create conditional routing that is hard to summarize with
+                one static graph. The workspace view shows where information can travel, but not always why a component
+                chose to write one thing rather than another on a particular example.
+            </p>
+            <p>
+                Third, interpretability claims built on the residual stream are still vulnerable to basis tricks and
+                incomplete decompositions. Saying that a feature "lives in the residual stream" is not yet a full
+                explanation unless one can show which readers use it and what would break if it were removed.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The obvious next step is to make the shared-workspace picture scale. Sparse autoencoders, path-based
+                circuit discovery, and feature-level tracing all look promising because they try to decompose the stream
+                into units that can be followed across layers without pretending the raw basis itself is meaningful.
+                Another direction is more safety-focused: if dangerous planning or deceptive coordination uses the same
+                residual communication fabric as harmless reasoning, then monitoring should target persistent
+                cross-layer features rather than only final outputs or selected heads.
+            </p>
+            <p>
+                The open question I find most important is this: <strong>in large modern LLMs, is the residual stream
+                still sparse and modular enough that most safety-relevant computations can be described as readable
+                feature traffic, or does scale turn the workspace into a dense superposition regime where circuit-level
+                explanations stop being operationally useful?</strong>
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                My takeaway is that the residual stream is not background plumbing. It is the central shared medium
+                through which transformer components communicate, compose, and sometimes interfere. Elhage et al. gave
+                the algebraic framing, Olsson et al. showed how a simple reusable circuit can ride that substrate, and
+                Wang et al. showed that a more natural language behavior can still be decomposed into coordinated
+                residual-stream edits. If mechanistic interpretability has a core object, it is often not an individual
+                head or neuron but the evolving contents of this shared linear workspace.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Elhage et al. (2021), "A Mathematical Framework for Transformer Circuits."
+                    <a href="https://transformer-circuits.pub/2021/framework/">https://transformer-circuits.pub/2021/framework/</a>
+                </li>
+                <li>
+                    Auxiliary: Olsson et al. (2022), "In-context Learning and Induction Heads."
+                    <a href="https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/">https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/</a>
+                </li>
+                <li>
+                    Auxiliary: Wang et al. (2022), "Interpretability in the Wild: a Circuit for Indirect Object Identification in GPT-2 small."
+                    <a href="https://arxiv.org/abs/2211.00593">https://arxiv.org/abs/2211.00593</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
