@@ -55,7 +55,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-07-26-why-the-residual-stream-is-a-shared-linear-workspace.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-08-05-why-soft-prompt-tuning-only-catches-up-at-scale.html">Start with the latest memo</a>
                         <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
@@ -67,11 +67,11 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>35 published</strong>
+                            <strong>36 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
-                            <strong>Feb to Jul 2026</strong>
+                            <strong>Feb to Aug 2026</strong>
                             <span>Current public note window</span>
                         </div>
                         <div class="stat">
@@ -141,8 +141,10 @@
                             <span class="topic-chip">Sparse MoE</span>
                             <span class="topic-chip">CoT faithfulness</span>
                             <span class="topic-chip">Residual stream</span>
+                            <span class="topic-chip">Soft prompts</span>
                         </div>
                         <ul>
+                            <li>2026-08-05: Why soft prompt tuning becomes competitive mainly when a frozen model is already large enough to expose reusable task circuits.</li>
                             <li>2026-07-26: Why transformer components compose by writing to and reading from a shared residual-stream workspace.</li>
                             <li>2026-07-22: When visible chain-of-thought is a polished rationale rather than the causal process behind an answer.</li>
                             <li>2026-07-22: Why sparse MoE layers decouple parameter capacity from per-token compute.</li>
@@ -163,19 +165,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">August 5, 2026 / 22 min read</p>
+                            <h3>Why soft prompt tuning only catches up at scale</h3>
+                            <p>
+                                A longer review of why continuous soft prompts become competitive mainly when frozen
+                                language models are already large enough to expose reusable task circuits.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-08-05-why-soft-prompt-tuning-only-catches-up-at-scale.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">July 26, 2026 / 20 min read</p>
                             <h3>Why the residual stream is a shared linear workspace</h3>
                             <p>
                                 A longer review of why transformer components compose through a common residual-stream
                                 communication substrate, and why that matters for interpretability and alignment.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-07-26-why-the-residual-stream-is-a-shared-linear-workspace.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-07-26-why-the-residual-stream-is-a-shared-linear-workspace.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">July 22, 2026 / 19 min read</p>
                             <h3>Why chain-of-thought can be causally unfaithful</h3>

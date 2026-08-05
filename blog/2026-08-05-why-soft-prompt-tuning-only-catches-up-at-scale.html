@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why soft prompt tuning only catches up at scale | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why soft prompt tuning on frozen language models becomes competitive mainly at large scale, what mechanism makes that possible, and where the approach still runs into hard limits." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why soft prompt tuning only catches up at scale</h1>
+            <div class="meta">August 5, 2026 &#183; 22 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                A recurring puzzle in parameter-efficient transfer is why a learned prompt made of a few continuous
+                vectors can sometimes rival full fine-tuning even though it leaves the model weights frozen. An equally
+                important puzzle is why this often fails on smaller models or harder tasks. The narrow question in this
+                memo is therefore not whether soft prompt methods can work, but why they tend to work <em>mainly at
+                scale</em>. My reading of the literature is that soft prompt tuning succeeds when the pretrained model
+                already contains the task-relevant features and circuits, and the learned prompt mainly has to
+                <em>select, route, and condition</em> those existing computations rather than create new ones. As model
+                scale increases, the frozen backbone becomes a richer reservoir of reusable behaviors, so a tiny number
+                of learned vectors can do surprisingly much. But that same mechanism implies a limitation: soft prompts
+                are good at eliciting latent competence, not at installing qualitatively new capabilities or rewriting
+                the model's internal attention geometry.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Lester, Al-Rfou, and Constant, <em>The Power of Scale for Parameter-Efficient
+                Prompt Tuning</em> (2021). That paper studies a simple setup in which a frozen T5 model receives a
+                short learned prompt in the embedding space. The core empirical result is strikingly specific: prompt
+                tuning lags behind full model tuning at smaller scales, but the gap shrinks sharply as the backbone
+                becomes very large, eventually approaching parity on several tasks. This is strong evidence that soft
+                prompting depends less on raw prompt capacity than on how much exploitable structure already exists
+                inside the frozen model.
+            </p>
+            <p>
+                An important precursor is Li and Liang's <em>Prefix-Tuning: Optimizing Continuous Prompts for
+                Generation</em> (2021). Rather than learning only input-embedding prompts, prefix-tuning injects
+                trainable "virtual tokens" into every transformer layer's attention computation. That added leverage
+                matters because it shows the phenomenon is not restricted to one exact parameterization. Prefix-tuning
+                already demonstrated that tuning roughly 0.1% of parameters could match full tuning on table-to-text
+                generation and summarization in the full-data regime, while often outperforming in low-data settings.
+            </p>
+            <p>
+                A second auxiliary source is Liu et al.'s <em>P-Tuning v2</em> (2022), which pushed the same family of
+                ideas into smaller models and harder NLU tasks by using deep prompts more systematically across layers.
+                It clarifies that some early weakness came from shallow prompt parameterizations and fragile
+                optimization. Even so, the need for deeper prompts is itself informative: when frozen backbones do not
+                naturally expose the right interfaces, a tiny input-only control signal is often too weak.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The basic mechanism is easier to see if one treats a soft prompt as a control interface rather than as
+                compressed weights. A learned prompt does not usually change what a frozen transformer knows in any deep
+                sense. Instead, it changes the <em>initial conditions</em> under which the model runs. Those learned
+                vectors alter attention keys, values, and hidden states early enough that downstream layers interpret
+                the whole sequence differently. In prefix-tuning, this effect is even clearer because later tokens can
+                attend directly to trainable prefix states as if they were extra context tokens.
+            </p>
+            <p>
+                Why does scale matter so much? Large pretrained models contain many more partially reusable features,
+                templates, and task fragments. If the downstream task can be solved by recombining those fragments, the
+                prompt only needs to steer the model into the right region of behavior. A small learned prompt can then
+                act like a low-dimensional address into a much larger computation space. By contrast, if the model is
+                too small, undertrained, or missing critical abstractions, no prompt can summon circuits that are not
+                already there. Full fine-tuning wins in those cases because it can alter internal weights to build or
+                repair the missing machinery.
+            </p>
+            <p>
+                A useful way to summarize the mechanism is: soft prompts buy <em>conditional access</em>, not
+                <em>structural rewrite</em>. Their success therefore scales with latent model competence, interface
+                accessibility, and the amount of task-specific change needed beyond those existing capacities.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the mechanism concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: T5 prompt tuning across model scale.</strong> In Lester et al., prompt tuning
+                    is noticeably worse than full tuning on smaller T5 variants, but becomes far more competitive on
+                    the largest models. The important point is not just the leaderboard gap. It is the pattern: the
+                    same prompt method becomes stronger as the frozen backbone becomes a richer computation reservoir.
+                </li>
+                <li>
+                    <strong>Case study 2: prefix-tuning for table-to-text and summarization.</strong> Li and Liang show
+                    that learned layerwise prefixes can match full tuning in standard data regimes and can outperform
+                    it when supervision is scarce or topics shift. This is exactly what one would expect if prompts are
+                    leveraging broad pretrained structure rather than rewriting the model from scratch.
+                </li>
+            </ul>
+            <p>
+                Five crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Soft prompts work by steering pretrained circuits, not by replacing them.</strong> Their strongest results appear when the backbone already contains the needed behavior in latent form.</li>
+                <li><strong>Scale helps because it increases reusable internal structure.</strong> Larger models expose more abstractions for a prompt to activate, combine, or suppress.</li>
+                <li><strong>Prompt depth is an interface question.</strong> Prefix-tuning and P-Tuning v2 work better than shallow input-only prompts partly because they can touch more of the transformer's computation graph.</li>
+                <li><strong>Low-data robustness is a direct consequence of freezing most weights.</strong> When only a tiny prompt moves, the method can preserve broad pretrained generalization instead of overfitting a narrow dataset.</li>
+                <li><strong>The main failure mode is missing capability, not missing prompt length.</strong> If the task requires a new mechanism rather than a new conditioning signal, full tuning still has a structural advantage.</li>
+            </ul>
+            <p>
+                For alignment, this distinction matters. Soft prompt methods are attractive when one wants cheap,
+                reversible, and easily swappable behavioral steering. But they should not be confused with strong
+                control over a model's internal objectives or latent failure modes. A prompt can expose or suppress
+                behavior that already exists; it is less reliable as a tool for repairing deep misalignment.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The strongest limitation is that the central explanation is partly inferential. Lester et al. clearly
+                show a scale trend, but the paper is not a mechanistic proof that larger models help because they
+                contain more reusable circuits. That interpretation fits the evidence, but it remains a conceptual
+                account layered on top of empirical scaling curves.
+            </p>
+            <p>
+                A second limitation is task coverage. Early prompt-tuning results were strongest on generation and less
+                universal on hard NLU or sequence labeling tasks. P-Tuning v2 narrows that gap, but only by making the
+                prompt deeper and optimization more elaborate. So one should be careful with claims like "prompt tuning
+                is as good as fine-tuning." It can be, under the right architecture, scale, and task conditions.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The next step is to characterize <em>task elicitation hardness</em>: which tasks are already present in
+                a frozen model in a form that a soft prompt can unlock, and which require genuine parameter change? A
+                useful theory would connect prompt success to measurable properties of the backbone, such as layerwise
+                linear separability, attention-path accessibility, or the presence of reusable intermediate features.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we predict in advance, from properties of a frozen model and a
+                downstream task, whether prompt-only adaptation will succeed because the needed circuit already exists,
+                or fail because the model lacks the right internal mechanism altogether?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The best current answer to why soft prompt tuning catches up mainly at scale is that large pretrained
+                models already contain a wide menu of task-relevant computations. Learned prompts and prefixes then act
+                as lightweight control signals that select among those existing behaviors rather than rewriting the
+                network. Lester et al. make the scale dependence explicit, Li and Liang show how deeper virtual tokens
+                can steer generation effectively, and P-Tuning v2 shows that better interfaces can extend the approach
+                further. The common lesson is sharp: prompt tuning is powerful when the task is mostly an
+                <em>elicitation problem</em>, and limited when it is really a <em>model editing problem</em>.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Lester, Al-Rfou, and Constant. "The Power of Scale for Parameter-Efficient Prompt Tuning." 2021.
+                    <a href="https://aclanthology.org/2021.emnlp-main.243/">https://aclanthology.org/2021.emnlp-main.243/</a>
+                </li>
+                <li>
+                    Auxiliary: Li and Liang. "Prefix-Tuning: Optimizing Continuous Prompts for Generation." 2021.
+                    <a href="https://aclanthology.org/2021.acl-long.353/">https://aclanthology.org/2021.acl-long.353/</a>
+                </li>
+                <li>
+                    Auxiliary: Liu et al. "P-Tuning v2: Prompt Tuning Can Be Comparable to Fine-tuning Universally Across Scales and Tasks." 2022.
+                    <a href="https://arxiv.org/abs/2110.07602">https://arxiv.org/abs/2110.07602</a>
+                </li>
+                <li>
+                    Auxiliary: Petrov, Torr, and Bibi. "When Do Prompting and Prefix-Tuning Work? A Theory of Capabilities and Limitations." 2023.
+                    <a href="https://arxiv.org/abs/2310.19698">https://arxiv.org/abs/2310.19698</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
