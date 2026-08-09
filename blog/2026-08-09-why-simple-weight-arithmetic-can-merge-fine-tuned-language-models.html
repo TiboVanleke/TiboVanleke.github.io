@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why simple weight arithmetic can merge fine-tuned language models | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why some independently fine-tuned language models can be merged by simple weight arithmetic, what geometry makes that possible, and where interference breaks it." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why simple weight arithmetic can merge fine-tuned language models</h1>
+            <div class="meta">August 9, 2026 &#183; 22 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                A narrow but increasingly important question in LLM engineering is why two independently fine-tuned
+                models can sometimes be combined by something as crude as averaging weights or adding task vectors. On
+                its face, that should not work. Neural-network parameters are highly non-identifiable, optimization is
+                non-convex, and separately trained models need not use the same internal coordinates. Yet the model
+                merging literature keeps finding islands where simple weight arithmetic works surprisingly well. My
+                reading is that these successes happen when fine-tuning mostly moves a large pretrained model inside a
+                shared low-loss basin, and when the task-specific updates are both <em>small relative to the base
+                model</em> and <em>sufficiently aligned in sign and support</em>. Under those conditions, arithmetic in
+                weight space is not random interpolation between incompatible solutions; it is a cheap way of combining
+                nearby behavioral edits. Merging breaks when updates conflict, when permutation symmetries leave units
+                misaligned, or when averaging falls between basins rather than inside one.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Ilharco et al.'s <em>Editing Models with Task Arithmetic</em> (2023). Its
+                central claim is that the difference between a pretrained checkpoint and its fine-tuned descendant can
+                be treated as a <em>task vector</em> in weight space. Those vectors can then be negated, added, or
+                combined analogically, and the resulting checkpoint often inherits the expected behavior. That is the
+                clearest empirical statement of the phenomenon this memo is about: model edits can sometimes compose
+                linearly even though the underlying network is nonlinear.
+            </p>
+            <p>
+                A useful geometric precursor is Wortsman et al.'s <em>Model soups</em> (2022). Their setting is
+                slightly different: average multiple fine-tuned checkpoints and obtain a single model that often beats
+                the best individual one without inference-time ensemble cost. The key observation is that large
+                pretrained models fine-tuned under different hyperparameters often remain in a single low-error basin,
+                so interpolation can stay on a low-loss path.
+            </p>
+            <p>
+                Two important qualifications come from Ainsworth et al.'s <em>Git Re-Basin</em> (2023) and Yadav et
+                al.'s <em>TIES-Merging</em> (2023). Git Re-Basin shows that some apparent incompatibility is just a
+                symmetry problem: two networks can implement nearly the same function while using permuted internal
+                units, so naive averaging mismatches corresponding features. TIES-Merging shows a second obstacle:
+                merged updates interfere when many parameters are tiny or move in opposite directions. Trimming small
+                updates and resolving sign conflicts improves the arithmetic.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                The mechanism is easiest to understand by writing each fine-tuned model as
+                <em>base weights + task-specific delta</em>. Suppose model A is the base model plus an update that
+                specializes it for summarization, while model B is the same base plus an update for instruction
+                following. If those deltas mostly modify disjoint or compatible parts of parameter space, adding or
+                averaging them can preserve both improvements. The pretrained checkpoint acts as a stable reference
+                frame, and the fine-tuning deltas behave like local edits around that anchor.
+            </p>
+            <p>
+                Why is this plausible in large language models? Because modern fine-tuning is often <em>small</em>
+                compared with pretraining. The base model already contains broad lexical, syntactic, and world-model
+                structure. Fine-tuning often nudges readout preferences, calibrates style, or reweights existing
+                pathways rather than inventing new circuitry. When downstream tasks reuse that shared substrate, their
+                updates can stay near one another in function space.
+            </p>
+            <p>
+                Three conditions seem to matter most. First, the checkpoints need a shared anchor, usually the same
+                pretrained initialization. Second, their solutions must remain in a compatible basin so that linear
+                interpolation does not cross a high-loss barrier. Third, the deltas must avoid severe interference.
+                Git Re-Basin says that even functionally similar models can be misaligned by hidden-unit permutations,
+                so "same basin" may only become visible after symmetry alignment. TIES says many coordinates should
+                not be merged uniformly because tiny or sign-conflicted updates behave more like noise than reusable
+                task edits.
+            </p>
+            <p>
+                What works is <em>structured arithmetic around a common pretrained point</em>. In that regime, merging
+                approximates composing several small edits on top of one stable world model.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two case studies make the mechanism concrete:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: model soups within one basin.</strong> Wortsman et al. average checkpoints
+                    obtained from the same pretrained model under different fine-tuning hyperparameters and often exceed
+                    the best single checkpoint. The important point is not merely that averaging helps; it is that it
+                    helps <em>without extra inference cost</em>, which implies the merged model itself remains good.
+                    That fits a flat low-loss region rather than isolated minima.
+                </li>
+                <li>
+                    <strong>Case study 2: task arithmetic and interference-aware merging.</strong> Ilharco et al. show
+                    that adding task vectors can compose behavior, while Yadav et al. show why this degrades once many
+                    updates collide. TIES improves merging by trimming negligible parameters and reconciling sign
+                    disagreements, showing that interference lives in the update coordinates.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Merging works best when fine-tuning is an edit, not a rewrite.</strong> If each task only nudges a large pretrained model, the resulting deltas are much easier to compose than if each task induces a distant solution.</li>
+                <li><strong>The pretrained checkpoint is the real coordinate system.</strong> Task arithmetic is most coherent when every update is measured relative to the same base model; without that anchor, "add these weights" is often meaningless.</li>
+                <li><strong>Most failure comes from misalignment and interference, not from the impossibility of linearity.</strong> Git Re-Basin and TIES both show that simple arithmetic fails for concrete reasons: permuted features, tiny noisy updates, and sign conflicts.</li>
+                <li><strong>Model merging is a test of modularity in learned representations.</strong> When two capabilities merge cleanly, that is evidence that the model stored them in at least partially separable parameter directions.</li>
+            </ul>
+            <p>
+                For alignment, this matters because merging can combine safety tuning, task specialization, and
+                stylistic control without retraining from scratch. But overlapping safety and capability edits can
+                silently degrade either one.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The cleanest limitation is that the strongest geometric explanations are still partly indirect. Model
+                soups and task arithmetic show that certain interpolations and delta compositions work, but they do not
+                by themselves prove a universal theory of LLM loss landscapes. "Single basin" is a good local
+                description in some pretrained-and-fine-tuned settings, not a blanket statement about all independent
+                language-model training runs. Much of the strongest evidence also came from classification,
+                vision-language, or moderate-scale NLP settings rather than today's largest instruction-tuned LLMs. The
+                safer claim is local: some <em>fine-tuning deltas</em> are composable around a shared base checkpoint
+                under the right conditions.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The most useful next step is predictive diagnostics: before merging, can we estimate whether two
+                fine-tuned LLMs are geometrically compatible, which layers will interfere, and whether safety-relevant
+                behavior will survive composition? The field needs lightweight measures of basin compatibility, update
+                sparsity, sign conflict, and representation alignment that predict merge quality before expensive
+                evaluation.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we build a reliable pre-merge criterion that tells us when two
+                language-model updates correspond to separable capabilities that will compose cleanly, versus competing
+                rewrites of the same internal mechanism?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The best current answer to why simple weight arithmetic can merge fine-tuned language models is that
+                many downstream updates are small, structured edits around a common pretrained anchor. When those edits
+                stay inside a shared low-loss basin and avoid severe sign or symmetry conflicts, averaging or adding
+                them can preserve capabilities at once. Model soups makes the basin story vivid, task
+                arithmetic shows that edits can compose linearly, Git Re-Basin explains alignment, and TIES shows
+                how interference can be corrected. Merging works when fine-tuning preserves modularity, and fails
+                when capabilities are fighting over the same parameters.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Ilharco et al. "Editing Models with Task Arithmetic." ICLR 2023.
+                    <a href="https://arxiv.org/abs/2212.04089">https://arxiv.org/abs/2212.04089</a>
+                </li>
+                <li>
+                    Auxiliary: Wortsman et al. "Model soups: averaging weights of multiple fine-tuned models improves accuracy without increasing inference time." ICML 2022.
+                    <a href="https://arxiv.org/abs/2203.05482">https://arxiv.org/abs/2203.05482</a>
+                </li>
+                <li>
+                    Auxiliary: Ainsworth, Hayase, and Srinivasa. "Git Re-Basin: Merging Models Modulo Permutation Symmetries." ICLR 2023.
+                    <a href="https://mlanthology.org/iclr/2023/ainsworth2023iclr-git/">https://mlanthology.org/iclr/2023/ainsworth2023iclr-git/</a>
+                </li>
+                <li>
+                    Auxiliary: Yadav et al. "TIES-Merging: Resolving Interference When Merging Models." 2023.
+                    <a href="https://arxiv.org/abs/2306.01708">https://arxiv.org/abs/2306.01708</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
