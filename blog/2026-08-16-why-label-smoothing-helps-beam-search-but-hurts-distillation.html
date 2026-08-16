@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why label smoothing helps beam search but hurts distillation | Tibo Vanleke</title>
+    <meta name="description" content="A longer research review of why label smoothing improves calibration and sequence decoding in Transformers while often making the model a weaker distillation teacher." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f3ee;
+            --bg-2: #eef6f2;
+            --card: #ffffff;
+            --text-main: #1a1a1a;
+            --text-muted: #5f5f5f;
+            --accent: #0b6e4f;
+            --line: rgba(0, 0, 0, 0.08);
+            --shadow: 0 20px 50px rgba(14, 43, 34, 0.12);
+            --radius: 8px;
+        }
+
+        body {
+            font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                linear-gradient(115deg, rgba(11, 110, 79, 0.08), rgba(254, 243, 199, 0.24) 48%, rgba(26, 94, 131, 0.08)),
+                var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 20px 80px;
+        }
+
+        header {
+            margin-bottom: 26px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            margin-bottom: 18px;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        h1 {
+            font-family: "Fraunces", serif;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+            margin: 0 0 10px;
+        }
+
+        .meta {
+            color: var(--text-muted);
+        }
+
+        article {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h2 {
+            margin-top: 26px;
+            font-size: 1.3rem;
+        }
+
+        footer {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why label smoothing helps beam search but hurts distillation</h1>
+            <div class="meta">August 16, 2026 &#183; 22 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                Label smoothing looks like a tiny training tweak: replace a one-hot target with a mostly-correct
+                distribution that leaves a little mass on the wrong classes. But the consequences are not tiny. The
+                narrow question in this memo is why that trick often improves Transformer behavior at inference time,
+                especially in sequence generation with beam search, while simultaneously making the trained model a
+                worse teacher for knowledge distillation. My reading of the literature is that label smoothing helps
+                because it prevents logits from becoming unnecessarily extreme, which improves calibration and makes
+                sequence-level search less likely to chase brittle token-level overconfidence. The same mechanism also
+                throws away some of the fine-grained similarity structure among wrong answers, the "dark knowledge"
+                that a student needs when learning from a teacher's full probability distribution. So the method is not
+                just generic regularization. It changes what information the model keeps in its logits.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is M&#252;ller, Kornblith, and Hinton's <em>When Does Label Smoothing Help?</em>
+                (NeurIPS 2019). That paper gives the clearest empirical answer to the puzzle. It argues that label
+                smoothing improves calibration and can improve beam-search performance, but harms distillation because
+                it compresses within-class variation and weakens the relative probabilities over incorrect classes. The
+                paper matters because it moves the discussion beyond "regularization helps" and asks what specific
+                information is being removed from the output distribution.
+            </p>
+            <p>
+                Two useful precursors frame the mechanism. Szegedy et al.'s <em>Rethinking the Inception
+                Architecture</em> (2016) popularized label smoothing as a defense against pathological overconfidence.
+                Vaswani et al.'s <em>Attention Is All You Need</em> (2017) then carried the trick into Transformer
+                sequence modeling, where calibration affects decoding quality rather than only top-1 classification.
+                A later extension from Lukasik et al. (2020) shows that the same machinery interacts nontrivially with
+                label noise, reinforcing the view that label smoothing is best understood as a structured change to the
+                training target, not a vague stabilizer.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                With ordinary cross-entropy, the optimization target tells the model to drive the correct token's
+                probability toward one and every other token toward zero. In finite models that ideal is never reached,
+                but the pressure is clear: keep widening the logit gap. Label smoothing relaxes that target. If the
+                smoothing rate is <em>epsilon</em>, the correct class no longer needs probability one; some small mass
+                is deliberately spread over the alternatives. That changes the optimum from "be maximally certain" to
+                "be correct without claiming absurd certainty."
+            </p>
+            <p>
+                This has two downstream effects. First, the model becomes better calibrated. Probabilities line up more
+                closely with actual correctness frequencies because the training loss no longer rewards extreme
+                confidence for every easy example. Second, the output distribution carries less information about how
+                the model ranks the wrong answers relative to one another. The logits become flatter in precisely the
+                places where a distilled student would have learned useful structure, such as that "dog" is more
+                confusable with "wolf" than with "tractor," or that one translation continuation is almost correct
+                while another is nonsense.
+            </p>
+            <p>
+                For sequence models, calibration matters because decoding compounds local mistakes. Beam search keeps
+                hypotheses that look best under the model's own token probabilities. If those probabilities are
+                overconfident, search can overcommit early to a brittle path. Label smoothing often helps not because
+                it makes the model uniformly better, but because it makes the model's token scores a better proxy for
+                sequence quality. For distillation, the opposite pressure dominates: the student needs the teacher's
+                full soft distribution, and label smoothing makes that signal less informative.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two concrete cases make the mechanism visible:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: machine translation with beam search.</strong> In the analysis highlighted by
+                    M&#252;ller et al., label smoothing can worsen token-level confidence metrics such as raw likelihood
+                    while still improving decoded translation quality. The useful interpretation is that a slightly less
+                    peaked token distribution can produce better global search behavior, because beam search is less
+                    easily trapped by overconfident but ultimately inferior continuations.
+                </li>
+                <li>
+                    <strong>Case study 2: teacher-student distillation.</strong> The same paper shows that a teacher
+                    trained with label smoothing is often a worse teacher even when it is a better standalone model.
+                    The student sees softened targets, but many of the informative relative preferences across wrong
+                    classes have already been erased upstream. Better calibration for direct use does not imply better
+                    pedagogy for a student.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Label smoothing is a logit-shaping intervention, not only a regularizer.</strong> It changes what the model is asked to preserve in its output distribution.</li>
+                <li><strong>Beam search benefits from calibrated uncertainty.</strong> Sequence decoding is sensitive to overconfident local scores, so slightly flatter token distributions can improve final outputs.</li>
+                <li><strong>Distillation needs dark knowledge that smoothing suppresses.</strong> A student learns from relative probabilities over alternatives, and those relations become less informative after smoothing.</li>
+                <li><strong>Better standalone accuracy and better teachability can diverge.</strong> A model can be more useful when deployed directly yet less useful as an intermediate teacher.</li>
+            </ul>
+            <p>
+                For modern LLMs, the immediate lesson is practical. Whenever post-training or fine-tuning pipelines use
+                smoothed token targets, they are making an implicit trade: better-behaved confidence and possibly
+                better decoding against weaker probability structure for downstream imitation or compression.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The cleanest limitation is domain shift between the classic evidence base and today's largest
+                decoder-only LLMs. M&#252;ller et al. analyze classification and translation settings, not frontier
+                chat models trained with massive pretraining corpora, preference tuning, and tool-augmented decoding.
+                So the mechanism should be treated as a strong explanatory template, not a fully established law of
+                modern LLM training. Another limitation is that label smoothing interacts with vocabulary size,
+                class imbalance, and target ambiguity. Uniformly moving probability mass away from the gold token may
+                be too crude when some "wrong" tokens are near-synonyms and others are genuinely implausible. The
+                method helps by discarding information, and that means the exact information being discarded matters.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The most interesting next step is to replace uniform smoothing with structure-aware smoothing. Instead
+                of spreading probability mass equally over every alternative token, one could imagine targets that keep
+                calibration benefits while preserving semantically meaningful similarity information for distillation.
+                In language models, that could mean lexical, syntactic, or teacher-informed smoothing schemes rather
+                than a flat uniform prior.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we design a token-level smoothing rule for modern LLM training that
+                preserves label smoothing's gains in calibration and decoding while retaining enough dark knowledge in
+                the logits to remain an effective teacher for distillation?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The best current answer is that label smoothing helps beam search and hurts distillation for the same
+                underlying reason: it reshapes the logit distribution away from brittle overconfidence and toward
+                calibrated uncertainty, but in doing so it removes some of the relative-probability structure among
+                non-gold options. That is good for direct decoding, where overconfident local scores can mislead
+                search, and bad for teacher-student transfer, where those relative scores carry the teacher's richest
+                signal. The method works not by making the model smarter in general, but by choosing which output
+                information to preserve and which to compress.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: M&#252;ller, Kornblith, and Hinton. "When Does Label Smoothing Help?" NeurIPS 2019.
+                    <a href="https://papers.neurips.cc/paper_files/paper/2019/hash/f1748d6b0fd9d439f71450117eba2725-Abstract.html">https://papers.neurips.cc/paper_files/paper/2019/hash/f1748d6b0fd9d439f71450117eba2725-Abstract.html</a>
+                </li>
+                <li>
+                    Auxiliary: Szegedy et al. "Rethinking the Inception Architecture for Computer Vision." CVPR 2016.
+                    <a href="https://openaccess.thecvf.com/content_cvpr_2016/html/Szegedy_Rethinking_the_Inception_CVPR_2016_paper.html">https://openaccess.thecvf.com/content_cvpr_2016/html/Szegedy_Rethinking_the_Inception_CVPR_2016_paper.html</a>
+                </li>
+                <li>
+                    Auxiliary: Vaswani et al. "Attention Is All You Need." NeurIPS 2017.
+                    <a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a>
+                </li>
+                <li>
+                    Auxiliary: Lukasik et al. "Does label smoothing mitigate label noise?" ICML 2020.
+                    <a href="https://proceedings.mlr.press/v119/lukasik20a.html">https://proceedings.mlr.press/v119/lukasik20a.html</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>

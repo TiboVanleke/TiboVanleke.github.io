@@ -55,7 +55,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-08-09-why-simple-weight-arithmetic-can-merge-fine-tuned-language-models.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-08-16-why-label-smoothing-helps-beam-search-but-hurts-distillation.html">Start with the latest memo</a>
                         <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>37 published</strong>
+                            <strong>38 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -143,8 +143,10 @@
                             <span class="topic-chip">Residual stream</span>
                             <span class="topic-chip">Soft prompts</span>
                             <span class="topic-chip">Model merging</span>
+                            <span class="topic-chip">Label smoothing</span>
                         </div>
                         <ul>
+                            <li>2026-08-16: Why label smoothing can improve Transformer calibration and beam-search decoding while simultaneously weakening distillation signals.</li>
                             <li>2026-08-09: Why some fine-tuned language models can be merged by simple weight arithmetic when their updates stay aligned around a shared pretrained base.</li>
                             <li>2026-08-05: Why soft prompt tuning becomes competitive mainly when a frozen model is already large enough to expose reusable task circuits.</li>
                             <li>2026-07-26: Why transformer components compose by writing to and reading from a shared residual-stream workspace.</li>
@@ -167,19 +169,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">August 16, 2026 / 22 min read</p>
+                            <h3>Why label smoothing helps beam search but hurts distillation</h3>
+                            <p>
+                                A longer review of why label smoothing improves calibration and sequence decoding in
+                                Transformers while often making the model a weaker distillation teacher.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-08-16-why-label-smoothing-helps-beam-search-but-hurts-distillation.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">August 9, 2026 / 22 min read</p>
                             <h3>Why simple weight arithmetic can merge fine-tuned language models</h3>
                             <p>
                                 A longer review of why some independently fine-tuned language models can be merged by
                                 simple weight arithmetic, and where interference breaks the trick.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-08-09-why-simple-weight-arithmetic-can-merge-fine-tuned-language-models.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-08-09-why-simple-weight-arithmetic-can-merge-fine-tuned-language-models.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">August 5, 2026 / 22 min read</p>
                             <h3>Why soft prompt tuning only catches up at scale</h3>
@@ -352,6 +364,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">August 16, 2026 / Optimization</p>
+                        <h3>Why label smoothing helps beam search but hurts distillation</h3>
+                        <p>Why reshaping target distributions improves calibration for Transformer decoding while erasing some of the dark knowledge distillation needs.</p>
+                        <a class="inline-link" href="/blog/2026-08-16-why-label-smoothing-helps-beam-search-but-hurts-distillation.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">August 9, 2026 / Adaptation</p>
                         <h3>Why simple weight arithmetic can merge fine-tuned language models</h3>
