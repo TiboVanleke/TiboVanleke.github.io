@@ -55,7 +55,7 @@
                         question so the work remains visible before it becomes polished.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-08-16-why-label-smoothing-helps-beam-search-but-hurts-distillation.html">Start with the latest memo</a>
+                        <a class="btn btn-primary" href="/blog/2026-08-23-why-long-context-llms-get-lost-in-the-middle.html">Start with the latest memo</a>
                         <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
                         <a class="btn btn-secondary" href="/">Back to home</a>
                     </div>
@@ -67,7 +67,7 @@
                     </ul>
                     <div class="stat-strip">
                         <div class="stat">
-                            <strong>38 published</strong>
+                            <strong>39 published</strong>
                             <span>Public memos so far</span>
                         </div>
                         <div class="stat">
@@ -169,19 +169,29 @@
                 <div class="writing-grid">
                     <article class="feature-card" data-reveal>
                         <div>
+                            <p class="card-meta">August 23, 2026 / 23 min read</p>
+                            <h3>Why long-context LLMs get lost in the middle</h3>
+                            <p>
+                                A longer review of why long-context language models often use evidence best at the
+                                edges of a prompt and least reliably from the middle.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="btn btn-primary" href="/blog/2026-08-23-why-long-context-llms-get-lost-in-the-middle.html">Read now</a>
+                        </div>
+                    </article>
+
+                    <div class="stack-grid">
+                        <article class="card" data-reveal>
                             <p class="card-meta">August 16, 2026 / 22 min read</p>
                             <h3>Why label smoothing helps beam search but hurts distillation</h3>
                             <p>
                                 A longer review of why label smoothing improves calibration and sequence decoding in
                                 Transformers while often making the model a weaker distillation teacher.
                             </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-08-16-why-label-smoothing-helps-beam-search-but-hurts-distillation.html">Read now</a>
-                        </div>
-                    </article>
+                            <a class="inline-link" href="/blog/2026-08-16-why-label-smoothing-helps-beam-search-but-hurts-distillation.html">Open memo</a>
+                        </article>
 
-                    <div class="stack-grid">
                         <article class="card" data-reveal>
                             <p class="card-meta">August 9, 2026 / 22 min read</p>
                             <h3>Why simple weight arithmetic can merge fine-tuned language models</h3>
@@ -364,6 +374,13 @@
                 </div>
 
                 <div class="archive-grid">
+                    <article class="card" data-reveal>
+                        <p class="card-meta">August 23, 2026 / Context length</p>
+                        <h3>Why long-context LLMs get lost in the middle</h3>
+                        <p>Why long-context performance depends on position-robust evidence access rather than prompt-window size alone.</p>
+                        <a class="inline-link" href="/blog/2026-08-23-why-long-context-llms-get-lost-in-the-middle.html">Read memo</a>
+                    </article>
+
                     <article class="card" data-reveal>
                         <p class="card-meta">August 16, 2026 / Optimization</p>
                         <h3>Why label smoothing helps beam search but hurts distillation</h3>
@@ -634,6 +651,7 @@
 
                 <article class="card" data-reveal>
                     <ul class="card-list">
+                        <li><strong>August 23, 2026:</strong> why long-context language models often underuse relevant evidence when it sits in the middle of the prompt rather than near the beginning or end.</li>
                         <li><strong>August 9, 2026:</strong> why some fine-tuned language-model updates compose cleanly in weight space while others interfere or cancel out.</li>
                         <li><strong>July 26, 2026:</strong> why transformer components compose by writing to and reading from a shared linear residual-stream workspace.</li>
                         <li><strong>July 22, 2026:</strong> why chain-of-thought can improve reasoning performance while still failing as a causal explanation of the answer.</li>

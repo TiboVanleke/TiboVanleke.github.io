@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Why long-context LLMs get lost in the middle</title>
+    <meta name="description" content="A deeper review of why long-context language models often retrieve relevant information best from the beginning or end of a prompt, and worst from the middle." />
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4efe8;
+            --paper: rgba(255, 252, 247, 0.96);
+            --ink: #1f1a17;
+            --muted: #6f6257;
+            --accent: #b55d35;
+            --accent-soft: rgba(181, 93, 53, 0.14);
+            --line: rgba(31, 26, 23, 0.12);
+            --shadow: 0 24px 60px rgba(31, 26, 23, 0.12);
+            --max: 760px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Georgia", "Times New Roman", serif;
+            background:
+                radial-gradient(circle at top, rgba(181, 93, 53, 0.12), transparent 28%),
+                linear-gradient(180deg, #f8f3ec 0%, var(--bg) 100%);
+            color: var(--ink);
+            line-height: 1.75;
+        }
+
+        a { color: var(--accent); }
+
+        .page {
+            width: min(calc(100% - 32px), 920px);
+            margin: 0 auto;
+            padding: 32px 0 64px;
+        }
+
+        .top-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            text-decoration: none;
+            margin-bottom: 28px;
+        }
+
+        header, article, footer {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        header {
+            padding: 40px;
+            margin-bottom: 24px;
+        }
+
+        article {
+            padding: 40px;
+        }
+
+        footer {
+            margin-top: 24px;
+            padding: 24px 40px;
+            color: var(--muted);
+        }
+
+        h1, h2, h3 {
+            line-height: 1.2;
+            margin: 0;
+            font-weight: 700;
+        }
+
+        h1 {
+            font-size: clamp(2.4rem, 4vw, 4rem);
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            font-size: 1.55rem;
+            margin-top: 36px;
+            margin-bottom: 12px;
+        }
+
+        p, ul {
+            max-width: var(--max);
+            margin: 0 0 16px;
+        }
+
+        ul {
+            padding-left: 22px;
+        }
+
+        li + li {
+            margin-top: 10px;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 0.98rem;
+            letter-spacing: 0.01em;
+        }
+
+        @media (max-width: 720px) {
+            .page {
+                width: min(calc(100% - 20px), 920px);
+                padding: 20px 0 44px;
+            }
+
+            header, article, footer {
+                border-radius: 18px;
+            }
+
+            header, article {
+                padding: 24px;
+            }
+
+            footer {
+                padding: 20px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">&#8592; Back to blog</a>
+        <header>
+            <h1>Why long-context LLMs get lost in the middle</h1>
+            <div class="meta">August 23, 2026 &#183; 23 min read</div>
+        </header>
+
+        <article>
+            <h2>Abstract</h2>
+            <p>
+                The narrow question in this memo is why language models that can technically ingest very long prompts
+                still retrieve relevant information unreliably when it sits in the middle of the context. The best
+                current answer is not simply that long contexts are hard. It is that many models allocate attention and
+                trust unevenly across position: tokens near the beginning benefit from primacy, tokens near the end
+                benefit from recency, and middle tokens are comparatively underused unless the model or prompt is
+                explicitly adjusted. The result is a characteristic U-shaped retrieval pattern. That pattern matters
+                because it means context-window size and context-window usefulness are different things. A model can
+                advertise 100k or 1M tokens yet still fail at the practical task of finding and using the one passage
+                that matters when it is buried halfway through.
+            </p>
+
+            <h2>Related Work</h2>
+            <p>
+                The primary source is Liu et al.'s <em>Lost in the Middle: How Language Models Use Long Contexts</em>
+                (2023). It provides the cleanest baseline observation: performance on multi-document question
+                answering and synthetic key-value retrieval often peaks when the relevant evidence appears at the start
+                or end of the prompt, and drops sharply when the same evidence is moved to the middle. The paper
+                matters because it reframes the long-context problem from "can the model fit more tokens?" to "how does
+                the model distribute usable attention over position?"
+            </p>
+            <p>
+                Two auxiliary papers sharpen that interpretation. Hsieh et al.'s <em>Found in the Middle:
+                Calibrating Positional Attention Bias Improves Long Context Utilization</em> (2024) argues that the
+                failure is tied to an intrinsic U-shaped attention bias and shows that calibration can improve middle
+                retrieval as well as downstream RAG quality. Zhang et al.'s <em>Found in the Middle: How Language
+                Models Use Long Contexts Better via Plug-and-Play Positional Encoding</em> (2024) instead emphasizes
+                the role of positional encoding, especially RoPE-style distance effects that decay badly over long
+                spans. Taken together, these papers suggest that "lost in the middle" is not one bug but the combined
+                consequence of architectural priors, training distribution, and inference heuristics.
+            </p>
+
+            <h2>Method/Mechanism</h2>
+            <p>
+                A useful mental model is that long-context usage requires two separate capabilities. First, the model
+                must preserve enough information about distant tokens for them to remain representationally available.
+                Second, it must allocate attention toward those tokens when they are actually relevant to the query.
+                Many current LLMs are weaker on the second step than marketing about context length suggests.
+            </p>
+            <p>
+                Why do the edges win? Primacy can come from training and formatting conventions: instructions, task
+                framing, and demonstrations often appear early, so models learn that early tokens are globally
+                important. Recency comes from the ordinary mechanics of autoregressive decoding, where the most recent
+                tokens are often easiest to condition on and most predictive of the next one. Middle tokens enjoy
+                neither advantage. If positional encoding also weakens effective discrimination over long ranges, the
+                model can retain a blurry memory that "something relevant was somewhere back there" without reliably
+                routing attention to the right span.
+            </p>
+            <p>
+                This explains why simply scaling context windows is insufficient. If a model's positional bias remains
+                U-shaped, then adding more room may just create a larger low-salience middle. It also explains why
+                retrieval quality can improve when documents are reordered, chunked differently, or duplicated near the
+                end. Those tricks do not necessarily increase knowledge; they reposition evidence into places the model
+                already treats as trustworthy.
+            </p>
+
+            <h2>Key Findings</h2>
+            <p>
+                Two concrete cases make the mechanism visible:
+            </p>
+            <ul>
+                <li>
+                    <strong>Case study 1: multi-document question answering.</strong> In Liu et al., the answer-bearing
+                    document is moved to different positions while the question stays fixed. Accuracy is often best when
+                    the relevant document is first or last, and materially worse when it is buried in the middle. The
+                    content did not change; only position did. That isolates positional utilization, not knowledge, as
+                    the bottleneck.
+                </li>
+                <li>
+                    <strong>Case study 2: synthetic key-value retrieval.</strong> The model is asked to recover a value
+                    associated with a key placed somewhere in a long list. This task removes much of the ambiguity of
+                    natural language, yet the same middle-position degradation appears. That matters because it shows
+                    the problem is not merely discourse complexity. Even clean lookup can fail when relevant evidence
+                    lands in the wrong part of the prompt.
+                </li>
+            </ul>
+            <p>
+                Four crisp insights follow:
+            </p>
+            <ul>
+                <li><strong>Long context capacity is not long context access.</strong> A large window only guarantees tokens can enter the model, not that they will remain competitively attended to.</li>
+                <li><strong>The main failure is positional relevance allocation.</strong> Many long-context errors arise because evidence is underweighted by where it appears, not because the model lacks the underlying knowledge.</li>
+                <li><strong>Prompt engineering can partially mask architectural bias.</strong> Reordering, retrieval placement, and summary buffers work because they exploit edge preferences, not because the bias disappears.</li>
+                <li><strong>Evaluation protocols must move evidence across positions.</strong> Benchmarks that only test one ordering can overestimate how robustly a model uses its context.</li>
+            </ul>
+            <p>
+                Hsieh et al. add an important extension: if positional attention bias is calibrated, performance gains
+                appear not only on synthetic retrieval but also in retrieval-augmented generation. That suggests the
+                issue is operationally important for real systems, not just a neat benchmark artifact. If a RAG system
+                concatenates many passages and trusts the model to find the right one, it may underperform simply
+                because the winning passage was inserted into the least favored region of the prompt.
+            </p>
+
+            <h2>Limitations</h2>
+            <p>
+                The evidence base still has boundaries. Much of it comes from controlled reorderings, synthetic lookup
+                tasks, or specific long-context benchmarks rather than the full diversity of production agent
+                workloads. Some newer models may also reduce the problem through better positional schemes, continued
+                long-context training, or retrieval-aware finetuning. So "lost in the middle" should not be treated as
+                a universal constant. It is better understood as a recurring failure mode that remains easy to trigger.
+                A second limitation is explanatory granularity: current papers can show the bias and improve it, but
+                they do not fully decompose how much comes from positional encoding, attention competition, instruction
+                formatting priors, or supervised fine-tuning habits.
+            </p>
+
+            <h2>Future Directions</h2>
+            <p>
+                The strongest next step is to treat long-context use as a routing problem rather than a storage
+                problem. That means combining architectural fixes, such as better positional calibration, with
+                evaluation setups that explicitly vary where evidence appears. It also means designing retrieval
+                systems that are position-aware instead of assuming that concatenation is neutral.
+            </p>
+            <p>
+                <strong>Open question:</strong> can we remove middle-position bias in long-context LLMs without
+                weakening the short-context priors that make instruction following and local coherence work well near
+                the beginning and end of prompts?
+            </p>
+
+            <h2>Summary</h2>
+            <p>
+                The best explanation for why long-context LLMs get lost in the middle is that their usable attention is
+                distributed unevenly over position. Beginning and end tokens benefit from strong learned priors and
+                easier access, while middle tokens are more likely to be ignored unless prompt structure or model design
+                actively compensates. The consequence is practical: context length alone is a misleading capability
+                measure. What matters is whether relevant evidence remains reachable when it appears anywhere in the
+                prompt, especially in the least privileged region. Until that changes, many long-context systems will
+                still be better described as edge-biased than truly position-robust.
+            </p>
+
+            <h2>References</h2>
+            <ul>
+                <li>
+                    Primary: Liu et al. "Lost in the Middle: How Language Models Use Long Contexts." 2023.
+                    <a href="https://arxiv.org/abs/2307.03172">https://arxiv.org/abs/2307.03172</a>
+                </li>
+                <li>
+                    Auxiliary: Hsieh et al. "Found in the Middle: Calibrating Positional Attention Bias Improves Long Context Utilization." 2024.
+                    <a href="https://arxiv.org/abs/2406.16008">https://arxiv.org/abs/2406.16008</a>
+                </li>
+                <li>
+                    Auxiliary: Zhang et al. "Found in the Middle: How Language Models Use Long Contexts Better via Plug-and-Play Positional Encoding." 2024.
+                    <a href="https://arxiv.org/abs/2403.04797">https://arxiv.org/abs/2403.04797</a>
+                </li>
+            </ul>
+        </article>
+
+        <footer>
+            Want to respond? Send a note to tibo@vanleke.com.
+        </footer>
+    </div>
+</body>
+</html>
