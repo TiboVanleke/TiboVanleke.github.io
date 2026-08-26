@@ -1,37 +1,41 @@
 document.documentElement.classList.add("js");
 
-const revealItems = [...document.querySelectorAll("[data-reveal]")];
-const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const menuButton = document.querySelector("[data-menu-toggle]");
+const siteNav = document.querySelector("[data-site-nav]");
 
-if (prefersReducedMotion) {
-    revealItems.forEach((item) => item.classList.add("is-visible"));
-} else {
-    revealItems.forEach((item, index) => {
-        item.style.setProperty("--delay", `${Math.min(index * 70, 320)}ms`);
+function setMenu(open) {
+    if (!menuButton || !siteNav) {
+        return;
+    }
+
+    menuButton.setAttribute("aria-expanded", String(open));
+    menuButton.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+    siteNav.dataset.open = String(open);
+    document.body.classList.toggle("menu-open", open);
+}
+
+if (menuButton && siteNav) {
+    menuButton.addEventListener("click", () => {
+        setMenu(menuButton.getAttribute("aria-expanded") !== "true");
     });
 
-    if ("IntersectionObserver" in window) {
-        const revealObserver = new IntersectionObserver(
-            (entries, observer) => {
-                entries.forEach((entry) => {
-                    if (!entry.isIntersecting) {
-                        return;
-                    }
+    siteNav.addEventListener("click", (event) => {
+        if (event.target.closest("a")) {
+            setMenu(false);
+        }
+    });
 
-                    entry.target.classList.add("is-visible");
-                    observer.unobserve(entry.target);
-                });
-            },
-            {
-                threshold: 0.18,
-                rootMargin: "0px 0px -8% 0px"
-            }
-        );
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            setMenu(false);
+        }
+    });
 
-        revealItems.forEach((item) => revealObserver.observe(item));
-    } else {
-        revealItems.forEach((item) => item.classList.add("is-visible"));
-    }
+    window.addEventListener("resize", () => {
+        if (window.innerWidth > 840) {
+            setMenu(false);
+        }
+    });
 }
 
 const currentPath = window.location.pathname.replace(/index\.html$/, "");
@@ -51,28 +55,59 @@ document.querySelectorAll("[data-nav]").forEach((link) => {
     }
 });
 
-const noteLinks = [
-    ...new Set(
-        [...document.querySelectorAll('.archive-grid a[href^="/blog/"][href$=".html"]')]
-            .map((link) => link.getAttribute("href"))
-            .filter(Boolean)
-    )
-];
+const noteItems = [...document.querySelectorAll("[data-note]")];
+const noteSearch = document.querySelector("[data-note-search]");
+const noteCount = document.querySelector("[data-note-count]");
+const archiveEmpty = document.querySelector("[data-archive-empty]");
+
+function updateNoteCount(count) {
+    if (noteCount) {
+        noteCount.textContent = String(count);
+    }
+}
+
+if (noteSearch && noteItems.length) {
+    updateNoteCount(noteItems.length);
+
+    noteSearch.addEventListener("input", () => {
+        const query = noteSearch.value.trim().toLocaleLowerCase();
+        let visibleCount = 0;
+
+        noteItems.forEach((item) => {
+            const searchText = (item.dataset.search || item.textContent).toLocaleLowerCase();
+            const matches = !query || searchText.includes(query);
+            item.hidden = !matches;
+
+            if (matches) {
+                visibleCount += 1;
+            }
+        });
+
+        updateNoteCount(visibleCount);
+
+        if (archiveEmpty) {
+            archiveEmpty.hidden = visibleCount !== 0;
+        }
+    });
+}
 
 document.querySelectorAll("[data-random-note]").forEach((link) => {
-    if (!noteLinks.length) {
+    if (!noteItems.length) {
         return;
     }
 
-    const pickNote = () => {
-        const currentNote = window.location.pathname.replace(/index\.html$/, "");
-        const alternatives = noteLinks.filter((href) => href !== currentNote);
-        const options = alternatives.length ? alternatives : noteLinks;
-        return options[Math.floor(Math.random() * options.length)];
-    };
+    const noteLinks = noteItems
+        .map((item) => item.getAttribute("href"))
+        .filter(Boolean);
 
-    link.href = pickNote();
-    link.addEventListener("click", () => {
-        link.href = pickNote();
+    const pickNote = () => noteLinks[Math.floor(Math.random() * noteLinks.length)];
+
+    link.addEventListener("click", (event) => {
+        event.preventDefault();
+        window.location.href = pickNote();
     });
+});
+
+document.querySelectorAll("[data-year]").forEach((node) => {
+    node.textContent = String(new Date().getFullYear());
 });

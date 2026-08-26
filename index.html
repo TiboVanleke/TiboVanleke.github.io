@@ -3,213 +3,427 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tibo Vanleke | Research &amp; Running</title>
-    <meta name="description" content="Enter Tibo Vanleke's two main worlds: technical AI safety research and competitive running.">
+    <title>Tibo Vanleke — AI Safety Researcher &amp; Runner</title>
+    <meta name="description" content="Tibo Vanleke is a PhD researcher at Vrije Universiteit Brussel working on AI safety, alignment, and interpretability—and a competitive steeplechase runner.">
     <meta name="author" content="Tibo Vanleke">
-    <meta name="theme-color" content="#e7edf2">
+    <meta name="theme-color" content="#f3f0e7">
+    <link rel="canonical" href="https://tibovanleke.com/">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
-    <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png">
     <link rel="apple-touch-icon" href="/favicon-180.png">
-    <link rel="canonical" href="https://tibovanleke.com/">
-    <meta property="og:title" content="Tibo Vanleke | Research &amp; Running">
-    <meta property="og:description" content="A split entrance into Tibo Vanleke's PhD research and competitive running profile.">
+    <meta property="og:title" content="Tibo Vanleke — AI Safety Researcher &amp; Runner">
+    <meta property="og:description" content="AI safety research, public notes, competitive running, and the person connecting them.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://tibovanleke.com/">
-    <meta property="og:image" content="https://tibovanleke.com/professional_portrait.jpeg">
-    <meta property="og:image:alt" content="Portrait of Tibo Vanleke smiling in a navy suit and tie.">
+    <meta property="og:image" content="https://tibovanleke.com/assets/images/tibo-cafe-portrait.webp">
+    <meta property="og:image:alt" content="Portrait of Tibo Vanleke.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://tibovanleke.com/professional_portrait.jpeg">
-    <meta name="twitter:image:alt" content="Portrait of Tibo Vanleke smiling in a navy suit and tie.">
+    <meta name="twitter:image" content="https://tibovanleke.com/assets/images/tibo-cafe-portrait.webp">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&amp;family=IBM+Plex+Mono:wght@500;600&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/site.css">
     <script defer src="/assets/site.js"></script>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Person",
+            "name": "Tibo Vanleke",
+            "url": "https://tibovanleke.com/",
+            "image": "https://tibovanleke.com/assets/images/tibo-cafe-portrait.webp",
+            "jobTitle": "PhD Researcher in Artificial Intelligence",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "Vrije Universiteit Brussel",
+                "url": "https://www.vub.be/"
+            },
+            "email": "mailto:tibo@vanleke.com",
+            "sameAs": [
+                "https://data.research.vub.be/tibo-vanleke",
+                "https://www.linkedin.com/in/tibo-vanleke",
+                "https://github.com/TiboVanleke",
+                "https://orcid.org/0009-0003-2200-7529",
+                "https://worldathletics.org/athletes/belgium/tibo-vanleke-14960904"
+            ]
+        }
+    </script>
 </head>
-<body class="page-landing">
+<body class="page-home">
     <a class="skip-link" href="#main">Skip to content</a>
-    <div class="site-shell">
-        <header class="topbar" data-reveal>
-            <a class="brand" href="/" aria-label="Tibo Vanleke home">
-                <span class="brand-mark">TV</span>
-                <span class="brand-copy">
-                    <strong>Tibo Vanleke</strong>
-                    <span>Research + running</span>
-                </span>
+
+    <header class="site-header">
+        <div class="container site-header__inner">
+            <a class="wordmark" href="/" aria-label="Tibo Vanleke, home">
+                <span class="wordmark__mark" aria-hidden="true">TV</span>
+                <span class="wordmark__text">Tibo Vanleke<span class="wordmark__dot">.</span></span>
             </a>
-            <nav class="nav" aria-label="Primary">
+
+            <button class="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation" data-menu-toggle>
+                <span></span>
+                <span></span>
+            </button>
+
+            <nav class="site-nav" id="primary-navigation" aria-label="Primary navigation" data-site-nav data-open="false">
                 <a href="/research/" data-nav>Research</a>
-                <a href="/running/" data-nav>Running</a>
                 <a href="/blog/" data-nav>Notes</a>
-                <a href="/research/#contact">Contact</a>
+                <a href="/running/" data-nav>Running</a>
+                <a href="/cv.pdf">CV</a>
+                <a class="nav-cta" href="mailto:tibo@vanleke.com">Say hello</a>
             </nav>
-        </header>
+        </div>
+    </header>
 
-        <main class="site-main site-main--stack" id="main">
-            <section class="landing-hero">
-                <div class="landing-copy panel" data-reveal>
-                    <p class="eyebrow">Personal website</p>
-                    <h1>Tibo Vanleke</h1>
-                    <p class="lede">
-                        AI safety researcher, PhD candidate at VUB, and steeplechase runner. The site splits
-                        cleanly into research, public notes, and the running profile that keeps the longer
-                        work honest.
-                    </p>
-                    <div class="button-row">
-                        <a class="btn btn-primary" href="/research/">Open research &amp; PhD</a>
-                        <a class="btn btn-secondary" href="/running/">Open running</a>
-                    </div>
-                    <div class="stat-strip">
-                        <div class="stat">
-                            <strong>VUB</strong>
-                            <span>PhD candidate in technical AI safety</span>
-                        </div>
-                        <div class="stat">
-                            <strong>9:23.84</strong>
-                            <span>3000m steeplechase personal best</span>
-                        </div>
-                        <div class="stat">
-                            <strong>16 notes</strong>
-                            <span>Public memos on interpretability and safety</span>
+    <main id="main">
+        <section class="home-hero">
+            <div class="container">
+                <div class="home-hero__grid">
+                    <div class="home-hero__copy intro-animate">
+                        <p class="eyebrow">AI safety researcher · competitive runner</p>
+                        <h1 class="display">
+                            <span>I study <em>intelligent</em> systems.</span>
+                            <span>I race over barriers.</span>
+                        </h1>
+                        <p class="lede">
+                            I’m Tibo, a PhD researcher at Vrije Universiteit Brussel working on AI safety,
+                            alignment, and interpretability. Outside the lab, I race the 3000m steeplechase.
+                        </p>
+                        <div class="button-row">
+                            <a class="button button--primary" href="/research/">
+                                Explore my research
+                                <span aria-hidden="true">→</span>
+                            </a>
+                            <a class="button button--ghost" href="#more-human">Meet the person</a>
                         </div>
                     </div>
-                </div>
 
-                <section class="panel panel--tint" data-reveal>
-                    <p class="eyebrow">Shared thread</p>
-                    <h2 class="panel-title">Both sides reward patience more than noise.</h2>
-                    <p class="panel-copy">
-                        The research page is warmer, slower, and notebook-like. The running page leans more
-                        open, kinetic, and airy. They are different on purpose, but they still belong to the
-                        same person.
-                    </p>
-                    <ul class="signal-list">
-                        <li>
-                            <span class="signal-index">01</span>
-                            <span class="signal-copy">
-                                <strong>Research &amp; PhD</strong>
-                                <span>Questions, writing, collaborators, and a direct contact form.</span>
-                            </span>
-                        </li>
-                        <li>
-                            <span class="signal-index">02</span>
-                            <span class="signal-copy">
-                                <strong>Running</strong>
-                                <span>Official profiles, rankings, personal bests, and race imagery.</span>
-                            </span>
-                        </li>
-                    </ul>
-                </section>
-            </section>
-
-            <section class="section">
-                <div class="split-landing">
-                    <article class="route-card route-card--research panel" data-reveal>
-                        <figure class="route-media">
+                    <div class="hero-visual intro-animate intro-animate--delay" aria-label="Portrait and race photographs of Tibo Vanleke">
+                        <figure class="hero-visual__portrait">
                             <img
-                                src="/professional_portrait.jpeg"
-                                alt="Portrait of Tibo Vanleke smiling in a navy suit and tie."
-                                width="2636"
-                                height="2636"
-                                loading="lazy"
-                                decoding="async"
+                                src="/assets/images/tibo-cafe-portrait.webp"
+                                alt="Tibo Vanleke smiling across a café table."
+                                width="1536"
+                                height="2048"
+                                fetchpriority="high"
                             >
                         </figure>
-                        <div class="route-copy">
-                            <p class="eyebrow">Research &amp; PhD</p>
-                            <h2>Technical AI safety, mechanistic interpretability, and public notes.</h2>
-                            <p>
-                                The research side gathers my PhD profile, the questions driving the work,
-                                selected writing, academic network, and a contact form for collaboration.
-                            </p>
-                            <div class="route-metrics" aria-label="Research highlights">
-                                <span>Vrije Universiteit Brussel</span>
-                                <span>Subliminal learning</span>
-                                <span>Mechanistic interpretability</span>
-                            </div>
-                            <div class="button-row">
-                                <a class="btn btn-primary" href="/research/">Open research page</a>
-                                <a class="btn btn-secondary" href="/blog/">Read notes</a>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="route-card route-card--running panel" data-reveal>
-                        <figure class="route-media">
+                        <figure class="hero-visual__run">
                             <picture>
                                 <source srcset="/assets/images/running-in-pain-1400.webp" type="image/webp">
                                 <img
                                     src="/Running_in_pain.JPG"
-                                    alt="Tibo Vanleke clearing a water jump during a steeplechase race."
+                                    alt="Tibo Vanleke racing through the steeplechase water jump."
                                     width="1400"
                                     height="933"
-                                    loading="lazy"
-                                    decoding="async"
                                 >
                             </picture>
                         </figure>
-                        <div class="route-copy">
-                            <p class="eyebrow">Running</p>
-                            <h2>Steeplechase focus, official profiles, and race-day images.</h2>
-                            <p>
-                                The running side brings the athletic profile forward with World Athletics,
-                                European Athletics, personal bests, rankings, and a fuller visual story.
-                            </p>
-                            <div class="route-metrics" aria-label="Running highlights">
-                                <span>3000m steeplechase</span>
-                                <span>World Athletics profile</span>
-                                <span>European Athletics profile</span>
-                            </div>
-                            <div class="button-row">
-                                <a class="btn btn-primary" href="/running/">Open running page</a>
-                                <a class="btn btn-secondary" href="https://worldathletics.org/athletes/belgium/tibo-vanleke-14960904">Official results</a>
-                            </div>
-                        </div>
-                    </article>
+                        <div class="hero-visual__label">Brussels, Belgium</div>
+                    </div>
                 </div>
-            </section>
 
-            <section class="section">
-                <div class="section-heading" data-reveal>
-                    <p class="eyebrow">Orientation</p>
-                    <h2>Three quick ways to use the site.</h2>
+                <div class="proof-strip" aria-label="Profile highlights">
+                    <div class="proof">
+                        <strong>VUB</strong>
+                        <span>PhD researcher in artificial intelligence</span>
+                    </div>
+                    <div class="proof">
+                        <strong>39 notes</strong>
+                        <span>Public memos on language-model research</span>
+                    </div>
+                    <div class="proof">
+                        <strong>9:23.84</strong>
+                        <span>3000m steeplechase personal best</span>
+                    </div>
+                    <div class="proof">
+                        <strong>5 languages</strong>
+                        <span>Dutch, English, French, Spanish, German</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container intro-grid">
+                <div class="intro-grid__aside">
+                    <p class="eyebrow">Start anywhere</p>
+                    <h2>One person, three ways in.</h2>
+                </div>
+
+                <div class="intro-grid__body">
                     <p>
-                        If you are here for research, open the PhD page. If you are here for athletics, open
-                        the running page. If you want shorter ideas first, the notes page stays one click away.
+                        If you arrived after a conference, a recruiter search, a race result, or one of the
+                        more surprising corners of the internet: hello. This is the concise version of what
+                        I work on, what I write, and what keeps me moving.
+                    </p>
+
+                    <div class="chapter-list">
+                        <a class="chapter" href="/research/">
+                            <span class="chapter__number">01</span>
+                            <h3>Research</h3>
+                            <p>Hidden learning signals, mechanistic evidence, and AI safety that stays useful outside ideal lab conditions.</p>
+                            <span class="chapter__arrow" aria-hidden="true">→</span>
+                        </a>
+                        <a class="chapter" href="/blog/">
+                            <span class="chapter__number">02</span>
+                            <h3>Notes</h3>
+                            <p>One precise question at a time, from attention sinks and truth directions to model merging and long context.</p>
+                            <span class="chapter__arrow" aria-hidden="true">→</span>
+                        </a>
+                        <a class="chapter" href="/running/">
+                            <span class="chapter__number">03</span>
+                            <h3>Running</h3>
+                            <p>Official results, personal bests, and the less polished side of getting over barriers.</p>
+                            <span class="chapter__arrow" aria-hidden="true">→</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container current-grid">
+                <article class="feature-panel">
+                    <div class="feature-panel__content">
+                        <div>
+                            <p class="eyebrow eyebrow--light">Current research question</p>
+                            <h2>What can models learn from signals we barely notice?</h2>
+                            <p>
+                                My PhD currently looks at subliminal learning: how apparently innocuous
+                                patterns in data can transmit information and shift model behavior.
+                            </p>
+                        </div>
+                        <div class="button-row">
+                            <a class="button button--light" href="/research/">
+                                See the research agenda
+                                <span aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <aside class="latest-panel">
+                    <p class="eyebrow">Recent notes</p>
+                    <h2>Thinking in public.</h2>
+                    <a class="mini-note" href="/blog/2026-08-23-why-long-context-llms-get-lost-in-the-middle.html">
+                        <time datetime="2026-08-23">23 Aug 2026</time>
+                        <h3>Why long-context LLMs get lost in the middle</h3>
+                    </a>
+                    <a class="mini-note" href="/blog/2026-08-16-why-label-smoothing-helps-beam-search-but-hurts-distillation.html">
+                        <time datetime="2026-08-16">16 Aug 2026</time>
+                        <h3>Why label smoothing helps beam search but hurts distillation</h3>
+                    </a>
+                    <a class="mini-note" href="/blog/2026-08-09-why-simple-weight-arithmetic-can-merge-fine-tuned-language-models.html">
+                        <time datetime="2026-08-09">9 Aug 2026</time>
+                        <h3>Why simple weight arithmetic can merge fine-tuned language models</h3>
+                    </a>
+                    <div class="button-row">
+                        <a class="button button--ghost" href="/blog/">Browse all 39 notes</a>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <section class="section human-band" id="more-human">
+            <div class="container human-grid">
+                <div class="life-collage" aria-label="Photographs from Tibo's life outside research and racing">
+                    <figure class="life-collage__main">
+                        <img
+                            src="/assets/images/tibo-brussels-evening.webp"
+                            alt="Tibo Vanleke sharing an outdoor meal at Brussels' Cinquantenaire."
+                            width="1536"
+                            height="2048"
+                            loading="lazy"
+                            decoding="async"
+                        >
+                        <figcaption>Brussels, preferably outside</figcaption>
+                    </figure>
+                    <figure class="life-collage__cycling">
+                        <img
+                            src="/assets/images/tibo-cycling.webp"
+                            alt="Tibo Vanleke smiling beside his bicycle."
+                            width="1536"
+                            height="2048"
+                            loading="lazy"
+                            decoding="async"
+                        >
+                        <figcaption>Two wheels</figcaption>
+                    </figure>
+                    <figure class="life-collage__holiday">
+                        <img
+                            src="/assets/images/tibo-holiday.webp"
+                            alt="Tibo Vanleke smiling with a fresh coconut while travelling."
+                            width="768"
+                            height="1024"
+                            loading="lazy"
+                            decoding="async"
+                        >
+                        <figcaption>Out of office</figcaption>
+                    </figure>
+                </div>
+
+                <div class="human-copy">
+                    <p class="eyebrow eyebrow--light">Beyond the bio</p>
+                    <h2>A life needs more than one lane.</h2>
+                    <p>
+                        My work is serious, but I do not want the website to pretend every worthwhile hour
+                        happens at a desk or on a track. I like cities explored slowly, meals that stretch
+                        into conversation, and the useful quiet of a book.
+                    </p>
+                    <p>
+                        The best parts of a week rarely belong to one category: a hard research question,
+                        an honest discussion, a long ride, or something worth ordering twice.
+                    </p>
+
+                    <ul class="fact-list">
+                        <li>
+                            <strong>Home base</strong>
+                            Brussels, Belgium
+                        </li>
+                        <li>
+                            <strong>Away from work</strong>
+                            Books, long meals, cycling, and somewhere new
+                        </li>
+                        <li>
+                            <strong>Always welcome</strong>
+                            A recommendation with a reason behind it
+                        </li>
+                        <li>
+                            <strong>Best way to connect</strong>
+                            A thoughtful message beats a generic pitch
+                        </li>
+                    </ul>
+
+                    <div class="button-row">
+                        <a class="button button--light" href="/running/">See the running side</a>
+                        <a class="button button--ghost button--on-dark" href="#reading">Open the bookshelf</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section reading-band" id="reading">
+            <div class="container reading-grid">
+                <div class="reading-copy">
+                    <p class="eyebrow">Reading / recommendations welcome</p>
+                    <h2>What stays open after the last page?</h2>
+                    <p>
+                        Reading is where I let questions remain unresolved for longer than a paper deadline
+                        usually allows. I am drawn to books that offer a framework rather than a verdict—and
+                        to people with a recommendation they are willing to defend.
+                    </p>
+                    <blockquote>
+                        A useful book does not have to win the argument. It has to leave a better one behind.
+                    </blockquote>
+                    <p class="reading-copy__note">
+                        The shelf below is deliberately short: books I can actually say something about,
+                        not a decorative list of everything I have finished.
+                    </p>
+                    <div class="button-row">
+                        <a class="button button--primary" href="mailto:tibo@vanleke.com?subject=Book%20recommendation">Recommend a book</a>
+                    </div>
+                </div>
+
+                <figure class="reading-portrait">
+                    <img
+                        src="/assets/images/tibo-reading.webp"
+                        alt="Tibo Vanleke reading in the afternoon light."
+                        width="768"
+                        height="1024"
+                        loading="lazy"
+                        decoding="async"
+                    >
+                    <figcaption>Reading without a progress bar.</figcaption>
+                </figure>
+            </div>
+
+            <div class="container bookshelf">
+                <div class="bookshelf__intro">
+                    <p class="eyebrow">Six books / no ranking</p>
+                    <h2>A shelf I would happily argue about.</h2>
+                    <p>
+                        Not necessarily the six “best” books I have read. These are the ones that gave me
+                        a durable question, a useful method, or a line of thought I still return to.
                     </p>
                 </div>
 
-                <div class="overview-grid">
-                    <article class="card" data-reveal>
-                        <p class="card-meta">Research</p>
-                        <h3>PhD profile and agenda</h3>
-                        <p>Academic context, open questions, supervision, and selected public writing.</p>
-                        <a class="inline-link" href="/research/">Go to research</a>
+                <div class="book-grid">
+                    <article class="book-card">
+                        <span class="book-card__number">01</span>
+                        <h3><cite>Gödel, Escher, Bach</cite></h3>
+                        <p class="book-card__author">Douglas Hofstadter</p>
+                        <p>Formal systems, strange loops, minds, and the rare kind of ambition that changes what a book can be.</p>
                     </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">Running</p>
-                        <h3>Official profiles and PBs</h3>
-                        <p>World Athletics, European Athletics, rankings, key marks, and race photography.</p>
-                        <a class="inline-link" href="/running/">Go to running</a>
+                    <article class="book-card">
+                        <span class="book-card__number">02</span>
+                        <h3><cite>Antifragile</cite></h3>
+                        <p class="book-card__author">Nassim Nicholas Taleb</p>
+                        <p>The one Taleb entry: a vocabulary for uncertainty, fragility, and systems that improve through disorder.</p>
                     </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">Notes</p>
-                        <h3>Short memos, not polished waiting rooms</h3>
-                        <p>Public notes make the research process easier to follow before formal papers exist.</p>
-                        <a class="inline-link" href="/blog/">Browse notes</a>
+                    <article class="book-card">
+                        <span class="book-card__number">03</span>
+                        <h3><cite>How to Solve It</cite></h3>
+                        <p class="book-card__author">George Pólya</p>
+                        <p>A practical bridge between mathematical problem-solving and the craft of helping someone else learn it.</p>
+                    </article>
+                    <article class="book-card">
+                        <span class="book-card__number">04</span>
+                        <h3><cite>The Stranger</cite></h3>
+                        <p class="book-card__author">Albert Camus</p>
+                        <p>Spare, unsettling, and much harder to forget than its length suggests.</p>
+                    </article>
+                    <article class="book-card">
+                        <span class="book-card__number">05</span>
+                        <h3><cite>Bullshit Jobs</cite></h3>
+                        <p class="book-card__author">David Graeber</p>
+                        <p>A provocative lens on work, meaning, and the strange institutions people learn to treat as inevitable.</p>
+                    </article>
+                    <article class="book-card">
+                        <span class="book-card__number">06</span>
+                        <h3><cite>Parkinson’s Law</cite></h3>
+                        <p class="book-card__author">C. Northcote Parkinson</p>
+                        <p>Short, mischievous, and uncomfortably observant about organizations.</p>
                     </article>
                 </div>
-            </section>
-        </main>
 
-        <footer class="footer">
-            <span>Based in Belgium / Split into research and running in March 2026</span>
-            <span>Contact lives on the research page</span>
-        </footer>
-    </div>
+                <aside class="short-shelf">
+                    <div>
+                        <p class="eyebrow">Short reads that overperform</p>
+                        <h3><cite>The Basic Laws of Human Stupidity</cite> <span>— Carlo M. Cipolla</span></h3>
+                        <h3><cite>The Usefulness of Useless Knowledge</cite> <span>— Abraham Flexner</span></h3>
+                    </div>
+                    <p>Two compact arguments with far more afterlife than their page counts suggest.</p>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container site-footer__main">
+            <div class="site-footer__intro">
+                <p class="eyebrow eyebrow--light">Get in touch</p>
+                <h2>A question, a paper, a project—or just a good reason to say hello?</h2>
+                <p>
+                    Research conversations are especially welcome, but the inbox is not restricted to them.
+                </p>
+                <div class="button-row">
+                    <a class="button button--light" href="mailto:tibo@vanleke.com">tibo@vanleke.com</a>
+                </div>
+            </div>
+
+            <nav class="footer-links" aria-label="Footer links">
+                <a href="https://data.research.vub.be/tibo-vanleke"><span>VUB profile</span><span aria-hidden="true">↗</span></a>
+                <a href="https://www.linkedin.com/in/tibo-vanleke"><span>LinkedIn</span><span aria-hidden="true">↗</span></a>
+                <a href="https://github.com/TiboVanleke"><span>GitHub</span><span aria-hidden="true">↗</span></a>
+                <a href="https://orcid.org/0009-0003-2200-7529"><span>ORCID</span><span aria-hidden="true">↗</span></a>
+                <a href="https://worldathletics.org/athletes/belgium/tibo-vanleke-14960904"><span>World Athletics</span><span aria-hidden="true">↗</span></a>
+            </nav>
+        </div>
+
+        <div class="container site-footer__bottom">
+            <span>© <span data-year>2026</span> Tibo Vanleke</span>
+            <span>Research · writing · running</span>
+        </div>
+    </footer>
 </body>
 </html>

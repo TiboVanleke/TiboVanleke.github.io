@@ -3,684 +3,339 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tibo Vanleke | Research Notes</title>
-    <meta name="description" content="Public research notes on LLM safety, interpretability, optimization, and experimental workflows.">
+    <title>Research Notes — Tibo Vanleke</title>
+    <meta name="description" content="Thirty-nine focused research memos by Tibo Vanleke on AI safety, interpretability, transformer behavior, and language-model training.">
     <meta name="author" content="Tibo Vanleke">
-    <meta name="theme-color" content="#f4efe6">
+    <meta name="theme-color" content="#10251e">
+    <link rel="canonical" href="https://tibovanleke.com/blog/">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
-    <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png">
     <link rel="apple-touch-icon" href="/favicon-180.png">
-    <link rel="canonical" href="https://tibovanleke.com/blog/">
-    <meta property="og:title" content="Tibo Vanleke | Research Notes">
-    <meta property="og:description" content="Short, high-signal research memos on AI safety, interpretability, and transformer behavior.">
+    <meta property="og:title" content="Research Notes — Tibo Vanleke">
+    <meta property="og:description" content="One precise language-model research question at a time.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://tibovanleke.com/blog/">
     <meta name="twitter:card" content="summary">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&amp;family=IBM+Plex+Mono:wght@500;600&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/site.css">
     <script defer src="/assets/site.js"></script>
 </head>
 <body class="page-notes">
     <a class="skip-link" href="#main">Skip to content</a>
-    <div class="site-shell">
-        <header class="topbar" data-reveal>
-            <a class="brand" href="/" aria-label="Tibo Vanleke home">
-                <span class="brand-mark">TV</span>
-                <span class="brand-copy">
-                    <strong>Tibo Vanleke</strong>
-                    <span>AI safety researcher</span>
-                </span>
+
+    <header class="site-header">
+        <div class="container site-header__inner">
+            <a class="wordmark" href="/" aria-label="Tibo Vanleke, home">
+                <span class="wordmark__mark" aria-hidden="true">TV</span>
+                <span class="wordmark__text">Tibo Vanleke<span class="wordmark__dot">.</span></span>
             </a>
-            <nav class="nav" aria-label="Primary">
-                <a href="/" data-nav>Overview</a>
+
+            <button class="menu-toggle" type="button" aria-controls="primary-navigation" aria-expanded="false" aria-label="Open navigation" data-menu-toggle>
+                <span></span>
+                <span></span>
+            </button>
+
+            <nav class="site-nav" id="primary-navigation" aria-label="Primary navigation" data-site-nav data-open="false">
                 <a href="/research/" data-nav>Research</a>
                 <a href="/blog/" data-nav>Notes</a>
                 <a href="/running/" data-nav>Running</a>
                 <a href="/cv.pdf">CV</a>
-                <a href="/research/#contact">Contact</a>
+                <a class="nav-cta" href="mailto:tibo@vanleke.com">Say hello</a>
             </nav>
-        </header>
+        </div>
+    </header>
 
-        <main class="site-main" id="main">
-            <section class="hero">
-                <div class="hero-main panel" data-reveal>
-                    <p class="eyebrow">Research notes</p>
-                    <h1>Public thinking from the edge of the research process.</h1>
-                    <p class="lede">
-                        These memos stay intentionally compact. Each one isolates a mechanism, paper, or
-                        question so the work remains visible before it becomes polished.
+    <main id="main">
+        <section class="notes-hero">
+            <div class="container notes-hero__grid">
+                <div class="notes-hero__copy intro-animate">
+                    <p class="eyebrow eyebrow--light">Research notes</p>
+                    <h1>One precise question at a time.</h1>
+                    <p>
+                        A public notebook on AI safety, interpretability, and the mechanisms inside language
+                        models. Each memo stays narrow enough to leave a useful answer—and an honest open question.
                     </p>
                     <div class="button-row">
-                        <a class="btn btn-primary" href="/blog/2026-08-23-why-long-context-llms-get-lost-in-the-middle.html">Start with the latest memo</a>
-                        <a class="btn btn-minimal" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-random-note>Surprise me</a>
-                        <a class="btn btn-secondary" href="/">Back to home</a>
-                    </div>
-                    <ul class="tag-list" aria-label="Note topics">
-                        <li class="tag">Interpretability</li>
-                        <li class="tag">Optimization</li>
-                        <li class="tag">Transformer theory</li>
-                        <li class="tag">Research process</li>
-                    </ul>
-                    <div class="stat-strip">
-                        <div class="stat">
-                            <strong>39 published</strong>
-                            <span>Public memos so far</span>
-                        </div>
-                        <div class="stat">
-                            <strong>Feb to Aug 2026</strong>
-                            <span>Current public note window</span>
-                        </div>
-                        <div class="stat">
-                            <strong>One question each</strong>
-                            <span>A note format built for clarity over coverage</span>
-                        </div>
+                        <a class="button button--light" href="#archive">Browse the archive</a>
+                        <a class="button button--ghost button--on-dark" href="#" data-random-note>Surprise me</a>
                     </div>
                 </div>
 
-                <div class="hero-side">
-                    <section class="panel panel--tint" data-reveal>
-                        <p class="eyebrow">Format</p>
-                        <h2 class="panel-title">How these notes are written.</h2>
-                        <ul class="signal-list">
-                            <li>
-                                <span class="signal-index">01</span>
-                                <span class="signal-copy">
-                                    <strong>Keep it narrow</strong>
-                                    <span>Each memo stays centered on one claim, one paper, or one mechanism.</span>
-                                </span>
-                            </li>
-                            <li>
-                                <span class="signal-index">02</span>
-                                <span class="signal-copy">
-                                    <strong>Prefer signal over summary</strong>
-                                    <span>The aim is a strong takeaway, not exhaustive coverage.</span>
-                                </span>
-                            </li>
-                            <li>
-                                <span class="signal-index">03</span>
-                                <span class="signal-copy">
-                                    <strong>Leave open questions visible</strong>
-                                    <span>The most useful part is often what still feels unresolved.</span>
-                                </span>
-                            </li>
-                        </ul>
-                    </section>
-
-                    <section class="panel" data-reveal>
-                        <p class="eyebrow">Recent focus</p>
-                        <h2 class="panel-title">A few themes keep resurfacing.</h2>
-                        <div class="topic-cloud">
-                            <span class="topic-chip">Self-consistency</span>
-                            <span class="topic-chip">Preference optimization</span>
-                            <span class="topic-chip">Layer norm placement</span>
-                            <span class="topic-chip">Truthfulness</span>
-                            <span class="topic-chip">Length extrapolation</span>
-                            <span class="topic-chip">Feature geometry</span>
-                            <span class="topic-chip">Induction heads</span>
-                            <span class="topic-chip">Truth directions</span>
-                            <span class="topic-chip">Reversal curse</span>
-                            <span class="topic-chip">Attention sinks</span>
-                            <span class="topic-chip">Low-rank adaptation</span>
-                            <span class="topic-chip">Gated MLPs</span>
-                            <span class="topic-chip">muP scaling</span>
-                            <span class="topic-chip">Constitutional AI</span>
-                            <span class="topic-chip">Tail truncation</span>
-                            <span class="topic-chip">Compute-optimal scaling</span>
-                            <span class="topic-chip">Speculative decoding</span>
-                            <span class="topic-chip">Weight tying</span>
-                            <span class="topic-chip">RMSNorm</span>
-                            <span class="topic-chip">Tuned lens</span>
-                            <span class="topic-chip">Memorization</span>
-                            <span class="topic-chip">Emergence metrics</span>
-                            <span class="topic-chip">Goal misgeneralization</span>
-                            <span class="topic-chip">Function vectors</span>
-                            <span class="topic-chip">Sparse MoE</span>
-                            <span class="topic-chip">CoT faithfulness</span>
-                            <span class="topic-chip">Residual stream</span>
-                            <span class="topic-chip">Soft prompts</span>
-                            <span class="topic-chip">Model merging</span>
-                            <span class="topic-chip">Label smoothing</span>
-                        </div>
-                        <ul>
-                            <li>2026-08-16: Why label smoothing can improve Transformer calibration and beam-search decoding while simultaneously weakening distillation signals.</li>
-                            <li>2026-08-09: Why some fine-tuned language models can be merged by simple weight arithmetic when their updates stay aligned around a shared pretrained base.</li>
-                            <li>2026-08-05: Why soft prompt tuning becomes competitive mainly when a frozen model is already large enough to expose reusable task circuits.</li>
-                            <li>2026-07-26: Why transformer components compose by writing to and reading from a shared residual-stream workspace.</li>
-                            <li>2026-07-22: When visible chain-of-thought is a polished rationale rather than the causal process behind an answer.</li>
-                            <li>2026-07-22: Why sparse MoE layers decouple parameter capacity from per-token compute.</li>
-                            <li>2026-07-22: Whether few-shot prompts induce a portable task vector that can be extracted from specific heads and reused in new contexts.</li>
-                            <li>2026-07-17: Why goal misgeneralization is a distinct failure mode from overfitting and reward misspecification.</li>
-                        </ul>
-                    </section>
-                </div>
-            </section>
-
-            <section class="section">
-                <div class="section-heading" data-reveal>
-                    <p class="eyebrow">Latest</p>
-                    <h2>The newest memo goes first.</h2>
-                    <p>Everything else stays browseable below, but the freshest research question should be immediate.</p>
-                </div>
-
-                <div class="writing-grid">
-                    <article class="feature-card" data-reveal>
-                        <div>
-                            <p class="card-meta">August 23, 2026 / 23 min read</p>
-                            <h3>Why long-context LLMs get lost in the middle</h3>
-                            <p>
-                                A longer review of why long-context language models often use evidence best at the
-                                edges of a prompt and least reliably from the middle.
-                            </p>
-                        </div>
-                        <div class="button-row">
-                            <a class="btn btn-primary" href="/blog/2026-08-23-why-long-context-llms-get-lost-in-the-middle.html">Read now</a>
-                        </div>
-                    </article>
-
-                    <div class="stack-grid">
-                        <article class="card" data-reveal>
-                            <p class="card-meta">August 16, 2026 / 22 min read</p>
-                            <h3>Why label smoothing helps beam search but hurts distillation</h3>
-                            <p>
-                                A longer review of why label smoothing improves calibration and sequence decoding in
-                                Transformers while often making the model a weaker distillation teacher.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-08-16-why-label-smoothing-helps-beam-search-but-hurts-distillation.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">August 9, 2026 / 22 min read</p>
-                            <h3>Why simple weight arithmetic can merge fine-tuned language models</h3>
-                            <p>
-                                A longer review of why some independently fine-tuned language models can be merged by
-                                simple weight arithmetic, and where interference breaks the trick.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-08-09-why-simple-weight-arithmetic-can-merge-fine-tuned-language-models.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">August 5, 2026 / 22 min read</p>
-                            <h3>Why soft prompt tuning only catches up at scale</h3>
-                            <p>
-                                A longer review of why continuous soft prompts become competitive mainly when frozen
-                                language models are already large enough to expose reusable task circuits.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-08-05-why-soft-prompt-tuning-only-catches-up-at-scale.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">July 26, 2026 / 20 min read</p>
-                            <h3>Why the residual stream is a shared linear workspace</h3>
-                            <p>
-                                A longer review of why transformer components compose through a common residual-stream
-                                communication substrate, and why that matters for interpretability and alignment.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-07-26-why-the-residual-stream-is-a-shared-linear-workspace.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">July 22, 2026 / 19 min read</p>
-                            <h3>Why chain-of-thought can be causally unfaithful</h3>
-                            <p>
-                                A longer review of when an LLM's visible reasoning stops reflecting the causal process
-                                behind its answer, and why that matters for alignment.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-07-22-why-chain-of-thought-can-be-causally-unfaithful.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">July 22, 2026 / 21 min read</p>
-                            <h3>Why sparse MoE layers scale without proportional compute</h3>
-                            <p>
-                                A longer review of why sparse expert routing buys parameter scale without paying dense
-                                compute on every token, and where the trade turns back into systems overhead.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-07-22-why-sparse-moe-layers-scale-without-proportional-compute.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">July 22, 2026 / 20 min read</p>
-                            <h3>Why function vectors can trigger in-context tasks</h3>
-                            <p>
-                                A longer review of why task information can be packaged into a portable residual-stream
-                                vector, how specific heads extract it, and where that mechanistic story still breaks.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-07-22-why-function-vectors-can-trigger-in-context-tasks.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">July 17, 2026 / 18 min read</p>
-                            <h3>Why goal misgeneralization is not just overfitting</h3>
-                            <p>
-                                A longer review of why competent proxy pursuit is a distinct alignment failure mode,
-                                how it differs from capability failure, and why correct rewards may still be insufficient.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-07-17-why-goal-misgeneralization-is-not-just-overfitting.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">July 12, 2026 / 20 min read</p>
-                            <h3>Why many emergent abilities are measurement artifacts</h3>
-                            <p>
-                                A longer review of whether dramatic capability jumps mostly come from coarse
-                                evaluation metrics, limited measurement resolution, or real loss thresholds.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-07-12-why-many-emergent-abilities-are-measurement-artifacts.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">July 8, 2026 / 18 min read</p>
-                            <h3>Why LLMs memorize rare repeated strings</h3>
-                            <p>
-                                A longer review of why exact memorization concentrates on rare, repeated,
-                                high-entropy strings, and what that reveals about scaling and data hygiene.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-07-08-why-llms-memorize-rare-repeated-strings.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">July 7, 2026 / 20 min read</p>
-                            <h3>Why the tuned lens beats the logit lens</h3>
-                            <p>
-                                A longer review of why raw direct decoding misreads intermediate transformer states,
-                                how representation drift creates probe artifacts, and why affine translators help.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-07-07-why-the-tuned-lens-beats-the-logit-lens.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">July 1, 2026 / 19 min read</p>
-                            <h3>Why RMSNorm works without mean-centering</h3>
-                            <p>
-                                A longer review of why RMSNorm preserves most of LayerNorm's optimization benefits,
-                                what stable activation scale buys, and where mean subtraction still matters.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-07-01-why-rmsnorm-works-without-mean-centering.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 30, 2026 / 23 min read</p>
-                            <h3>Why weight tying helps language models</h3>
-                            <p>
-                                A longer review of why sharing input and output embeddings improves language models,
-                                what shared lexical geometry buys, and where the assumption breaks.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-30-why-weight-tying-helps-language-models.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 29, 2026 / 24 min read</p>
-                            <h3>Why speculative decoding preserves the target distribution</h3>
-                            <p>
-                                A longer review of why draft-and-verify generation can accelerate LLM inference
-                                without changing the target model's sampling distribution.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-29-why-speculative-decoding-preserves-target-distribution.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 28, 2026 / 22 min read</p>
-                            <h3>Why Chinchilla scaling prefers more tokens than bigger models</h3>
-                            <p>
-                                A longer review of why compute-optimal LLM training often favors smaller models
-                                trained on more tokens, and what that reveals about undertraining.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-28-why-chinchilla-scaling-prefers-more-tokens-than-bigger-models.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 26, 2026 / 20 min read</p>
-                            <h3>Why open-ended decoding needs tail truncation</h3>
-                            <p>
-                                A longer review of why likelihood-maximizing decoding degenerates in open-ended
-                                generation, why nucleus sampling works, and what later theory says about the tail.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-26-why-open-ended-decoding-needs-tail-truncation.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 25, 2026 / 18 min read</p>
-                            <h3>Why Constitutional AI can replace many harmlessness labels</h3>
-                            <p>
-                                A longer review of why written principles plus AI-generated critiques can improve
-                                harmlessness, and where that substitution for human labels breaks.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-25-why-constitutional-ai-can-replace-many-harmlessness-labels.html">Open memo</a>
-                        </article>
-
-                        <article class="card" data-reveal>
-                            <p class="card-meta">June 24, 2026 / 21 min read</p>
-                            <h3>Why muP makes hyperparameters transfer across scale</h3>
-                            <p>
-                                A longer review of why maximal update parameterization keeps learning-rate and
-                                scale-sensitive hyperparameters stable as transformers grow wider.
-                            </p>
-                            <a class="inline-link" href="/blog/2026-06-24-why-mup-hyperparameters-transfer-across-scale.html">Open memo</a>
-                        </article>
-
+                <article class="latest-note intro-animate intro-animate--delay">
+                    <time datetime="2026-08-23">Latest · 23 August 2026</time>
+                    <h2>Why long-context LLMs get lost in the middle</h2>
+                    <p>
+                        Context-window size and context-window usefulness are not the same thing. This memo
+                        looks at the positional bias that leaves relevant evidence underused when it sits
+                        between the beginning and end of a long prompt.
+                    </p>
+                    <div class="button-row">
+                        <a class="button button--light" href="/blog/2026-08-23-why-long-context-llms-get-lost-in-the-middle.html">Read the latest memo</a>
                     </div>
-                </div>
-            </section>
-
-            <section class="section">
-                <div class="section-heading" data-reveal>
-                    <p class="eyebrow">Archive</p>
-                    <h2>The full memo archive.</h2>
-                    <p>Ordered newest first so the cadence and evolving interests are easy to scan.</p>
-                </div>
-
-                <div class="archive-grid">
-                    <article class="card" data-reveal>
-                        <p class="card-meta">August 23, 2026 / Context length</p>
-                        <h3>Why long-context LLMs get lost in the middle</h3>
-                        <p>Why long-context performance depends on position-robust evidence access rather than prompt-window size alone.</p>
-                        <a class="inline-link" href="/blog/2026-08-23-why-long-context-llms-get-lost-in-the-middle.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">August 16, 2026 / Optimization</p>
-                        <h3>Why label smoothing helps beam search but hurts distillation</h3>
-                        <p>Why reshaping target distributions improves calibration for Transformer decoding while erasing some of the dark knowledge distillation needs.</p>
-                        <a class="inline-link" href="/blog/2026-08-16-why-label-smoothing-helps-beam-search-but-hurts-distillation.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">August 9, 2026 / Adaptation</p>
-                        <h3>Why simple weight arithmetic can merge fine-tuned language models</h3>
-                        <p>Why a shared pretrained anchor, low-loss basin geometry, and update alignment can make model merging work.</p>
-                        <a class="inline-link" href="/blog/2026-08-09-why-simple-weight-arithmetic-can-merge-fine-tuned-language-models.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">July 26, 2026 / Mechanism</p>
-                        <h3>Why the residual stream is a shared linear workspace</h3>
-                        <p>Why transformer circuits compose by exchanging information through a shared residual-stream communication medium.</p>
-                        <a class="inline-link" href="/blog/2026-07-26-why-the-residual-stream-is-a-shared-linear-workspace.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">July 22, 2026 / Alignment</p>
-                        <h3>Why chain-of-thought can be causally unfaithful</h3>
-                        <p>Why visible reasoning can be a polished rationalization rather than the process that actually caused an LLM's answer.</p>
-                        <a class="inline-link" href="/blog/2026-07-22-why-chain-of-thought-can-be-causally-unfaithful.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">July 22, 2026 / Architecture</p>
-                        <h3>Why sparse MoE layers scale without proportional compute</h3>
-                        <p>Why conditional expert routing can add vast parameter capacity to language models without forcing dense compute on every token.</p>
-                        <a class="inline-link" href="/blog/2026-07-22-why-sparse-moe-layers-scale-without-proportional-compute.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">July 22, 2026 / Mechanism</p>
-                        <h3>Why function vectors can trigger in-context tasks</h3>
-                        <p>Why a small set of attention heads can package a demonstrated task into a portable residual-stream vector.</p>
-                        <a class="inline-link" href="/blog/2026-07-22-why-function-vectors-can-trigger-in-context-tasks.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">July 17, 2026 / Alignment</p>
-                        <h3>Why goal misgeneralization is not just overfitting</h3>
-                        <p>Why competent proxy pursuit is a distinct failure mode from ordinary overfitting and reward misspecification.</p>
-                        <a class="inline-link" href="/blog/2026-07-17-why-goal-misgeneralization-is-not-just-overfitting.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">July 12, 2026 / Scaling</p>
-                        <h3>Why many emergent abilities are measurement artifacts</h3>
-                        <p>Why dramatic-looking capability jumps often come from coarse metrics, while some thresholds may only survive in loss space.</p>
-                        <a class="inline-link" href="/blog/2026-07-12-why-many-emergent-abilities-are-measurement-artifacts.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">July 8, 2026 / Memorization</p>
-                        <h3>Why LLMs memorize rare repeated strings</h3>
-                        <p>Why exact memorization concentrates on rare, repeated, high-entropy strings instead of uniformly covering the training set.</p>
-                        <a class="inline-link" href="/blog/2026-07-08-why-llms-memorize-rare-repeated-strings.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">July 7, 2026 / Interpretability</p>
-                        <h3>Why the tuned lens beats the logit lens</h3>
-                        <p>Why intermediate hidden states need layer-specific translation before they can be read faithfully in token space.</p>
-                        <a class="inline-link" href="/blog/2026-07-07-why-the-tuned-lens-beats-the-logit-lens.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">July 1, 2026 / Optimization</p>
-                        <h3>Why RMSNorm works without mean-centering</h3>
-                        <p>Why stable activation scale often matters more than zero-mean activations in deep transformer optimization.</p>
-                        <a class="inline-link" href="/blog/2026-07-01-why-rmsnorm-works-without-mean-centering.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 30, 2026 / Language modeling</p>
-                        <h3>Why weight tying helps language models</h3>
-                        <p>Why sharing input and output embeddings regularizes lexical geometry and often improves perplexity.</p>
-                        <a class="inline-link" href="/blog/2026-06-30-why-weight-tying-helps-language-models.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 29, 2026 / Inference</p>
-                        <h3>Why speculative decoding preserves the target distribution</h3>
-                        <p>Why draft-and-verify generation can speed up autoregressive sampling without changing the large model's distribution.</p>
-                        <a class="inline-link" href="/blog/2026-06-29-why-speculative-decoding-preserves-target-distribution.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 28, 2026 / Scaling</p>
-                        <h3>Why Chinchilla scaling prefers more tokens than bigger models</h3>
-                        <p>Why compute-optimal language-model training often rewards smaller models trained longer on more data.</p>
-                        <a class="inline-link" href="/blog/2026-06-28-why-chinchilla-scaling-prefers-more-tokens-than-bigger-models.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 26, 2026 / Decoding</p>
-                        <h3>Why open-ended decoding needs tail truncation</h3>
-                        <p>Why likelihood maximization collapses into repetition in open-ended generation, and why truncating the unreliable tail works better.</p>
-                        <a class="inline-link" href="/blog/2026-06-26-why-open-ended-decoding-needs-tail-truncation.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 25, 2026 / Alignment</p>
-                        <h3>Why Constitutional AI can replace many harmlessness labels</h3>
-                        <p>Why written principles plus AI critiques can substitute for much direct harmlessness labeling when the base model already understands the norms.</p>
-                        <a class="inline-link" href="/blog/2026-06-25-why-constitutional-ai-can-replace-many-harmlessness-labels.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 24, 2026 / Optimization</p>
-                        <h3>Why muP makes hyperparameters transfer across scale</h3>
-                        <p>Why width-aware parameter scaling keeps learning rates and related tuning choices stable across transformer scale.</p>
-                        <a class="inline-link" href="/blog/2026-06-24-why-mup-hyperparameters-transfer-across-scale.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 23, 2026 / Architecture</p>
-                        <h3>Why SwiGLU replaced standard Transformer MLPs</h3>
-                        <p>Why gated feed-forward blocks beat plain ReLU and GELU MLPs, even under compute-matched comparisons.</p>
-                        <a class="inline-link" href="/blog/2026-06-23-why-swiglu-replaced-standard-transformer-mlps.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 22, 2026 / Adaptation</p>
-                        <h3>Why low-rank updates are enough for LLM adaptation</h3>
-                        <p>Why downstream specialization often occupies a small weight-space subspace and can be captured with low-rank updates.</p>
-                        <a class="inline-link" href="/blog/2026-06-22-why-low-rank-updates-are-enough-for-llm-adaptation.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 17, 2026 / Mechanism</p>
-                        <h3>Why attention sinks stabilize long-context decoding</h3>
-                        <p>Why a few early tokens absorb surplus attention mass and become necessary for stable streaming inference.</p>
-                        <a class="inline-link" href="/blog/2026-06-17-why-attention-sinks-stabilize-long-context-decoding.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 16, 2026 / Reasoning</p>
-                        <h3>Why self-consistency decoding improves reasoning</h3>
-                        <p>Why sampling several chains of thought and aggregating answers approximates marginalization over noisy reasoning paths.</p>
-                        <a class="inline-link" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 15, 2026 / Theory</p>
-                        <h3>Why next-token prediction creates the reversal curse</h3>
-                        <p>Why LLMs often learn directional factual retrieval without learning stable reverse access to the same relation.</p>
-                        <a class="inline-link" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 14, 2026 / Alignment</p>
-                        <h3>Can hidden states reveal what an LLM thinks is true?</h3>
-                        <p>When latent truth directions survive misleading prompts, and where that evidence remains fragile.</p>
-                        <a class="inline-link" href="/blog/2026-06-14-truth-directions-latent-knowledge.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 14, 2026 / Interpretability</p>
-                        <h3>Why induction heads emerge as a phase change</h3>
-                        <p>Why a specific copy circuit appears abruptly during training and tracks the onset of copy-based in-context learning.</p>
-                        <a class="inline-link" href="/blog/2026-06-14-induction-heads-phase-change-copying.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">June 14, 2026 / Alignment</p>
-                        <h3>Why TruthfulQA shows inverse scaling</h3>
-                        <p>Why larger language models can become less truthful when scaling mostly improves imitation rather than evidence-sensitive abstention.</p>
-                        <a class="inline-link" href="/blog/2026-06-14-truthfulqa-inverse-scaling-imitative-falsehoods.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">March 2, 2026 / Optimization</p>
-                        <h3>DPO as implicit reward optimization under KL constraints</h3>
-                        <p>When DPO matches KL-regularized reward optimization, and where the approximation starts to leak.</p>
-                        <a class="inline-link" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 17, 2026 / Stability</p>
-                        <h3>Pre-LN vs Post-LN</h3>
-                        <p>How layer norm placement shapes gradient flow and training stability in deep Transformers.</p>
-                        <a class="inline-link" href="/blog/2026-02-17-pre-ln-post-ln-transformer-stability.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 16, 2026 / Theory</p>
-                        <h3>Hard attention and Turing completeness</h3>
-                        <p>Architectural ingredients, formal expressivity, and what they say about real-world attention.</p>
-                        <a class="inline-link" href="/blog/2026-02-16-hard-attention-turing-completeness-transformers.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 15, 2026 / Language modeling</p>
-                        <h3>The softmax bottleneck in language modeling</h3>
-                        <p>Why a low-rank output layer limits expressivity and how mixture-of-softmaxes expands it.</p>
-                        <a class="inline-link" href="/blog/2026-02-15-softmax-bottleneck-mixture-of-softmaxes.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 13, 2026 / Context length</p>
-                        <h3>ALiBi vs RoPE</h3>
-                        <p>Why ALiBi extrapolates to longer contexts more reliably than RoPE.</p>
-                        <a class="inline-link" href="/blog/2026-02-13-alibi-vs-rope-length-extrapolation.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 12, 2026 / Memory</p>
-                        <h3>FFN layers as key-value memories</h3>
-                        <p>Evidence that mid-layer MLPs store and retrieve factual associations.</p>
-                        <a class="inline-link" href="/blog/2026-02-12-ffn-key-value-memory-factual-recall.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 11, 2026 / Attention</p>
-                        <h3>Attention as modern Hopfield memory</h3>
-                        <p>A compact review of the Hopfield-network view of attention, storage capacity, and retrieval.</p>
-                        <a class="inline-link" href="/blog/2026-02-11-attention-as-modern-hopfield-memory.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 7, 2026 / In-context learning</p>
-                        <h3>In-context learning as implicit gradient descent</h3>
-                        <p>Evidence that Transformers can implement gradient-descent-like procedures in context.</p>
-                        <a class="inline-link" href="/blog/2026-02-07-in-context-gradient-descent-linear-regression.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 6, 2026 / Optimization</p>
-                        <h3>Grokking as a phase transition in transformer training</h3>
-                        <p>How weight decay can trigger a delayed shift from memorization to algorithmic generalization.</p>
-                        <a class="inline-link" href="/blog/2026-02-06-grokking-weight-decay-phase-transition.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 5, 2026 / Interpretability</p>
-                        <h3>Sparsity as a control knob for superposition</h3>
-                        <p>How sparsity penalties can flip a model between dense superposition and cleaner feature geometry.</p>
-                        <a class="inline-link" href="/blog/2026-02-05-superposition-sparsity-phase-transition.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 4, 2026 / Mechanistic evaluation</p>
-                        <h3>Evaluating IOI circuits</h3>
-                        <p>Faithfulness, completeness, and minimality as standards for mechanistic explanations.</p>
-                        <a class="inline-link" href="/blog/2026-02-04-ioi-circuit-evaluation.html">Read memo</a>
-                    </article>
-
-                    <article class="card" data-reveal>
-                        <p class="card-meta">February 4, 2026 / Research process</p>
-                        <h3>Bootstrapping a weekly research memo</h3>
-                        <p>A lightweight public writing habit for turning weekly notes into usable research output.</p>
-                        <a class="inline-link" href="/blog/2026-02-04-bootstrapping-a-weekly-research-memo.html">Read memo</a>
-                    </article>
-                </div>
-            </section>
-
-            <section class="section">
-                <div class="section-heading" data-reveal>
-                    <p class="eyebrow">Topic log</p>
-                    <h2>A running ledger of narrow questions.</h2>
-                    <p>Useful as a sanity check against repetition and as a map of what the memo series is actually circling.</p>
-                </div>
-
-                <article class="card" data-reveal>
-                    <ul class="card-list">
-                        <li><strong>August 23, 2026:</strong> why long-context language models often underuse relevant evidence when it sits in the middle of the prompt rather than near the beginning or end.</li>
-                        <li><strong>August 9, 2026:</strong> why some fine-tuned language-model updates compose cleanly in weight space while others interfere or cancel out.</li>
-                        <li><strong>July 26, 2026:</strong> why transformer components compose by writing to and reading from a shared linear residual-stream workspace.</li>
-                        <li><strong>July 22, 2026:</strong> why chain-of-thought can improve reasoning performance while still failing as a causal explanation of the answer.</li>
-                        <li><strong>July 22, 2026:</strong> why sparse MoE layers decouple parameter capacity from per-token compute through conditional expert routing.</li>
-                        <li><strong>July 22, 2026:</strong> why some few-shot prompts appear to induce a portable task vector that can be extracted from a small set of causal attention heads.</li>
-                        <li><strong>July 17, 2026:</strong> why goal misgeneralization is a distinct failure mode where capability generalizes while the pursued objective does not.</li>
-                        <li><strong>July 8, 2026:</strong> why exact LLM memorization concentrates on rare, repeated, high-entropy strings that become retrievable from the right prefix.</li>
-                        <li><strong>July 7, 2026:</strong> why intermediate transformer states need a learned translation before token-space readouts can be trusted.</li>
-                        <li><strong>July 1, 2026:</strong> why RMSNorm keeps most of LayerNorm's benefits by stabilizing activation scale even without explicit mean-centering.</li>
-                        <li><strong>June 30, 2026:</strong> why sharing input and output embeddings helps language models read and predict words in the same lexical space.</li>
-                        <li><strong>June 29, 2026:</strong> why speculative decoding can draft several tokens ahead yet still sample exactly from the target model after verification.</li>
-                        <li><strong>June 28, 2026:</strong> why compute-optimal scaling usually favors more training tokens over a much larger but undertrained model.</li>
-                        <li><strong>June 26, 2026:</strong> why open-ended generation needs dynamic tail truncation instead of likelihood-maximizing decoding.</li>
-                        <li><strong>June 25, 2026:</strong> why written principles plus AI-generated critiques can replace many direct harmlessness labels in alignment training.</li>
-                        <li><strong>June 24, 2026:</strong> why maximal update parameterization makes learning-rate and optimizer-scale choices transfer across transformer width.</li>
-                        <li><strong>June 23, 2026:</strong> why SwiGLU-style gated MLPs outperform standard transformer feed-forward blocks.</li>
-                        <li><strong>June 22, 2026:</strong> why many downstream LLM adaptations can be captured by low-rank updates instead of dense retraining.</li>
-                        <li><strong>June 17, 2026:</strong> why long-context decoding depends on early attention sinks that absorb surplus softmax mass.</li>
-                        <li><strong>June 16, 2026:</strong> why sampling several chains of thought and aggregating answers improves reasoning without changing model weights.</li>
-                        <li><strong>June 15, 2026:</strong> why next-token prediction learns directional fact retrieval but not stable reverse lookup.</li>
-                    </ul>
                 </article>
-            </section>
-        </main>
+            </div>
+        </section>
 
-        <footer class="footer">
-            <span>Want to suggest a topic? Email tibo@vanleke.com</span>
-            <span>Research notes archive / August 2026</span>
-        </footer>
-    </div>
+        <section class="section" id="archive">
+            <div class="container">
+                <div class="archive-header">
+                    <div>
+                        <p class="eyebrow">February — August 2026</p>
+                        <h2>The full archive.</h2>
+                    </div>
+                    <label class="search-label">
+                        <span>Search titles and topics</span>
+                        <input class="search-input" type="search" placeholder="Try “interpretability”" autocomplete="off" data-note-search>
+                    </label>
+                </div>
+
+                <div class="archive-meta" aria-live="polite">
+                    <span><strong data-note-count>39</strong> notes shown</span>
+                    <span>Newest first</span>
+                </div>
+
+                <div class="archive-list">
+                    <a class="archive-entry" href="/blog/2026-08-23-why-long-context-llms-get-lost-in-the-middle.html" data-note data-search="long context lost in the middle positional retrieval attention">
+                        <time datetime="2026-08-23">23 Aug 2026</time>
+                        <h3>Why long-context LLMs get lost in the middle</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-08-16-why-label-smoothing-helps-beam-search-but-hurts-distillation.html" data-note data-search="label smoothing beam search distillation calibration">
+                        <time datetime="2026-08-16">16 Aug 2026</time>
+                        <h3>Why label smoothing helps beam search but hurts distillation</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-08-09-why-simple-weight-arithmetic-can-merge-fine-tuned-language-models.html" data-note data-search="model merging task arithmetic fine tuning weights">
+                        <time datetime="2026-08-09">9 Aug 2026</time>
+                        <h3>Why simple weight arithmetic can merge fine-tuned language models</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-08-05-why-soft-prompt-tuning-only-catches-up-at-scale.html" data-note data-search="soft prompt tuning scale adaptation">
+                        <time datetime="2026-08-05">5 Aug 2026</time>
+                        <h3>Why soft prompt tuning only catches up at scale</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-07-26-why-the-residual-stream-is-a-shared-linear-workspace.html" data-note data-search="residual stream linear workspace interpretability">
+                        <time datetime="2026-07-26">26 Jul 2026</time>
+                        <h3>Why the residual stream is a shared linear workspace</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-07-22-why-chain-of-thought-can-be-causally-unfaithful.html" data-note data-search="chain of thought causally unfaithful reasoning alignment">
+                        <time datetime="2026-07-22">22 Jul 2026</time>
+                        <h3>Why chain-of-thought can be causally unfaithful</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-07-22-why-function-vectors-can-trigger-in-context-tasks.html" data-note data-search="function vectors in context learning attention heads">
+                        <time datetime="2026-07-22">22 Jul 2026</time>
+                        <h3>Why function vectors can trigger in-context tasks</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-07-22-why-sparse-moe-layers-scale-without-proportional-compute.html" data-note data-search="sparse mixture experts moe routing compute scale">
+                        <time datetime="2026-07-22">22 Jul 2026</time>
+                        <h3>Why sparse MoE layers scale without proportional compute</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-07-17-why-goal-misgeneralization-is-not-just-overfitting.html" data-note data-search="goal misgeneralization alignment overfitting reward">
+                        <time datetime="2026-07-17">17 Jul 2026</time>
+                        <h3>Why goal misgeneralization is not just overfitting</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-07-12-why-many-emergent-abilities-are-measurement-artifacts.html" data-note data-search="emergent abilities measurement metrics scaling">
+                        <time datetime="2026-07-12">12 Jul 2026</time>
+                        <h3>Why many emergent abilities are measurement artifacts</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-07-08-why-llms-memorize-rare-repeated-strings.html" data-note data-search="memorization rare repeated strings privacy data">
+                        <time datetime="2026-07-08">8 Jul 2026</time>
+                        <h3>Why LLMs memorize rare repeated strings</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-07-07-why-the-tuned-lens-beats-the-logit-lens.html" data-note data-search="tuned lens logit lens interpretability representation drift">
+                        <time datetime="2026-07-07">7 Jul 2026</time>
+                        <h3>Why the tuned lens beats the logit lens</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-07-01-why-rmsnorm-works-without-mean-centering.html" data-note data-search="rmsnorm layer normalization mean centering optimization">
+                        <time datetime="2026-07-01">1 Jul 2026</time>
+                        <h3>Why RMSNorm works without mean-centering</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-30-why-weight-tying-helps-language-models.html" data-note data-search="weight tying embeddings language models">
+                        <time datetime="2026-06-30">30 Jun 2026</time>
+                        <h3>Why weight tying helps language models</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-29-why-speculative-decoding-preserves-target-distribution.html" data-note data-search="speculative decoding sampling target distribution inference">
+                        <time datetime="2026-06-29">29 Jun 2026</time>
+                        <h3>Why speculative decoding preserves the target distribution</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-28-why-chinchilla-scaling-prefers-more-tokens-than-bigger-models.html" data-note data-search="chinchilla scaling compute optimal tokens model size">
+                        <time datetime="2026-06-28">28 Jun 2026</time>
+                        <h3>Why Chinchilla scaling prefers more tokens than bigger models</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-26-why-open-ended-decoding-needs-tail-truncation.html" data-note data-search="open ended decoding tail truncation nucleus sampling">
+                        <time datetime="2026-06-26">26 Jun 2026</time>
+                        <h3>Why open-ended decoding needs tail truncation</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-25-why-constitutional-ai-can-replace-many-harmlessness-labels.html" data-note data-search="constitutional ai harmlessness alignment feedback">
+                        <time datetime="2026-06-25">25 Jun 2026</time>
+                        <h3>Why Constitutional AI can replace many harmlessness labels</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-24-why-mup-hyperparameters-transfer-across-scale.html" data-note data-search="mup maximal update parameterization hyperparameters scaling">
+                        <time datetime="2026-06-24">24 Jun 2026</time>
+                        <h3>Why muP makes hyperparameters transfer across scale</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-23-why-swiglu-replaced-standard-transformer-mlps.html" data-note data-search="swiglu gated mlp transformer feed forward">
+                        <time datetime="2026-06-23">23 Jun 2026</time>
+                        <h3>Why SwiGLU replaced standard Transformer MLPs</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-22-why-low-rank-updates-are-enough-for-llm-adaptation.html" data-note data-search="low rank updates lora adaptation fine tuning">
+                        <time datetime="2026-06-22">22 Jun 2026</time>
+                        <h3>Why low-rank updates are enough for LLM adaptation</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-17-why-attention-sinks-stabilize-long-context-decoding.html" data-note data-search="attention sinks long context decoding">
+                        <time datetime="2026-06-17">17 Jun 2026</time>
+                        <h3>Why attention sinks stabilize long-context decoding</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-16-why-self-consistency-decoding-improves-reasoning.html" data-note data-search="self consistency decoding chain of thought reasoning">
+                        <time datetime="2026-06-16">16 Jun 2026</time>
+                        <h3>Why self-consistency decoding improves reasoning</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-15-why-next-token-prediction-creates-the-reversal-curse.html" data-note data-search="reversal curse next token prediction knowledge">
+                        <time datetime="2026-06-15">15 Jun 2026</time>
+                        <h3>Why next-token prediction creates the reversal curse</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-14-induction-heads-phase-change-copying.html" data-note data-search="induction heads phase change copying in context learning">
+                        <time datetime="2026-06-14">14 Jun 2026</time>
+                        <h3>Why induction heads emerge as a phase change</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-14-truth-directions-latent-knowledge.html" data-note data-search="truth directions latent knowledge hidden states interpretability">
+                        <time datetime="2026-06-14">14 Jun 2026</time>
+                        <h3>Can hidden states reveal what an LLM thinks is true?</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-06-14-truthfulqa-inverse-scaling-imitative-falsehoods.html" data-note data-search="truthfulqa inverse scaling falsehoods truthfulness">
+                        <time datetime="2026-06-14">14 Jun 2026</time>
+                        <h3>Why TruthfulQA shows inverse scaling</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-03-02-dpo-implicit-reward-optimization.html" data-note data-search="dpo direct preference optimization reward kl">
+                        <time datetime="2026-03-02">2 Mar 2026</time>
+                        <h3>DPO as implicit reward optimization under KL constraints</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-17-pre-ln-post-ln-transformer-stability.html" data-note data-search="pre ln post ln layer norm transformer stability gradients">
+                        <time datetime="2026-02-17">17 Feb 2026</time>
+                        <h3>Pre-LN vs Post-LN: why layer norm placement stabilizes Transformers</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-16-hard-attention-turing-completeness-transformers.html" data-note data-search="hard attention turing completeness transformers theory">
+                        <time datetime="2026-02-16">16 Feb 2026</time>
+                        <h3>Hard attention and Turing completeness in Transformers</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-15-softmax-bottleneck-mixture-of-softmaxes.html" data-note data-search="softmax bottleneck mixture expressivity language modeling">
+                        <time datetime="2026-02-15">15 Feb 2026</time>
+                        <h3>The softmax bottleneck in language modeling</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-13-alibi-vs-rope-length-extrapolation.html" data-note data-search="alibi rope positional encoding length extrapolation">
+                        <time datetime="2026-02-13">13 Feb 2026</time>
+                        <h3>ALiBi vs RoPE: positional bias and length extrapolation</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-12-ffn-key-value-memory-factual-recall.html" data-note data-search="ffn key value memory factual recall transformer">
+                        <time datetime="2026-02-12">12 Feb 2026</time>
+                        <h3>FFN layers as key-value memories for factual recall</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-11-attention-as-modern-hopfield-memory.html" data-note data-search="attention modern hopfield memory retrieval">
+                        <time datetime="2026-02-11">11 Feb 2026</time>
+                        <h3>Attention as modern Hopfield memory</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-07-in-context-gradient-descent-linear-regression.html" data-note data-search="in context learning gradient descent linear regression">
+                        <time datetime="2026-02-07">7 Feb 2026</time>
+                        <h3>In-context learning as implicit gradient descent</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-06-grokking-weight-decay-phase-transition.html" data-note data-search="grokking weight decay phase transition generalization">
+                        <time datetime="2026-02-06">6 Feb 2026</time>
+                        <h3>Grokking as a phase transition in transformer training</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-05-superposition-sparsity-phase-transition.html" data-note data-search="superposition sparsity features monosemanticity phase transition">
+                        <time datetime="2026-02-05">5 Feb 2026</time>
+                        <h3>Sparsity as a control knob for superposition</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-04-ioi-circuit-evaluation.html" data-note data-search="ioi circuit evaluation faithfulness completeness minimality interpretability">
+                        <time datetime="2026-02-04">4 Feb 2026</time>
+                        <h3>Evaluating IOI circuits: faithfulness, completeness, minimality</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="archive-entry" href="/blog/2026-02-04-bootstrapping-a-weekly-research-memo.html" data-note data-search="weekly research memo writing process">
+                        <time datetime="2026-02-04">4 Feb 2026</time>
+                        <h3>Bootstrapping a weekly research memo</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
+                </div>
+
+                <p class="archive-empty" data-archive-empty hidden>No notes match that search. Try a broader term.</p>
+            </div>
+        </section>
+
+        <section class="section section--compact">
+            <div class="container callout">
+                <div>
+                    <p class="eyebrow eyebrow--light">About the series</p>
+                    <h2>A weekly habit, not a claim of completeness.</h2>
+                    <p>
+                        The format forces one narrow question, a small set of primary sources, explicit
+                        limitations, and one open question worth carrying forward.
+                    </p>
+                </div>
+                <a class="button button--light" href="#" data-random-note>Pick a random note</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container site-footer__main">
+            <div class="site-footer__intro">
+                <p class="eyebrow eyebrow--light">Keep the conversation going</p>
+                <h2>Found a weak claim or a better paper?</h2>
+                <p>The notes are public partly so they can be corrected, sharpened, and discussed.</p>
+                <div class="button-row">
+                    <a class="button button--light" href="mailto:tibo@vanleke.com">Send a note</a>
+                </div>
+            </div>
+            <nav class="footer-links" aria-label="Footer links">
+                <a href="/"><span>Home</span><span aria-hidden="true">→</span></a>
+                <a href="/research/"><span>Research</span><span aria-hidden="true">→</span></a>
+                <a href="/running/"><span>Running</span><span aria-hidden="true">→</span></a>
+                <a href="/cv.pdf"><span>Curriculum vitae</span><span aria-hidden="true">↗</span></a>
+                <a href="mailto:tibo@vanleke.com"><span>Email</span><span aria-hidden="true">↗</span></a>
+            </nav>
+        </div>
+        <div class="container site-footer__bottom">
+            <span>© <span data-year>2026</span> Tibo Vanleke</span>
+            <span>39 public research notes</span>
+        </div>
+    </footer>
 </body>
 </html>
