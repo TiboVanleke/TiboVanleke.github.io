@@ -1,0 +1,69 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Why scheduled sampling can learn the wrong distribution | Tibo Vanleke</title>
+        <meta name="description" content="A focused review of how replacing training prefixes with model samples can break target consistency, even when generation metrics improve.">
+        <link rel="stylesheet" href="/assets/note.css">
+        <link rel="canonical" href="https://vanleke.com/blog/2026-09-21-why-scheduled-sampling-can-learn-the-wrong-distribution.html">
+</head>
+    <body>
+        <div class="page">
+            <a class="top-link" href="/blog/">← Back to research notes</a>
+            <header>
+                <h1>Why scheduled sampling can learn the wrong distribution</h1>
+                <div class="meta">September 21, 2026 · 7 min read</div>
+            </header>
+            <article>
+
+<h2>Abstract</h2>
+<p>Can exposing a language model to its own mistakes teach it the wrong dependencies? Scheduled sampling makes this question precise: during training, it sometimes replaces a reference token with a generated token while retaining the original next-token target. The intended benefit is resilience during generation. The danger is that the target no longer belongs to the prefix. This memo examines that tension through foundational sequence-modeling research and a worked probability example. The lesson for LLM training is a testable design constraint: changing the distribution of contexts also requires checking whether the supervision remains valid in those contexts.</p>
+
+<h2>Related Work</h2>
+<p>Bengio et al. introduced scheduled sampling in 2015, gradually reducing reliance on reference histories. Their recurrent models improved on several sequence tasks. Huszár subsequently showed that the idealized objective is statistically inconsistent: even unlimited data and sufficient capacity need not recover the true joint distribution. These are compatible findings because task performance and distribution recovery are different criteria. <a href="https://arxiv.org/abs/1506.03099">[1]</a> <a href="https://arxiv.org/abs/1511.05101">[2]</a></p>
+<p>An earlier foundation is DAgger, from Ross, Gordon, and Bagnell. It collects states visited by the learner, obtains expert actions there, and aggregates those examples. Its guarantees require assumptions about the learning reduction and expert feedback. The useful comparison is the labeling operation: encountering a new state is paired with asking what to do in that state. <a href="https://proceedings.mlr.press/v15/ross11a.html">[3]</a></p>
+
+<h2>Method/Mechanism</h2>
+<p>Teacher forcing minimizes the sum of negative log probabilities of reference tokens given reference prefixes. By the probability chain rule, that sum is the negative log probability of the complete reference sequence. Scheduled sampling instead flips a coin to choose a reference or model-generated token for the evolving history. The original experiments did not backpropagate through the discrete sampling decisions. <a href="https://arxiv.org/abs/1506.03099">[1]</a></p>
+<p>Huszár's two-token analysis isolates the problem. When the first token is independently sampled from the model, the retained second token comes from an unrelated data example. As reference-token probability approaches zero, the idealized optimum becomes the product of the data marginals, discarding their dependency. This is a statement about the learning target, not merely noisy gradients or insufficient optimization. <a href="https://arxiv.org/abs/1511.05101">[2]</a></p>
+<p><strong>Example 1: a binary copying task.</strong> The following calculation is an illustrative derivation, not a reported experiment. Suppose a dataset contains only two-token sequences <code>00</code> and <code>11</code>, equally often. A correct model samples a fair first bit and copies it. Assume its first-token distribution is already correct and held fixed. Let ε denote the probability of retaining the reference first bit during training.</p>
+<p>Among examples whose presented prefix is <code>0</code>, the retained-reference component always has target <code>0</code>. In the replacement component, the independent sampled prefix says nothing about the reference target, which is equally likely to be either bit. The cross-entropy optimum therefore predicts a matching second bit with probability <code>(1 + ε) / 2</code>. At ε = 1 it copies perfectly; at ε = 0 it predicts a fair coin after either prefix.</p>
+<p>This calculation gives a concrete diagnostic. At ε = 0.5, the learned conditional assigns 75% probability to copying. Free generation then produces invalid unequal pairs 25% of the time, despite a training dataset containing none. At ε = 0, all four pairs have probability 25%. The model's first-token marginal remains exactly right throughout. Evaluating only token frequencies would therefore miss the failure; evaluating the relation between tokens exposes it immediately.</p>
+
+<h2>Key Findings</h2>
+<p><strong>Case study 2: image captioning.</strong> In Bengio et al.'s MSCOCO development evaluation, single-model BLEU-4 rose from 28.8 to 30.6 with scheduled sampling. Always sampling from the model instead scored 11.2. Those results support a benefit from the curriculum in that experimental setting; they do not establish consistent estimation. <a href="https://arxiv.org/abs/1506.03099">[1]</a></p>
+<p>Four insights follow from separating those results from the worked example:</p>
+<ul>
+<li><strong>Correct marginals can hide broken relations.</strong> In the binary task, individual token frequencies provide no warning that copying has deteriorated. Dependency-sensitive evaluation is essential.</li>
+<li><strong>A better task score does not certify a probability model.</strong> Caption overlap and recovery of the training distribution answer different questions. Success on one leaves the other unresolved.</li>
+<li><strong>Context changes require target checks.</strong> A useful audit records the presented prefix and asks whether the retained target is still appropriate, rather than checking only how often corruption occurred.</li>
+<li><strong>The schedule is part of the intervention.</strong> Reporting a method name without its replacement rate and stopping point hides how much contradictory supervision the learner actually received.</li>
+</ul>
+
+<h2>Limitations</h2>
+<p>The copying calculation deliberately fixes the first-token marginal and assumes sufficient capacity to fit each conditional separately. Parameter sharing, finite data, external conditioning, and optimization can alter practical behavior. Huszár's argument concerns an idealized sampling objective; it does not predict that every finite training run will reach complete independence. <a href="https://arxiv.org/abs/1511.05101">[2]</a></p>
+<p>Nor does this review establish the size of exposure bias in contemporary LLMs. The empirical anchor uses recurrent models, not a controlled comparison of large decoder-only transformers. Transferring the target-validity concern is a methodological inference; transferring the reported gains would require new evidence. Synthetic training on complete, coherent sequences also differs from attaching an old continuation to a newly sampled prefix. Those procedures should not be grouped together simply because both use model outputs.</p>
+
+<h2>Future Directions</h2>
+<p>A useful experiment would train matched small transformers on controlled sequence tasks with known dependencies. Hold compute, initialization, and dataset size fixed; vary only prefix replacement and labeling. Compare unchanged reference targets with targets supplied by an oracle for the actual presented prefix. Measure held-out likelihood, invalid-sequence probability, and recovery after deliberate perturbations separately. The binary task supplies an exact baseline before natural-language ambiguity enters.</p>
+<p>DAgger motivates the oracle comparison, but language introduces a difficulty: a changed prefix may admit many valid continuations, and an expert action need not identify their full probability distribution. A repair policy and a generative density model therefore need separate evaluation. <a href="https://proceedings.mlr.press/v15/ross11a.html">[3]</a></p>
+<p><strong>Open question:</strong> Can a practical LLM training procedure learn recovery from generated prefixes while preserving the correct distribution over valid continuations, without an oracle that labels every altered context?</p>
+
+<h2>Summary</h2>
+<p>Scheduled sampling makes the validity of supervision after a context change impossible to ignore. Its historical task gains deserve recognition, while the copying example shows exactly how a training modification can erase a dependency. For new proposals, inspect the prefix-target pair and evaluate sequence relations alongside aggregate task scores.</p>
+
+<h2>References</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/1506.03099">[1] Bengio, Vinyals, Jaitly, and Shazeer (2015). Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks.</a> NeurIPS. Primary empirical anchor.</li>
+<li><a href="https://arxiv.org/abs/1511.05101">[2] Huszár (2015). How (not) to Train your Generative Model: Scheduled Sampling, Likelihood, Adversary?</a> Primary theoretical critique.</li>
+<li><a href="https://proceedings.mlr.press/v15/ross11a.html">[3] Ross, Gordon, and Bagnell (2011). A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning.</a> AISTATS.</li>
+</ul>
+
+        </article>
+            <footer>
+                Want to respond? Email tibo@vanleke.com.
+            </footer>
+        </div>
+    </body>
+    </html>
