@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why content-free inputs improve few-shot classification | Tibo Vanleke</title>
+    <meta name="description" content="A focused review of contextual calibration: when dividing out a prompt’s baseline label preferences improves classification, and when it removes useful information.">
+    <link rel="stylesheet" href="/assets/note.css">
+    <link rel="canonical" href="https://vanleke.com/blog/2026-09-27-why-content-free-inputs-improve-few-shot-classification.html">
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to research notes</a>
+        <header>
+            <h1>Why content-free inputs improve few-shot classification</h1>
+            <div class="meta">September 27, 2026 · 7 min read</div>
+        </header>
+        <article>
+<h2>Abstract</h2>
+<p>A few-shot classifier can change its answer when demonstrations are reordered, even though the examples themselves are unchanged. This review asks a narrower question than how in-context learning works: when can a content-free input identify a removable preference for particular labels? The central distinction is between evidence supplied by the test item and a baseline preference supplied by its prompt. Two worked examples below show why separating them can improve decisions, but also why the correction cannot establish that a model understands the task or reports trustworthy confidence.</p>
+
+<h2>Related Work</h2>
+<p>Zhao et al.’s <em>Calibrate Before Use</em> is the primary empirical anchor. They identify majority-label, recency, and common-token biases, and report improved accuracy and reduced prompt sensitivity with contextual calibration in GPT-2 and GPT-3. Their SST-2 analysis found that permuting four demonstrations could move GPT-3 2.7B accuracy from 54.3% to 93.4%. <a href="https://proceedings.mlr.press/v139/zhao21c.html">[1]</a></p>
+<p>Min et al. provide complementary evidence: across their classification and multiple-choice experiments, demonstrations conveyed useful label-space, input-distribution, and formatting information even when their labels were randomized. That finding concerns the tested tasks and models; it does not establish that correct demonstrations never matter. It motivates separating several things a prompt communicates instead of attributing every accuracy gain to learning an input-label mapping. <a href="https://aclanthology.org/2022.emnlp-main.759/">[2]</a></p>
+<p>Jiang et al. study a different meaning of calibration: whether language-model probabilities on question answering track correctness. They examine T5, BART, and GPT-2 and find substantial room for improvement. This distinction matters here: changing which class wins and making a confidence value statistically reliable are separate objectives. <a href="https://aclanthology.org/2021.tacl-1.57/">[3]</a></p>
+
+<h2>Method/Mechanism</h2>
+<p>For classification, Zhao et al. estimate a baseline vector <em>b</em> using content-free test inputs under the same demonstration prompt. They average predictions for “N/A”, “[MASK]”, and an empty string. With label probabilities <em>p</em> normalized over the candidate labels, their decision rule selects the largest <em>p</em><sub>y</sub>/<em>b</em><sub>y</sub>. Dividing the averaged baseline by itself gives equal scores, producing a tie. No model weights change. <a href="https://proceedings.mlr.press/v139/zhao21c.html">[1]</a></p>
+<p><strong>Example 1: correcting a sentiment threshold.</strong> These numbers are illustrative, not experimental results. Suppose the baseline assigns positive and negative labels probabilities 0.8 and 0.2. For a review, the model assigns 0.6 and 0.4. Ordinary classification chooses positive. Dividing by the baseline gives scores 0.75 and 2, so the corrected decision is negative. The review increased negative support relative to the prompt’s starting preference.</p>
+<p>The binary threshold can be derived exactly. Write the positive test probability as <em>p</em> and its baseline as <em>b</em>, with both strictly between zero and one. Positive wins after correction when <em>p/b &gt; (1−p)/(1−b)</em>. Multiplying through and cancelling gives <em>p &gt; b</em>. The original threshold of one half has become the measured baseline. This calculation explains the intervention without assuming that the resulting scores are reliable probabilities.</p>
+<p>A useful explanatory model is an explicit assumption: suppose each unnormalized label score factors into a prompt-only multiplier and an input-dependent evidence term. If the content-free probe gives equal evidence to all labels, division cancels the multiplier, leaving the evidence ranking. This is a sufficient condition, not an established description of transformer internals. When input and prompt interact differently for different items, a single baseline cannot cancel their effects everywhere.</p>
+
+<h2>Key Findings</h2>
+<p><strong>Example 2: removing a useful prior.</strong> Consider a hypothetical support inbox where 90% of messages are routine and 10% urgent. Suppose both the baseline and an ambiguous message receive probabilities 0.9 and 0.1. Division produces a tie. If the message contains no distinguishing evidence and these probabilities reflect the real prevalence, ordinary classification already minimizes error under equal mistake costs. Removing that prior discards useful information.</p>
+<p>This example does not show that calibration generally hurts imbalanced tasks. It isolates an identification problem: identical baseline numbers could represent an arbitrary label preference or a valid deployment prior. The arithmetic alone cannot tell them apart. A high cost for missing urgent messages would introduce a further decision threshold, which also cannot be inferred from a blank input.</p>
+<ul>
+<li><strong>The baseline is part of the classifier.</strong> Changing demonstrations while retaining an old baseline changes the intervention. Cache and evaluate them together.</li>
+<li><strong>Decision improvement need not imply new knowledge.</strong> In the first example, the model’s test probabilities stay fixed; a different comparison rule changes the answer.</li>
+<li><strong>Uniformity encodes a choice.</strong> Making the probe indifferent between labels is useful only insofar as that indifference matches the intended task.</li>
+<li><strong>Stability and correctness require separate measurements.</strong> A classifier that always chooses one label can be perfectly stable across prompt permutations and still perform poorly.</li>
+</ul>
+
+<h2>Limitations</h2>
+<p>“Content-free” is an operational description, not a guarantee of semantic neutrality. A placeholder can resemble missing data, an unfamiliar token, or a cue to abstain. The factorization argument therefore leaves two assumptions to test: whether the probe is neutral, and whether its measured bias transfers to actual inputs. Neither follows from observing a uniform corrected probe.</p>
+<p>Numerical sensitivity creates another limitation. If a baseline component is extremely small, division magnifies small errors in that component. Probability floors can prevent numerical failure, but their value becomes a methodological choice requiring validation. Multi-token label strings also require an explicit scoring convention; silently comparing only their first tokens can change the task being evaluated.</p>
+<p>The historical experiments establish results for their evaluated systems. Applying this procedure to an instruction-tuned assistant, especially one that can refuse or produce unconstrained text, requires defining the candidate labels and measuring performance again. This review makes no claim of a universal accuracy gain.</p>
+
+<h2>Future Directions</h2>
+<p>A discriminating experiment would cross prompt order with deployment prevalence. Keep model, label names, examples, and test items fixed when testing permutations; then separately construct test mixtures with different class frequencies. Compare ordinary predictions, contextual correction, and a classifier whose threshold is selected using a labeled validation set. Report macro accuracy, overall accuracy, prompt variance, and confidence reliability separately.</p>
+<p>Repeat the experiment with several probe strings and inspect which individual decisions change. That would help distinguish a robust baseline correction from dependence on one placeholder. Reserve held-out data for the final comparison so choosing a probe does not quietly become test-set tuning.</p>
+<p><strong>Open question:</strong> Can unlabeled probes reliably distinguish removable prompt bias from a useful deployment prior when the class distribution is unknown?</p>
+
+<h2>Summary</h2>
+<p>Contextual calibration offers a precise intervention on label decisions. The worked examples identify its promise and its boundary: dividing out a baseline can expose evidence, but the same operation can erase a valid prior. Evaluate the probe, the decision threshold, and confidence reliability as distinct components.</p>
+
+<h2>References</h2>
+<ul>
+<li><a href="https://proceedings.mlr.press/v139/zhao21c.html">[1] Zhao, Wallace, Feng, Klein, and Singh (2021). Calibrate Before Use: Improving Few-shot Performance of Language Models.</a> ICML. Primary empirical and methodological source.</li>
+<li><a href="https://aclanthology.org/2022.emnlp-main.759/">[2] Min et al. (2022). Rethinking the Role of Demonstrations: What Makes In-Context Learning Work?</a> EMNLP.</li>
+<li><a href="https://aclanthology.org/2021.tacl-1.57/">[3] Jiang, Araki, Ding, and Neubig (2021). How Can We Know When Language Models Know? On the Calibration of Language Models for Question Answering.</a> TACL.</li>
+</ul>
+        </article>
+        <footer>Want to respond? Email tibo@vanleke.com.</footer>
+    </div>
+</body>
+</html>
