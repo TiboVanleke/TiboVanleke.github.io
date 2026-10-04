@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why exact attention does not need a quadratic matrix | Tibo Vanleke</title>
+    <meta name="description" content="A focused review of how online softmax preserves every attention interaction while avoiding a stored quadratic matrix, and why memory savings do not imply linear-time attention.">
+    <link rel="stylesheet" href="/assets/note.css">
+    <link rel="canonical" href="https://vanleke.com/blog/2026-10-04-why-exact-attention-does-not-need-a-quadratic-matrix.html">
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to research notes</a>
+        <header>
+            <h1>Why exact attention does not need a quadratic matrix</h1>
+            <div class="meta">October 4, 2026 · 7 min read</div>
+        </header>
+        <article>
+<h2>Abstract</h2>
+<p>Does exact attention require keeping every token-to-token weight in memory? The familiar matrix formula suggests it does, but the output only needs a weighted sum. This review asks how that distinction permits an exact computation with much smaller intermediate storage. The answer rests on combining partial sums under a shared normalization scale. FlashAttention makes this algebra useful on GPUs by arranging computation around memory movement. The question is deliberately about evaluating a fixed attention function: it does not concern which tokens a trained model chooses to attend to.</p>
+
+<h2>Related Work</h2>
+<p>Dao et al.’s widely cited <em>FlashAttention</em> is the primary source. It combines tiled attention, recomputation during differentiation, and an analysis of transfers between large GPU memory and small, fast on-chip memory. Its dense algorithm preserves the attention operation while avoiding a stored matrix of all pairwise weights. <a href="https://arxiv.org/abs/2205.14135">[1]</a></p>
+<p>Two earlier contributions clarify the mechanism. Milakov and Gimelshein show how to update the softmax normalizer alongside a running maximum, reducing memory passes without replacing softmax. <a href="https://arxiv.org/abs/1805.02867">[2]</a> Rabe and Staats show that attention's quadratic intermediate storage is avoidable, including when differentiating it, while retaining quadratic time complexity. Their work separates a mathematical storage requirement from the behavior of a conventional implementation. <a href="https://arxiv.org/abs/2112.05682">[3]</a></p>
+
+<h2>Method/Mechanism</h2>
+<p>For one query, let <em>s</em><sub>j</sub> be its scaled score for key <em>j</em>, and let <em>v</em><sub>j</sub> be that key's value vector. The desired output is the sum of exp(<em>s</em><sub>j</sub>)<em>v</em><sub>j</sub>, divided by the sum of exp(<em>s</em><sub>j</sub>). Both sums can be accumulated. The complication is numerical: directly exponentiating a large score can overflow.</p>
+<p>Subtracting the largest score solves that problem without changing the ratio. For each processed block, retain three quantities: its maximum <em>m</em>, its denominator <em>l</em> = Σ exp(<em>s</em><sub>j</sub> − <em>m</em>), and its vector numerator <em>u</em> = Σ exp(<em>s</em><sub>j</sub> − <em>m</em>)<em>v</em><sub>j</sub>. The scalar normalizer follows the online-softmax construction; accumulating the numerator makes it an attention computation. <a href="https://arxiv.org/abs/1805.02867">[2]</a> <a href="https://arxiv.org/abs/2112.05682">[3]</a></p>
+<p>Here is the merge identity, written for two nonempty blocks A and B with finite scores. Set <em>m</em> = max(<em>m</em><sub>A</sub>, <em>m</em><sub>B</sub>). Multiply each block's denominator and numerator by exp(<em>m</em><sub>block</sub> − <em>m</em>), then add corresponding quantities. The final answer is <em>u/l</em>. Multiplication simply changes both blocks to the same exponential scale; cancellation in the ratio establishes correctness.</p>
+<p><strong>Example 1: why averaging block outputs fails.</strong> This is an illustrative calculation. Block A has scores (0, 0) and scalar values (0, 2). Its summary is (<em>m</em>, <em>l</em>, <em>u</em>) = (0, 2, 2), so its local output is 1. Block B has one score ln(2) and value 4. Its summary is (ln(2), 1, 4), and its local output is 4.</p>
+<p>The combined maximum is ln(2). Rescale A by one half, giving denominator 1 and numerator 1. B needs no rescaling. The merged output is therefore (1 + 4)/(1 + 1) = 2.5. Direct evaluation gives weights (1, 1, 2)/4 and the same result.</p>
+<p>In this particular example, averaging the two local outputs also gives 2.5, but only because their unnormalized masses happen to match. Replace B's score with ln(4). The local outputs remain 1 and 4, yet the correct merged answer becomes (2 + 16)/(2 + 4) = 3. The normalizers carry essential information that the local outputs alone lose.</p>
+
+<h2>Key Findings</h2>
+<p>FlashAttention computes score tiles in fast on-chip memory and consumes them before discarding them. During the backward pass, it reconstructs needed tiles using saved normalization statistics instead of retaining the full attention matrix. The extra arithmetic can pay for itself through reduced memory transfers. <a href="https://arxiv.org/abs/2205.14135">[1]</a></p>
+<p><strong>Example 2: the size of an unnecessary intermediate.</strong> For an illustrative single head with 16,384 queries and equally many keys, one dense matrix contains 268,435,456 entries. At two bytes per entry, that is 512 MiB. An output with 64 value coordinates per query contains 1,048,576 entries, or 2 MiB at the same precision. These are calculated tensor sizes, not measured peak memory: inputs, gradients, scratch space, and accumulation precision add further costs.</p>
+<ul>
+<li><strong>Normalization can be deferred.</strong> Partial numerators and denominators preserve information that independently normalized block outputs discard.</li>
+<li><strong>Storage and arithmetic scale differently.</strong> Avoiding the matrix does not remove the dense pairwise score calculations.</li>
+<li><strong>Recomputation can improve speed.</strong> Whether storing an intermediate is worthwhile depends on the cost of moving it as well as calculating it.</li>
+<li><strong>Exactness needs a numerical qualifier.</strong> An algebraically identical result need not be bitwise identical after floating-point operations are reordered.</li>
+</ul>
+
+<h2>Limitations</h2>
+<p>The memory calculation assumes the consumer needs only the attention output. If an analysis explicitly requests every attention weight, writing that output itself requires quadratic space. A compact internal computation cannot make a requested quadratic artifact disappear. Similarly, reducing temporary attention storage does not eliminate the key-value cache used during autoregressive generation.</p>
+<p>Dense FlashAttention retains O(N²d) arithmetic for sequence length N and head dimension d. Its reported speed gains depend on the evaluated hardware and comparison implementation; they are not a universal multiplier. <a href="https://arxiv.org/abs/2205.14135">[1]</a> Single-token decoding also has a different workload from processing all query positions together, so conclusions should specify the phase being measured.</p>
+<p>The merge calculation above excludes fully masked blocks. An implementation must handle those explicitly rather than subtracting negative infinity from itself. Precision, causal masking, and dropout also belong in a correctness comparison. “Same formula” is a necessary starting point, not a substitute for checking a working kernel.</p>
+
+<h2>Future Directions</h2>
+<p>A useful experiment would hold queries, keys, values, masks, and precision fixed while varying tile size and sequence length. Compare outputs and gradients against a high-precision reference, then record peak allocated memory, memory traffic, and elapsed time separately. Disable dropout initially; introduce matched dropout masks in a second comparison. This design would distinguish numerical disagreement from stochastic variation.</p>
+<p>For performance, include both prompt processing and single-token decoding, and report the baseline implementation precisely. A memory reduction can be real even when elapsed time barely changes. That outcome would help identify when arithmetic, launch overhead, or another part of the model becomes the limiting cost.</p>
+<p><strong>Open question:</strong> Can tile selection minimize memory traffic while enforcing a useful worst-case bound on output and gradient error across long sequences in low precision?</p>
+
+<h2>Summary</h2>
+<p>Exact attention needs the correctly normalized weighted sum, not a persistent record of every weight. Online normalization provides the algebra; tiling makes it useful on hardware. The central distinction is between eliminating an intermediate and eliminating interactions. The former saves memory while preserving the dense computation.</p>
+
+<h2>References</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/2205.14135">[1] Dao, Fu, Ermon, Rudra, and Ré (2022). FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness.</a> NeurIPS. Primary source.</li>
+<li><a href="https://arxiv.org/abs/1805.02867">[2] Milakov and Gimelshein (2018). Online normalizer calculation for softmax.</a></li>
+<li><a href="https://arxiv.org/abs/2112.05682">[3] Rabe and Staats (2021; revised 2022). Self-attention Does Not Need O(n²) Memory.</a></li>
+</ul>
+        </article>
+        <footer>Want to respond? Email tibo@vanleke.com.</footer>
+    </div>
+</body>
+</html>

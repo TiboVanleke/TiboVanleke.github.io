@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Research Notes — Tibo Vanleke</title>
-    <meta name="description" content="Forty-two focused research memos by Tibo Vanleke on AI safety, interpretability, transformer behavior, and language-model training.">
+    <meta name="description" content="Forty-three focused research memos by Tibo Vanleke on AI safety, interpretability, transformer behavior, and language-model training.">
     <meta name="author" content="Tibo Vanleke">
     <meta name="theme-color" content="#10251e">
     <link rel="canonical" href="https://vanleke.com/blog/">
@@ -65,11 +65,11 @@
                 </div>
 
                 <article class="latest-note intro-animate intro-animate--delay">
-                    <time datetime="2026-09-27">Latest · 27 September 2026</time>
-                    <h2>Why content-free inputs improve few-shot classification</h2>
-                    <p>A focused review of contextual calibration: when dividing out a prompt’s baseline label preferences improves classification, and when it removes useful information.</p>
+                    <time datetime="2026-10-04">Latest · 4 October 2026</time>
+                    <h2>Why exact attention does not need a quadratic matrix</h2>
+                    <p>A focused review of how online softmax preserves every attention interaction while avoiding a stored quadratic matrix, and why memory savings do not imply linear-time attention.</p>
                     <div class="button-row">
-                        <a class="button button--light" href="/blog/2026-09-27-why-content-free-inputs-improve-few-shot-classification.html">Read the latest memo</a>
+                        <a class="button button--light" href="/blog/2026-10-04-why-exact-attention-does-not-need-a-quadratic-matrix.html">Read the latest memo</a>
                     </div>
                 </article>
             </div>
@@ -79,7 +79,7 @@
             <div class="container">
                 <div class="archive-header">
                     <div>
-                        <p class="eyebrow">February — September 2026</p>
+                        <p class="eyebrow">February — October 2026</p>
                         <h2>The full archive.</h2>
                     </div>
                     <label class="search-label">
@@ -89,11 +89,16 @@
                 </div>
 
                 <div class="archive-meta" aria-live="polite">
-                    <span><strong data-note-count>42</strong> notes shown</span>
+                    <span><strong data-note-count>43</strong> notes shown</span>
                     <span>Newest first</span>
                 </div>
 
                 <div class="archive-list">
+                    <a class="archive-entry" href="/blog/2026-10-04-why-exact-attention-does-not-need-a-quadratic-matrix.html" data-note data-search="flashattention exact attention online softmax quadratic matrix memory tiling normalization">
+                        <time datetime="2026-10-04">4 Oct 2026</time>
+                        <h3>Why exact attention does not need a quadratic matrix</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
                     <a class="archive-entry" href="/blog/2026-09-27-why-content-free-inputs-improve-few-shot-classification.html" data-note data-search="contextual calibration content free few shot classification label bias prompt prior">
                         <time datetime="2026-09-27">27 Sep 2026</time>
                         <h3>Why content-free inputs improve few-shot classification</h3>
@@ -316,6 +321,7 @@
                     <p class="eyebrow eyebrow--light">Topic log</p>
                     <h2 id="topic-log-title">The latest narrow question.</h2>
                     <ul>
+                        <li><strong>October 4, 2026:</strong> how online softmax computes exact attention without retaining a quadratic weight matrix, while preserving dense pairwise arithmetic.</li>
                         <li><strong>September 27, 2026:</strong> when content-free probes remove prompt-induced label bias in few-shot classification, and when they erase a useful prior.</li>
                         <li><strong>September 21, 2026:</strong> why scheduled sampling can improve sequence generation while learning the wrong distribution through mismatched prefixes and targets.</li>
                         <li><strong>September 6, 2026:</strong> why preference optimization can reward an assistant for matching a user's beliefs rather than preserving truthful disagreement.</li>
@@ -359,7 +365,7 @@
         </div>
         <div class="container site-footer__bottom">
             <span>© <span data-year>2026</span> Tibo Vanleke</span>
-            <span>42 public research notes</span>
+            <span>43 public research notes</span>
         </div>
     </footer>
 </body>
