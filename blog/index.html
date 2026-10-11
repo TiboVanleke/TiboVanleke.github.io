@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Research Notes — Tibo Vanleke</title>
-    <meta name="description" content="Forty-three focused research memos by Tibo Vanleke on AI safety, interpretability, transformer behavior, and language-model training.">
+    <meta name="description" content="Forty-four focused research memos by Tibo Vanleke on AI safety, interpretability, transformer behavior, and language-model training.">
     <meta name="author" content="Tibo Vanleke">
     <meta name="theme-color" content="#10251e">
     <link rel="canonical" href="https://vanleke.com/blog/">
@@ -65,11 +65,11 @@
                 </div>
 
                 <article class="latest-note intro-animate intro-animate--delay">
-                    <time datetime="2026-10-04">Latest · 4 October 2026</time>
-                    <h2>Why exact attention does not need a quadratic matrix</h2>
-                    <p>A focused review of how online softmax preserves every attention interaction while avoiding a stored quadratic matrix, and why memory savings do not imply linear-time attention.</p>
+                    <time datetime="2026-10-12">Latest · 12 October 2026</time>
+                    <h2>Why sampling token boundaries can improve robustness</h2>
+                    <p>A focused review of subword regularization: how alternative segmentations preserve text while changing training, and what translation evidence does and does not establish for LLMs.</p>
                     <div class="button-row">
-                        <a class="button button--light" href="/blog/2026-10-04-why-exact-attention-does-not-need-a-quadratic-matrix.html">Read the latest memo</a>
+                        <a class="button button--light" href="/blog/2026-10-12-why-sampling-token-boundaries-can-improve-robustness.html">Read the latest memo</a>
                     </div>
                 </article>
             </div>
@@ -89,11 +89,16 @@
                 </div>
 
                 <div class="archive-meta" aria-live="polite">
-                    <span><strong data-note-count>43</strong> notes shown</span>
+                    <span><strong data-note-count>44</strong> notes shown</span>
                     <span>Newest first</span>
                 </div>
 
                 <div class="archive-list">
+                    <a class="archive-entry" href="/blog/2026-10-12-why-sampling-token-boundaries-can-improve-robustness.html" data-note data-search="subword regularization tokenization bpe dropout boundaries segmentation robustness spelling">
+                        <time datetime="2026-10-12">12 Oct 2026</time>
+                        <h3>Why sampling token boundaries can improve robustness</h3>
+                        <span class="archive-entry__arrow" aria-hidden="true">→</span>
+                    </a>
                     <a class="archive-entry" href="/blog/2026-10-04-why-exact-attention-does-not-need-a-quadratic-matrix.html" data-note data-search="flashattention exact attention online softmax quadratic matrix memory tiling normalization">
                         <time datetime="2026-10-04">4 Oct 2026</time>
                         <h3>Why exact attention does not need a quadratic matrix</h3>
@@ -321,6 +326,7 @@
                     <p class="eyebrow eyebrow--light">Topic log</p>
                     <h2 id="topic-log-title">The latest narrow question.</h2>
                     <ul>
+                        <li><strong>October 12, 2026:</strong> why sampling alternative subword segmentations can improve robustness while preserving text, and what remains untested for decoder-only LLMs.</li>
                         <li><strong>October 4, 2026:</strong> how online softmax computes exact attention without retaining a quadratic weight matrix, while preserving dense pairwise arithmetic.</li>
                         <li><strong>September 27, 2026:</strong> when content-free probes remove prompt-induced label bias in few-shot classification, and when they erase a useful prior.</li>
                         <li><strong>September 21, 2026:</strong> why scheduled sampling can improve sequence generation while learning the wrong distribution through mismatched prefixes and targets.</li>
@@ -365,7 +371,7 @@
         </div>
         <div class="container site-footer__bottom">
             <span>© <span data-year>2026</span> Tibo Vanleke</span>
-            <span>43 public research notes</span>
+            <span>44 public research notes</span>
         </div>
     </footer>
 </body>

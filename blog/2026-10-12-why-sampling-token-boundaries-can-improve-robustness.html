@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why sampling token boundaries can improve robustness | Tibo Vanleke</title>
+    <meta name="description" content="A focused review of subword regularization: how alternative segmentations preserve text while changing training, and what translation evidence does and does not establish for LLMs.">
+    <link rel="stylesheet" href="/assets/note.css">
+    <link rel="canonical" href="https://vanleke.com/blog/2026-10-12-why-sampling-token-boundaries-can-improve-robustness.html">
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to research notes</a>
+        <header>
+            <h1>Why sampling token boundaries can improve robustness</h1>
+            <div class="meta">October 12, 2026 · 7 min read</div>
+        </header>
+        <article>
+<h2>Abstract</h2>
+<p>Can a language model benefit from seeing the same sentence with different token boundaries? This review examines a precise intervention: sample alternative subword segmentations during training, then use a deterministic tokenizer at inference. The underlying text stays fixed, but the model encounters different sequences of token identifiers. The research suggests that this can reduce dependence on a single segmentation. The strongest evidence reviewed here comes from machine translation; extending it to large autoregressive models remains an empirical question. The useful distinction is between covering a string with a vocabulary and learning to interpret its possible encodings.</p>
+
+<h2>Related Work</h2>
+<p>The highly cited foundation is Sennrich, Haddow, and Birch’s subword translation work. It adapted byte-pair encoding (BPE) to represent rare words using smaller units, with gains on English–German and English–Russian translation. Its central contribution is vocabulary coverage without requiring a separate symbol for every word. <a href="https://aclanthology.org/P16-1162/">[1]</a></p>
+<p>Kudo’s <em>Subword Regularization</em> supplies the central training idea: resample segmentations on the fly using a unigram segmentation model. It reports improvements particularly in low-resource and out-of-domain translation. Provilkov, Emelianenko, and Voita subsequently introduced BPE-dropout, making stochastic segmentation compatible with an existing BPE vocabulary. <a href="https://aclanthology.org/P18-1007/">[2]</a> <a href="https://aclanthology.org/2020.acl-main.170/">[3]</a></p>
+<p>A separate comparison by Bostrom and Durrett found that unigram tokenization matched or exceeded BPE on downstream tasks for masked language models in English and Japanese. That establishes that tokenizer choice can matter beyond translation. It does not isolate the benefit of sampling boundaries, because changing the vocabulary construction method is a different intervention. <a href="https://aclanthology.org/2020.findings-emnlp.414/">[4]</a></p>
+
+<h2>Method/Mechanism</h2>
+<p>Ordinary BPE repeatedly applies learned merges to adjacent units. BPE-dropout randomly suppresses candidate merges during segmentation, producing alternative token sequences while retaining the vocabulary; inference uses ordinary BPE. Kudo’s approach instead assigns probabilities to segmentations using products of unigram token probabilities and samples from that distribution. These are different sampling procedures with a shared purpose. <a href="https://aclanthology.org/2020.acl-main.170/">[3]</a> <a href="https://aclanthology.org/P18-1007/">[2]</a></p>
+<p><strong>Example 1: one string, two learning problems.</strong> Consider an illustrative vocabulary containing “play”, “ing”, “playing”, and the required characters. The text “playing” could be represented as [playing] or [play, ing]. Assume both segmentations are available; this example is not a claim about a particular production tokenizer.</p>
+<p>For next-token training, the first representation asks the model to predict one identifier from the preceding context. The second asks it to predict “play”, then “ing” after a longer prefix. Detokenization yields the same text, but the loss terms and computation differ. Successful prediction of [playing] alone does not logically require successful prediction of [play, ing]. Sharing character content does not force independently learned token embeddings to share useful behavior.</p>
+<p>To sharpen that distinction, consider an illustrative source-only objective with a fixed target y. Let q(s|x) assign probabilities to segmentations s of input text x. Training minimizes the average loss E<sub>s∼q</sub>[−log p(y|s)]. This is a simplified instance of sampling over segmentations, rather than a description of a new experiment. Kudo also samples target segmentations. <a href="https://aclanthology.org/P18-1007/">[2]</a></p>
+<p>Here is an original calculation. Suppose two source segmentations are equally likely and a model gives the correct target probabilities 0.9 and 0.1. Its average negative log probability is about 1.204 nats. A model assigning 0.5 under both receives about 0.693 nats. Both have the same arithmetic-average probability, 0.5, yet the average log loss prefers the second. Poor performance on one encoding cannot be fully hidden by good performance on another.</p>
+<p>This also separates the average loss from −log E<sub>s</sub>[p(y|s)], which is 0.693 for both models. Jensen’s inequality makes the former at least as large as the latter. Sampling training encodings therefore should not casually be described as exact inference that averages over every encoding. Nor does the objective guarantee identical hidden states: it constrains predictions through training examples.</p>
+
+<h2>Key Findings</h2>
+<p><strong>Case study 2: translation under synthetic misspellings.</strong> In Table 5 of the BPE-dropout paper, WMT14 English–German BLEU rises from 27.41 to 28.01 on original input and from 24.45 to 26.03 on corrupted input. The corruption modifies each source word with probability 10%, inserting, deleting, or substituting a character. Training did not introduce these misspellings. This supports transfer from segmentation variation to that particular noise test. <a href="https://aclanthology.org/2020.acl-main.170/">[3]</a></p>
+<p>My interpretation is bounded: the intervention helps with a perturbation that can alter token boundaries, but the result does not prove which internal representation caused the gain. Four practical insights follow from the mechanism and evidence:</p>
+<ul>
+<li><strong>Coverage is weaker than competence.</strong> A tokenizer’s ability to encode an unfamiliar string does not establish that the model understands that encoding.</li>
+<li><strong>Unchanged text can produce changed supervision.</strong> Token boundaries determine prediction events, prefix lengths, and which embeddings receive updates.</li>
+<li><strong>Average log loss penalizes fragile encodings.</strong> The worked calculation shows why one successful segmentation need not compensate for another unsuccessful one.</li>
+<li><strong>Robustness needs a named perturbation.</strong> Better scores on synthetic spelling errors do not establish resistance to every distribution shift.</li>
+</ul>
+
+<h2>Limitations</h2>
+<p>The translation evidence concerns conditional generation with an encoder and decoder. A decoder-only model trained on web text has a different objective and data regime. Treating these results as a recipe for frontier-scale pretraining would skip the experiment that matters.</p>
+<p>There is also a resource confound. Splitting a token into several pieces increases sequence length. At fixed token count, a training run can then see fewer characters; at fixed text exposure, it can spend more computation. Either choice is defensible, but they answer different questions. Per-token perplexity also becomes difficult to compare when prediction units change. Evaluation should retain a common text unit and specify whether likelihood uses canonical tokenization or sums over alternative encodings.</p>
+<p>Finally, sampling cannot supply missing facts or guarantee compositional understanding. It changes how existing text is presented. A model could improve through more useful embedding updates, broader prefix exposure, or another optimization effect without acquiring the human-interpretable mechanism suggested by the word “composition”.</p>
+
+<h2>Future Directions</h2>
+<p>A decisive LLM study would hold the raw corpus, architecture, and vocabulary fixed, and vary only segmentation sampling. Report both matched-compute and matched-text comparisons. Test clean text, controlled spelling errors, and held-out word formations separately, while recording sequence lengths and throughput.</p>
+<p>To test the proposed mechanism directly, encode identical held-out strings in several valid ways and measure disagreement in predictions over a common set of continuation strings. That would distinguish sensitivity to token boundaries from ordinary task error. Repeated seeds and uncertainty intervals would help determine whether a small robustness gain survives training variability.</p>
+<p><strong>Open question:</strong> At fixed training compute, can stochastic segmentation reduce decoder-only LLM sensitivity to alternative encodings without sacrificing performance on clean text?</p>
+
+<h2>Summary</h2>
+<p>Subword sampling changes the prediction problem while preserving the text. Translation studies provide evidence that this can improve robustness; the loss calculation explains why performance across encodings matters. The next step for LLMs is a controlled test that accounts for both text exposure and computational cost.</p>
+
+<h2>References</h2>
+<ul>
+<li><a href="https://aclanthology.org/P16-1162/">[1] Sennrich, Haddow, and Birch (2016). Neural Machine Translation of Rare Words with Subword Units.</a> ACL. Foundational primary source.</li>
+<li><a href="https://aclanthology.org/P18-1007/">[2] Kudo (2018). Subword Regularization: Improving Neural Network Translation Models with Multiple Subword Candidates.</a> ACL. Central mechanism.</li>
+<li><a href="https://aclanthology.org/2020.acl-main.170/">[3] Provilkov, Emelianenko, and Voita (2020). BPE-Dropout: Simple and Effective Subword Regularization.</a> ACL.</li>
+<li><a href="https://aclanthology.org/2020.findings-emnlp.414/">[4] Bostrom and Durrett (2020). Byte Pair Encoding is Suboptimal for Language Model Pretraining.</a> Findings of EMNLP.</li>
+</ul>
+        </article>
+        <footer>Want to respond? Email tibo@vanleke.com.</footer>
+    </div>
+</body>
+</html>
