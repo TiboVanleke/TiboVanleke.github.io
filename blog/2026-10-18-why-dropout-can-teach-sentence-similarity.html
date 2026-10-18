@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why dropout can teach sentence similarity | Tibo Vanleke</title>
+    <meta name="description" content="A focused review of why contrasting two dropout views of one sentence improves embeddings, and why separating sentences is insufficient without preserving semantic neighbors.">
+    <link rel="stylesheet" href="/assets/note.css">
+    <link rel="canonical" href="https://vanleke.com/blog/2026-10-18-why-dropout-can-teach-sentence-similarity.html">
+</head>
+<body>
+    <div class="page">
+        <a class="top-link" href="/blog/">← Back to research notes</a>
+        <header>
+            <h1>Why dropout can teach sentence similarity</h1>
+            <div class="meta">October 18, 2026 · 7 min read</div>
+        </header>
+        <article>
+<h2>Abstract</h2>
+<p>Why should processing an identical sentence twice teach a language model anything about similarity? The narrow question here concerns unsupervised SimCSE: learning sentence embeddings from two noisy executions of one encoder. The apparent paradox disappears once we distinguish identical text from identical computation. A useful embedding must remain stable under irrelevant internal variation while distinguishing different inputs. But neither requirement, alone or together, guarantees semantic understanding. This review examines the objective, a revealing dropout ablation, and the gap between separating training instances and preserving meaningful neighborhoods.</p>
+
+<h2>Related Work</h2>
+<p>Sentence-BERT established a practical motivation for independently computable sentence representations: encode each sentence once, then compare vectors rather than rerunning a joint encoder for every pair. Its siamese training approach made cosine similarity useful for semantic comparison. This separates the cost of representation from the cost of comparing representations. <a href="https://aclanthology.org/D19-1410/">[1]</a></p>
+<p>Ethayarajh’s analysis of BERT, ELMo, and GPT-2 found anisotropic contextual representations: their directions are not uniformly distributed. Consequently, a high cosine similarity needs a baseline; shared geometry can make unrelated representations look similar. These observations concern contextual word representations and should not automatically be transferred to every pooled sentence vector. <a href="https://aclanthology.org/D19-1006/">[2]</a></p>
+<p>Gao, Yao, and Chen’s highly cited SimCSE paper supplies the central intervention: feed each sentence through a pretrained encoder twice with independent dropout masks, treat those views as positives, and use other batch sentences as negatives. <a href="https://aclanthology.org/2021.emnlp-main.552/">[3]</a> Wang and Isola provide the complementary framework of alignment and uniformity for understanding contrastive objectives. <a href="https://proceedings.mlr.press/v119/wang20k.html">[4]</a></p>
+
+<h2>Method/Mechanism</h2>
+<p>Write u<sub>i</sub> and v<sub>i</sub> for normalized embeddings of sentence i under independent dropout. SimCSE minimizes −log[exp(u<sub>i</sub>·v<sub>i</sub>/τ) / Σ<sub>j</sub> exp(u<sub>i</sub>·v<sub>j</sub>/τ)], with temperature τ and the positive included in the denominator. Encoder parameters are shared and fine-tuned. <a href="https://aclanthology.org/2021.emnlp-main.552/">[3]</a></p>
+<p>The following deductions explain the objective without claiming to identify a particular learned circuit. Let s<sub>j</sub> denote a candidate cosine and p<sub>j</sub> its softmax probability. Differentiating the loss gives (p<sub>j</sub> − 1[j=i])/τ. Increasing the positive score lowers loss; increasing a negative score raises it. Negatives already resembling the anchor exert stronger pressure. Temperature changes that concentration as well as the gradient scale.</p>
+<p><strong>Example 1: a two-candidate calculation.</strong> Suppose the positive cosine is 0.8, one negative cosine is 0.6, and τ=0.1. The positive probability is 1/(1+exp(−2)), approximately 0.881; loss is about 0.127 nats. If both scores are 0.8, probability falls to 0.5 and loss becomes 0.693. These are illustrative scores, not measured embeddings. They show why positive similarity alone cannot assess success: the comparison set determines whether that similarity is informative.</p>
+<p>Now remove all stochasticity. For nonzero embeddings, comparing a vector with itself gives cosine one for every parameter setting. The positive score is therefore constant, with no direct gradient encouraging robustness to a changed computation. Negative comparisons still supply gradients. Independent dropout creates a positive score that can improve, requiring different executions to agree. This algebra explains the missing constraint; it does not prove that every deterministic contrastive system must fail.</p>
+<p>Wang and Isola distinguish alignment, which brings positive pairs together, from uniformity, which spreads normalized representations across the sphere. Their analysis connects contrastive learning to both properties in an asymptotic setting. Neither term specifies human meaning without assumptions about which pairs are positive. <a href="https://proceedings.mlr.press/v119/wang20k.html">[4]</a> In this application, that distinction is decisive: agreement between two views of one sentence is directly trained, whereas closeness between two different paraphrases must transfer through the pretrained representation and subsequent learning.</p>
+
+<h2>Key Findings</h2>
+<p><strong>Case study 2: independent versus shared masks.</strong> SimCSE Table 3 reports STS-B development Spearman correlations, multiplied by 100, of 82.5 with dropout probability 0.1, 71.1 without dropout, and 43.6 when both views share the same mask at probability 0.1. The authors also observe improved uniformity but deteriorating semantic alignment for the two identical-view variants. These development results are distinct from their 76.3 average across seven STS test tasks for unsupervised BERT-base. <a href="https://aclanthology.org/2021.emnlp-main.552/">[3]</a></p>
+<p>My reading is that separating instances can damage a useful neighborhood structure unless training also preserves appropriate local stability. Four insights follow:</p>
+<ul>
+<li><strong>Positive identity is not positive variation.</strong> Repeating text supplies a correspondence; independent computation makes that correspondence a nontrivial constraint.</li>
+<li><strong>Negatives define the competition.</strong> The same positive cosine can receive very different losses as competing similarities change.</li>
+<li><strong>Spread is insufficient.</strong> An embedding can distribute sentences widely while placing semantic neighbors incorrectly.</li>
+<li><strong>Pretraining is part of the explanation.</strong> Success after adapting an existing language encoder does not demonstrate that instance discrimination learns meaning from scratch.</li>
+</ul>
+
+<h2>Limitations</h2>
+<p>Consider two unlabeled batch sentences that happen to be paraphrases. The objective treats them as competitors despite their semantic relationship. Conversely, two statements differing only in negation may share vocabulary while requiring separation for a particular application. Instance identity is an inexpensive training label, but it is an imperfect specification of semantic similarity.</p>
+<p>The mathematical argument also leaves several mechanisms unresolved. Dropout may encourage robustness through many distributed parameter changes. A good final correlation does not isolate those changes, establish causal mediation through uniformity, or demonstrate that the same perturbation is appropriate for every encoder. A metric can describe an outcome without explaining the full learning process.</p>
+<p>Finally, sentence similarity is only one use of language representations. Retrieval relevance can be asymmetric: a short question and a long answer serve different roles. Safety judgments may depend on a single negation or qualification. Improved ranking of general sentence pairs does not establish either capability, and these encoder results do not directly establish gains for decoder-only LLMs.</p>
+
+<h2>Future Directions</h2>
+<p>A useful experiment would fix the pretrained checkpoint, training sentences, batch composition, and compute, then compare independent masks, shared masks, and deterministic execution across several seeds. Evaluate two separate quantities: agreement between repeated executions and similarity between independently written paraphrases. Include negation pairs and batches with controlled numbers of paraphrase collisions.</p>
+<p>Track these quantities during training alongside uniformity. This would help distinguish preserving an existing semantic organization from merely improving instance separation. A stronger causal test would intervene on the learned geometry while checking whether semantic rankings survive; correlation between a geometric statistic and benchmark performance is insufficient.</p>
+<p><strong>Open question:</strong> Can an unlabeled criterion identify when dropout-based instance discrimination begins destroying semantic neighborhoods, early enough to guide training without a similarity development set?</p>
+
+<h2>Summary</h2>
+<p>Independent dropout makes self-comparison informative, while negative examples make agreement competitive. The central research lesson is that stable views, separated instances, and useful semantic neighborhoods are different properties. SimCSE provides evidence that they can coexist; the remaining challenge is predicting when they stop doing so.</p>
+
+<h2>References</h2>
+<ul>
+<li><a href="https://aclanthology.org/D19-1410/">[1] Reimers and Gurevych (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks.</a> EMNLP-IJCNLP.</li>
+<li><a href="https://aclanthology.org/D19-1006/">[2] Ethayarajh (2019). How Contextual are Contextualized Word Representations? Comparing the Geometry of BERT, ELMo, and GPT-2 Embeddings.</a> EMNLP-IJCNLP.</li>
+<li><a href="https://aclanthology.org/2021.emnlp-main.552/">[3] Gao, Yao, and Chen (2021). SimCSE: Simple Contrastive Learning of Sentence Embeddings.</a> EMNLP. Central primary source.</li>
+<li><a href="https://proceedings.mlr.press/v119/wang20k.html">[4] Wang and Isola (2020). Understanding Contrastive Representation Learning through Alignment and Uniformity on the Hypersphere.</a> ICML.</li>
+</ul>
+        </article>
+        <footer>Want to respond? Email tibo@vanleke.com.</footer>
+    </div>
+</body>
+</html>
